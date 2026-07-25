@@ -1098,7 +1098,7 @@ window.onload = function() {
     function prosesHasilScanQR(qrString) {
       if (!SESSION_USER) { showToast("Sistem Keamanan: Barcode hanya dapat dibaca saat sudah login!", "error"); return; }
       let data = decryptQRPayload(qrString);
-      if (!data) { showToast("Gagal: Barcode 2D tidak valid atau bukan milik sistem PRB Cilongok I!", "error"); return; }
+      if (!data) { showToast("Gagal: Barcode 2D tidak valid atau bukan milik PORTAL PRB TERPADU CILONGOK I!", "error"); return; }
       let foundP = patientMapNIK.get(data.nik);
       if (!foundP && data.nama) foundP = patientMapName.get(data.nama);
       if (foundP) { let trueIdx = APP_DATA_PASIEN.indexOf(foundP); showToast(`Identitas Terverifikasi: ${foundP[1]}`); switchTab('pemantauan'); setTimeout(()=>bukaModalPantauInstan(trueIdx), 300); } 
@@ -1350,7 +1350,7 @@ function cetakKartuMassal() {
               </div>
               <div style="border-top:1px dashed #aaa; padding-top:4px; display:flex; justify-content:space-between; align-items:center; font-size:7.5px; color:#555;">
                 <span>*QR terenkripsi (scan saat terautentikasi)</span>
-                <span style="font-weight:700; color:#0055FF;">SISTEM PRB CILONGOK I</span>
+                <span style="font-weight:700; color:#0055FF;">PORTAL PRB TERPADU CILONGOK I</span>
               </div>
           </div>`;
       });
