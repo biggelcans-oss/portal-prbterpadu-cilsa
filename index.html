@@ -1199,15 +1199,20 @@ window.onload = function() {
     function filterTabelPasien() { let input = document.getElementById("searchPasienInput").value.toLowerCase(); dataPasienFiltered = APP_DATA_PASIEN.filter(r => { if(!r) return false; let n = r[2] ? r[2].toString().replace(/^'/, "") : ""; let b = r[3] ? r[3].toString().replace(/^'/, "") : ""; return input === "" || `${r[1]} ${n} ${b} ${r[4]} ${r[10]}`.toLowerCase().includes(input); }); dataPasienFiltered.sort((a, b) => (a[1] || "").toString().localeCompare((b[1] || "").toString())); pagePasien = 1; renderTabelPasien(); }
     
     // PEMBARUAN: Cetak Kartu Satuan menggunakan Base64 & 110px Size
-    function cetakKartuPasien(idx) {
+function cetakKartuPasien(idx) {
       const p = APP_DATA_PASIEN[idx];
       if (!p) return;
+      
       const nama = p[1] || "-";
       const nik = p[2] ? p[2].toString().replace(/^'/, "") : "-";
       
       document.getElementById('cardNama').innerText = nama;
       document.getElementById('cardTglLahir').innerText = getTglLahirFromNik(nik);
-      document.getElementById('cardAlamat').innerText = p[4] === 'Luar Wilayah' ? p[5] : p[4];
+      
+      // PERBAIKAN: Menggabungkan Desa dan RT/RW agar informasi lengkap
+      const desa = p[4] === 'Luar Wilayah' ? p[5] : p[4];
+      const rtrw = p[6] ? p[6].toString().replace(/^'/, "") : "-";
+      document.getElementById('cardAlamat').innerText = `${desa} (RT/RW: ${rtrw})`;
       
       let diags = [];
       if (p[10] && p[10] !== '-') diags.push(p[10]);
@@ -1230,7 +1235,6 @@ window.onload = function() {
         correctLevel : QRCode.CorrectLevel.L
       });
 
-      // Ambil Base64 PNG agar gambar stabil di popup layar
       setTimeout(() => {
         let canvas = tempDiv.querySelector('canvas');
         let imgSrc = '';
@@ -1248,7 +1252,6 @@ window.onload = function() {
 
       bukaModal('modalKartuPasien');
     }
-
     function eksekusiCetakKartu() {
       const qrContainer = document.getElementById('qrcodeContainer');
       let canvas = qrContainer.querySelector('canvas');
@@ -1290,23 +1293,39 @@ window.onload = function() {
       setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); }, 400);
     }
 
-    function cetakKartuMassal() {
-      if (dataPasienFiltered.length === 0) { showToast("Tidak ada data pasien yang tersedia dari filter pencarian saat ini!", "error"); return; }
+function cetakKartuMassal() {
+      if (dataPasienFiltered.length === 0) {
+        showToast("Tidak ada data pasien yang tersedia dari filter pencarian saat ini!", "error");
+        return;
+      }
+      
       showToast("Sistem sedang menyiapkan layout cetak massal... Mohon tunggu sebentar.");
       
       let printHtml = `<div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; padding: 10px;">`;
+      
       dataPasienFiltered.forEach(p => {
           const nama = p[1] || "-";
           const nik = p[2] ? p[2].toString().replace(/^'/, "") : "-";
           const tglLahir = getTglLahirFromNik(nik);
-          const alamat = p[4] === 'Luar Wilayah' ? p[5] : p[4];
-          let diags = []; if (p[10] && p[10] !== '-') diags.push(p[10]); if (p[11] && p[11] !== '-' && p[11] !== '') diags.push(p[11]); if (p[12] && p[12] !== '-' && p[12] !== '') diags.push(p[12]); const diagStr = diags.length > 0 ? diags.join(", ") : "-";
+          
+          // PERBAIKAN: Menggabungkan Desa dan RT/RW untuk cetak massal
+          const desa = p[4] === 'Luar Wilayah' ? p[5] : p[4];
+          const rtrw = p[6] ? p[6].toString().replace(/^'/, "") : "-";
+          const alamatLengkap = `${desa} (RT/RW: ${rtrw})`;
+
+          let diags = [];
+          if (p[10] && p[10] !== '-') diags.push(p[10]);
+          if (p[11] && p[11] !== '-' && p[11] !== '') diags.push(p[11]);
+          if (p[12] && p[12] !== '-' && p[12] !== '') diags.push(p[12]);
+          const diagStr = diags.length > 0 ? diags.join(", ") : "-";
           
           let tempDiv = document.createElement('div');
           new QRCode(tempDiv, { text: generateSecureQRPayload(nik, nama), width: 256, height: 256, correctLevel: QRCode.CorrectLevel.L });
           
-          let qrSrc = ''; let canvas = tempDiv.querySelector('canvas');
-          if (canvas) { qrSrc = canvas.toDataURL('image/png'); } else { let img = tempDiv.querySelector('img'); if (img) qrSrc = img.src; }
+          let qrSrc = '';
+          let canvas = tempDiv.querySelector('canvas');
+          if (canvas) { qrSrc = canvas.toDataURL('image/png'); } 
+          else { let img = tempDiv.querySelector('img'); if (img) qrSrc = img.src; }
           
           printHtml += `
           <div class="id-card-layout">
@@ -1325,7 +1344,7 @@ window.onload = function() {
                 <div style="flex:1; line-height:1.25; overflow:hidden;">
                   <div style="font-size:11px; font-weight:800; color:#000; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${nama}</div>
                   <div style="font-size:8.5px; color:#333;">Tgl Lahir: <strong style="color:#000;">${tglLahir}</strong></div>
-                  <div style="font-size:8.5px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Alamat: <strong style="color:#000;">${alamat}</strong></div>
+                  <div style="font-size:8.5px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Alamat: <strong style="color:#000;">${alamatLengkap}</strong></div>
                   <div style="font-size:8px; color:#0055FF; font-weight:700; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${diagStr}</div>
                 </div>
               </div>
@@ -1335,10 +1354,18 @@ window.onload = function() {
               </div>
           </div>`;
       });
+      
       printHtml += `</div>`;
       
       let iframe = document.getElementById('printIframeMassal');
-      if (!iframe) { iframe = document.createElement('iframe'); iframe.id = 'printIframeMassal'; iframe.style.position = 'absolute'; iframe.style.top = '-9999px'; document.body.appendChild(iframe); }
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.id = 'printIframeMassal';
+        iframe.style.position = 'absolute';
+        iframe.style.top = '-9999px';
+        document.body.appendChild(iframe);
+      }
+      
       const doc = iframe.contentWindow.document;
       doc.open();
       doc.write(`
@@ -1351,15 +1378,20 @@ window.onload = function() {
             body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background: #fff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             .id-card-layout { width: 325px !important; height: 200px !important; border: 1.5px solid #0055FF !important; border-radius: 10px !important; background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%) !important; padding: 10px 12px !important; box-shadow: none !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; position: relative !important; overflow: hidden !important; box-sizing: border-box !important; color: #000000 !important; page-break-inside: avoid; }
             .id-card-layout::before { content: ""; position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: rgba(0,85,255,0.08) !important; border-radius: 50%; pointer-events: none; }
-            /* UKURAN QR CODE DI KERTAS CETAK 110px */
             #qrcodeContainer { width: 110px !important; height: 110px !important; min-width: 110px !important; min-height: 110px !important; background: #ffffff !important; padding: 4px !important; border: 1.5px solid #0055FF !important; border-radius: 8px !important; flex-shrink: 0 !important; display: flex !important; justify-content: center !important; align-items: center !important; box-sizing: border-box !important; overflow: hidden !important; }
           </style>
         </head>
-        <body>${printHtml}</body>
+        <body>
+          ${printHtml}
+        </body>
         </html>
       `);
       doc.close();
-      setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); }, 1000); 
+      
+      setTimeout(() => { 
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print(); 
+      }, 1000); 
     }
 
     function switchTab(tabId) { 
