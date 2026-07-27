@@ -516,7 +516,8 @@
                   <h3><i class="ph-light ph-users-three"></i> Dasbor Antrian Live (Hari Ini)</h3>
                   <div style="display:flex; gap:10px;">
                     <button class="btn-action btn-small" onclick="bukaAntrianLangsung()"><i class="ph-light ph-plus"></i> Pemantauan Langsung (Tanpa Kartu)</button>
-                    <button class="btn btn-outline" style="color:var(--primary); border-color:var(--primary); padding:6px 12px;" onclick="segarkanData()"><i class="ph-bold ph-arrows-clockwise"></i> Segarkan Data</button>
+                    <button class="btn-action btn-small" onclick="fetchAppData(false)"><i class="ph-light ph-arrows-clockwise"></i> Segarkan Data</button>
+                  </div>
                 </div>
                 <div class="search-bar">
                   <i class="ph-light ph-funnel"></i>
@@ -937,7 +938,7 @@
 
   <!-- JAVASCRIPT LOGIC ENGINE -->
   <script>
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyJkO1hlu2K4cCdyAt2VuCXsWlzKyvvoaU7qfE3UgMddukULou2k7TsV2aXqlKTM1xi/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwg3RoEaWs3PhJtnSdI6aeJ6aZhD9Hfy6Iv3crPjaOMvLiiwCBFXuRDcoBrLMkrclRh/exec";
 
     let SESSION_USER = "", SESSION_USERNAME = "", SESSION_ROLE = "";
     let APP_DATA_PASIEN = []; let APP_DATA_HISTORI = []; let APP_DATA_ANTRIAN = [];
@@ -1929,18 +1930,6 @@
                 trHtml += `<tr><td>${formatTanggalIndo(h[0])}</td><td><strong>${namaPasien}</strong><br>${displayNikBpjs}</td><td>${desaHistori}</td><td>${rtHistori}</td><td>${getMultiDiagnosaHtml(p)}</td><td><span style="padding:3px 6px; border-radius:4px; font-size:10px; font-weight:700; background:var(--table-hover); color:var(--text);">${h[2]}</span></td><td>TD: ${h[3] ? h[3].toString().replace(/^'/, "") : "-"}<br><span style="font-size:10px; color:var(--secondary);">${gula}</span></td><td>${h[7]}</td><td style="text-align:right;"><button class="btn-icon" onclick="cetakKartuKendaliDariHistori(${trueIdx})" title="Kartu Kendali 12 Bulan"><i class="ph-light ph-printer"></i></button> <button class="btn-icon" onclick="bukaFormEditPemantauan(${trueIdx})"><i class="ph-light ph-pencil-simple"></i></button> <button class="btn-icon" onclick="aksiHapusData('Pemantauan', ${trueIdx})" style="color:#ff3b30;"><i class="ph-light ph-trash"></i></button></td></tr>`; });
         } document.getElementById('tbodyHistori').innerHTML = trHtml; let totalPages = Math.ceil(dataHistoriFiltered.length / PER_PAGE) || 1; document.getElementById('infoPageHistori').innerText = `Halaman ${pageHistori} dari ${totalPages}`; document.getElementById('btnPrevHistori').disabled = (pageHistori === 1); document.getElementById('btnNextHistori').disabled = (pageHistori === totalPages);
     }
-            // Di dalam fungsi buildLaporanCetak untuk laporan kunjungan:
-        let filtered = APP_DATA_HISTORI.filter(h => {
-           if(!h || !h[0]) return false;
-           let metodeLayanan = h[2] ? h[2].toString().trim() : "";
-           // KODE BARU: Abaikan/kecualikan pasien yang Tidak Hadir / Absen
-           if(metodeLayanan === "Tidak Hadir") return false; 
-        
-           let d = parseDateWib(h[0]);
-           if(!d) return false;
-           if(jns === 'laporan_bulan' && (d.month.toString() !== m || d.year.toString() !== y)) return false;
-           return true;
-        });
     function changePageHistori(dir) { let totalPages = Math.ceil(dataHistoriFiltered.length / PER_PAGE) || 1; if(dir === 1 && pageHistori < totalPages) { pageHistori++; renderTabelHistori(); } else if(dir === -1 && pageHistori > 1) { pageHistori--; renderTabelHistori(); } }
 
     function getMultiDiagnosaHtml(p) { if (!p) return "-"; let diags = []; if (p[10] && p[10] !== '-') diags.push(p[10]); if (p[11] && p[11] !== '-' && p[11] !== '') diags.push(p[11]); if (p[12] && p[12] !== '-' && p[12] !== '') diags.push(p[12]); if (diags.length === 0) return "-"; return `<span style="font-size:10px; font-weight:700; color:var(--blue); padding:2px 6px; border-radius:4px; background:var(--primary-light);">${diags.join(", ")}</span>`; }
@@ -2471,140 +2460,6 @@
           }
           document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
         }
-    // --- TOMBOL SEGARKAN DATA ---
-    async function segarkanData() {
-       showToast("Memperbarui data dari database...");
-       await loadInitData();
-       // Refresh halaman yang sedang aktif
-       if(!document.getElementById('page-pasien').classList.contains('hidden')) renderTabelPasien();
-       if(!document.getElementById('page-pemantauan').classList.contains('hidden')) renderTabelPemantauan();
-       if(!document.getElementById('page-antrian').classList.contains('hidden')) renderTabelAntrian();
-       showToast("Data berhasil diperbarui!");
-    }
-
-    // --- MANAJEMEN PASIEN (TAMBAH & EDIT) ---
-    function bukaModalPasien() {
-       document.getElementById('editPasienIndex').value = "";
-       document.getElementById('modalPasienTitle').innerHTML = `<i class="ph-bold ph-user-plus"></i> Form Pasien PRB`;
-       document.getElementById('formPasien').reset();
-       bukaModal('modalPasien');
-    }
-
-    function bukaEditPasien(idx) {
-       let p = APP_DATA_PASIEN[idx];
-       if(!p) return;
-       document.getElementById('editPasienIndex').value = p._idx; // baris di spreadsheet
-       document.getElementById('modalPasienTitle').innerHTML = `<i class="ph-bold ph-pencil-simple"></i> Edit Data Pasien`;
-       document.getElementById('pNama').value = p[1];
-       document.getElementById('pNik').value = p[2] ? p[2].toString().replace(/^'/,"") : "";
-       document.getElementById('pBpjs').value = p[3] ? p[3].toString().replace(/^'/,"") : "";
-       document.getElementById('pAlamat').value = p[4];
-       document.getElementById('pRtrw').value = p[6] ? p[6].toString().replace(/^'/, "") : "";
-       document.getElementById('pStatus').value = p[7] || "Aktif";
-       document.getElementById('pDiag1').value = p[10] || "Hipertensi";
-       bukaModal('modalPasien');
-    }
-
-    async function submitPasien(e) {
-       e.preventDefault();
-       const btn = document.getElementById('btnSimpanPasien');
-       setBtnLoading(btn, true);
-       
-       let editIdx = document.getElementById('editPasienIndex').value;
-       const fd = {
-          nama: document.getElementById('pNama').value,
-          nik: "'" + document.getElementById('pNik').value,
-          bpjs: "'" + document.getElementById('pBpjs').value,
-          alamat: document.getElementById('pAlamat').value,
-          desaLuar: "-",
-          rtrw: "'" + document.getElementById('pRtrw').value,
-          statusPrb: document.getElementById('pStatus').value,
-          prb1: document.getElementById('pDiag1').value,
-          currentUser: SESSION_NAMA
-       };
-
-       let action = editIdx ? "updatePasien" : "simpanPasien";
-       let payload = editIdx ? { rowIndex: parseInt(editIdx), fd } : { fd };
-       
-       const res = await callGasApi(action, payload);
-       if(res.success) {
-          showToast(res.message);
-          tutupModal('modalPasien');
-          await loadInitData();
-          renderTabelPasien();
-       } else {
-          showToast(res.message, "error");
-       }
-       setBtnLoading(btn, false);
-    }
-
-    // --- PROSES ANTRIAN & INPUT PEMANTAUAN ---
-    function prosesAntrian(nik, noAntrian) {
-       let p = patientMapNIK.get(nik);
-       if(!p) { showToast("Data pasien master tidak ditemukan!", "error"); return; }
-       
-       document.getElementById('pantauNoAntrian').value = noAntrian;
-       document.getElementById('pantauIdentitas').value = `${p[1]} || ${nik} || ${p[3] ? p[3].toString().replace(/^'/,"") : "-"}`;
-       document.getElementById('pantauTgl').value = getWibDateStr().split("T")[0];
-       document.getElementById('formPemantauan').reset();
-       document.getElementById('pantauNoAntrian').value = noAntrian; // reset ulang nilai antrian
-       document.getElementById('pantauIdentitas').value = `${p[1]} || ${nik} || ${p[3] ? p[3].toString().replace(/^'/,"") : "-"}`;
-       
-       bukaModal('modalPemantauan');
-    }
-
-    async function submitPemantauan(e) {
-       e.preventDefault();
-       const btn = document.getElementById('btnSimpanPantau');
-       setBtnLoading(btn, true);
-
-       const fd = {
-          namaPasien: document.getElementById('pantauIdentitas').value,
-          tglKunjungan: document.getElementById('pantauTgl').value,
-          jenisKunjungan: document.getElementById('pantauMetode').value,
-          td: "'" + document.getElementById('pantauTd').value,
-          jenisGula: "GDS",
-          hasilGula: document.getElementById('pantauGula').value || "-",
-          hasilG2PP: "-",
-          statusPRB: document.getElementById('pantauStatus').value,
-          currentUser: SESSION_NAMA
-       };
-       let noAntrian = document.getElementById('pantauNoAntrian').value;
-
-       const res = await callGasApi("simpanPemantauan", { fd, noAntrian });
-       if(res.success) {
-          showToast(res.message);
-          tutupModal('modalPemantauan');
-          await loadInitData();
-          renderTabelAntrian();
-          renderTabelPemantauan();
-       } else {
-          showToast(res.message, "error");
-       }
-       setBtnLoading(btn, false);
-    }
-    function renderTabelAntrian() {
-   const tbody = document.querySelector('#tabelAntrian tbody');
-   let html = "";
-   let todayIso = getWibDateStr().split("T")[0];
-   [...APP_DATA_ANTRIAN].reverse().filter(a => a[0] && a[0].toString().startsWith(todayIso)).forEach((a) => {
-      let st = a[5];
-      // Menampilkan Tanggal dan Jam Pengambilan Antrian
-      let tglJamAmbil = a[0]; 
-      html += `<tr>
-         <td>${tglJamAmbil}</td>
-         <td><h4 style="color:var(--primary); margin:0;">${a[1]}</h4></td>
-         <td>${a[2]}</td>
-         <td><strong>${a[3]}</strong></td>
-         <td>${a[4]}</td>
-         <td><span style="padding:4px 8px; border-radius:4px; font-size:12px; background:${st==='Selesai'?'#ecfdf5':'#fffbeb'}; color:${st==='Selesai'?'#059669':'#d97706'}">${st}</span></td>
-         <td>
-           ${st==='Menunggu' ? `<button class="btn btn-outline" style="color:var(--primary); border-color:var(--primary); padding:4px 8px; font-size:12px;" onclick="prosesAntrian('${a[2]}', '${a[1]}')"><i class="ph-bold ph-stethoscope"></i> Input Pemantauan</button>` : '-'}
-         </td>
-      </tr>`;
-   });
-   tbody.innerHTML = html || '<tr><td colspan="7" style="text-align:center;">Tidak ada antrian hari ini</td></tr>';
-}
       </script>
     </body>
     </html>
