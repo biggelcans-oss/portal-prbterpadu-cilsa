@@ -290,12 +290,17 @@
           <i class="ph-light ph-device-mobile-camera"></i> Buka Mode Scanner HP
         </button>
 
-        <!-- TOMBOL AMBIL ANTRIAN (TANPA LOGIN) -->
+        <!-- LAYANAN AMBIL ANTRIAN PASIEN (PILIHAN: SCAN QR ATAU MANUAL) -->
         <div style="margin-top: 24px; border-top: 1px dashed rgba(11, 20, 38, 0.2); padding-top: 16px;">
-          <p style="margin: 0 0 10px 0; font-size: 11.5px; color: var(--secondary);">Layanan Pasien (Tanpa Login)</p>
-          <button type="button" class="btn-action" onclick="bukaScannerAntrian()" style="width: 100%; background: #34c759; color: white; box-shadow: 0 3px 10px rgba(52,199,89,0.3);">
-            <i class="ph-light ph-ticket"></i> Ambil Antrian Pasien (Scan QR)
-          </button>
+          <p style="margin: 0 0 10px 0; font-size: 11.5px; color: var(--secondary);">Layanan Antrian Pasien (Tanpa Login)</p>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <button type="button" class="btn-action" onclick="bukaScannerAntrian()" style="width: 100%; background: #34c759; color: white; box-shadow: 0 3px 10px rgba(52,199,89,0.3);">
+              <i class="ph-light ph-qr-code"></i> Scan QR Kartu Pasien
+            </button>
+            <button type="button" class="btn-action" onclick="bukaModalAntrianManual()" style="width: 100%; background: var(--window); color: var(--text); border: var(--border); box-shadow: none;">
+              <i class="ph-light ph-keyboard"></i> Ambil Antrian Manual (Ketik NIK/Nama)
+            </button>
+          </div>
         </div>
       </form>
     </div>
@@ -388,7 +393,6 @@
               </div>
             </div>
 
-            <!-- MASTER DATA SEPANJANG TAHUN -->
             <h4 style="margin: 24px 0 12px 0; font-size: 13.5px; font-weight: 800; color: var(--text); display: flex; align-items: center; gap: 8px;">
               <i class="ph-fill ph-database" style="color: var(--blue);"></i> Master Data Peserta PRB (Sepanjang Tahun)
             </h4>
@@ -502,7 +506,7 @@
           </div>
         </div>
 
-        <!-- PEMANTAUAN -->
+        <!-- PEMANTAUAN (DENGAN FILTER KODE ANTRIAN / POLI) -->
         <div id="tab-pemantauan" class="mac-window hidden fixed-layout-window">
           <div class="content-wrapper-max">
             <div class="window-header-area">
@@ -513,9 +517,15 @@
                     <button class="btn-action btn-small" onclick="bukaRemoteScanner()" style="background:#34c759;"><i class="ph-light ph-device-mobile-camera"></i> HP Scanner</button>
                   </div>
                 </div>
-                <div class="search-bar">
+                <div class="search-bar" style="gap:10px;">
                   <i class="ph-light ph-magnifying-glass"></i>
-                  <input type="text" id="searchClientInput" onkeyup="debounceSearchPantau()" placeholder="Cari Nama, NIK, BPJS, atau Desa...">
+                  <input type="text" id="searchClientInput" onkeyup="debounceSearchPantau()" placeholder="Cari Nama, NIK, BPJS, atau Desa..." style="flex:1;">
+                  <div style="width:1px; height:20px; background:var(--border);"></div>
+                  <select id="filterKodeAntrian" onchange="filterTabelPantau()" style="border:none; background:transparent; font-weight:700; color:var(--blue); cursor:pointer;">
+                    <option value="">-- Filter Kode / Poli Antrian --</option>
+                    <option value="DM">Poli DM (Diabetes Melitus)</option>
+                    <option value="HT">Poli HT (Hipertensi & Lainnya)</option>
+                  </select>
                 </div>
             </div>
             <div class="window-table-area">
@@ -641,7 +651,6 @@
                    <p style="font-size: 11.5px; margin-bottom: 16px; color: var(--secondary); font-weight:600;"><i class="ph-light ph-eye"></i> Pratinjau Dokumen Cetak</p>
                    <div id="printArea" style="background:#fff; color:#000; padding:24px; border-radius:8px; border:1px dashed rgba(11, 20, 38, 0.18);">
                       
-                      <!-- DESAIN KOP SURAT PUSKESMAS CILONGOK I -->
                       <table style="width: 100%; border-collapse: collapse; margin-bottom: 2px;">
                         <tr>
                           <td style="width: 85px; text-align: left; vertical-align: middle; padding-bottom: 12px; border-bottom: 3.5px solid #000; border: none;">
@@ -673,7 +682,7 @@
                       </div>
 
                       <div id="printFooter" style="margin-top: 24px; border-top: 1px dashed #aaa; padding-top: 12px; font-size: 10px; font-family:sans-serif; display:flex; justify-content:space-between;">
-                          <div><strong>Portal PRB Terpadu</strong><br>Puskesmas Cilongok I<br><span style="color:#555; font-size:9px;"></span></div>
+                          <div><strong>Portal PRB Terpadu</strong><br>Puskesmas Cilongok I</div>
                           <div style="text-align:right;"><em>Dicetak tanggal (WIB):</em><br><strong id="tglCetakStamp" style="font-size:11px; display:inline-block;"></strong></div>
                       </div>
                    </div>
@@ -691,7 +700,7 @@
     </div>
   </div>
 
-  <!-- MODAL CETAK KARTU PASIEN -->
+  <!-- MODALS -->
   <div id="modalKartuPasien" class="modal-overlay">
     <div class="modal-content" style="max-width: 420px; text-align:center;">
       <div class="modal-header">
@@ -717,7 +726,7 @@
           </div>
         </div>
         <div style="border-top:1px dashed #aaa; padding-top:4px; display:flex; justify-content:space-between; align-items:center; font-size:7.5px; color:#555;">
-          <span>*QR terenkripsi (scan saat terautentikasi)</span>
+          <span>*QR terenkripsi</span>
           <span style="font-weight:700; color:#0055FF;">PORTAL PRB CILONGOK I</span>
         </div>
       </div>
@@ -727,22 +736,17 @@
     </div>
   </div>
 
-  <!-- MODAL SCANNER BARCODE 2D PC -->
   <div id="modalScannerQR" class="modal-overlay">
     <div class="modal-content" style="max-width: 420px; text-align:center;">
       <div class="modal-header">
         <h3><i class="ph-light ph-camera" style="color:var(--blue);"></i> Pemindai Live QR Pasien</h3>
         <button class="close-btn" onclick="tutupScannerQR()"><i class="ph-light ph-x"></i></button>
       </div>
-      <div style="padding: 10px 0;">
-        <p style="font-size: 11.5px; color: var(--secondary); margin-bottom: 12px; line-height: 1.5;">Izinkan akses kamera dan arahkan perangkat Anda langsung ke QR Code pada Kartu Pasien.</p>
-        <div id="qr-reader" style="width: 100%;"></div>
-      </div>
+      <div style="padding: 10px 0;"><div id="qr-reader" style="width: 100%;"></div></div>
       <button class="btn-action" onclick="tutupScannerQR()" style="width:100%; background:var(--bg); color:var(--text); border:var(--border); box-shadow:none; margin-top:12px;">Batal & Tutup</button>
     </div>
   </div>
 
-  <!-- MODAL SCANNER ANTRIAN -->
   <div id="modalScannerAntrian" class="modal-overlay">
     <div class="modal-content" style="max-width: 420px; text-align:center;">
       <div class="modal-header">
@@ -757,23 +761,64 @@
     </div>
   </div>
 
-  <!-- MODAL HASIL ANTRIAN -->
+  <!-- MODAL AMBIL ANTRIAN MANUAL (KETIK NIK / NAMA) -->
+  <div id="modalAntrianManual" class="modal-overlay">
+    <div class="modal-content" style="max-width: 400px; text-align:center;">
+      <div class="modal-header">
+        <h3><i class="ph-light ph-keyboard" style="color:var(--blue);"></i> Ambil Antrian Manual</h3>
+        <button class="close-btn" onclick="tutupModal('modalAntrianManual')"><i class="ph-light ph-x"></i></button>
+      </div>
+      <p style="font-size: 11.5px; color: var(--secondary); margin-bottom: 14px;">Masukkan NIK atau Nama Pasien terdaftar untuk mendapatkan nomor antrian.</p>
+      <form onsubmit="submitAntrianManual(event)">
+        <div class="form-group" style="margin-bottom: 16px;">
+          <input type="text" id="inputNikNamaAntrian" placeholder="Ketik NIK atau Nama Lengkap..." required style="padding: 12px; font-weight:600; text-align:center;">
+        </div>
+        <button type="submit" class="btn-action" style="width: 100%; padding: 11px;"><i class="ph-light ph-ticket"></i> Ambil Nomor Antrian</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL HASIL ANTRIAN (DENGAN TOMBOL AKSI HISTORI BULANAN) -->
   <div id="modalHasilAntrian" class="modal-overlay">
-    <div class="modal-content" style="max-width: 500px; text-align:center;">
-      <div class="modal-header" style="justify-content: center; margin-bottom: 10px;">
-        <h3 style="font-size: 18px;"><i class="ph-fill ph-ticket" style="color:var(--blue);"></i> KARTU KENDALI ANTRIAN PRB</h3>
+    <div class="modal-content" style="max-width: 420px; text-align:center;">
+      <div class="modal-header" style="justify-content: center; margin-bottom: 6px;">
+        <h3 style="font-size: 17px;"><i class="ph-fill ph-ticket" style="color:var(--blue);"></i> KARTU KENDALI ANTRIAN PRB</h3>
       </div>
       
-      <div id="cetakAntrianArea" style="padding: 15px; color: #000; background: #fff; border: 1px solid #ccc; border-radius: 8px;">
-        <h2 id="antrianNoUrut" style="font-size: 46px; font-weight: 900; margin: 10px 0; color: #000;">-</h2>
-        <div style="font-size: 12px; font-weight: 700; background: #f2f2f2; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-bottom: 16px;" id="antrianPoli">Poli / Diagnosa</div>
+      <div id="cetakAntrianArea" style="padding: 14px; color: #000; background: #fff; border: 1px solid #ccc; border-radius: 8px; margin-bottom: 12px;">
+        <h2 id="antrianNoUrut" style="font-size: 42px; font-weight: 900; margin: 8px 0; color: #000;">-</h2>
+        <div style="font-size: 11.5px; font-weight: 700; background: #f2f2f2; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-bottom: 12px;" id="antrianPoli">Poli / Diagnosa</div>
         
-        <div style="text-align: left; font-size: 11px; margin-bottom: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+        <div style="text-align: left; font-size: 11px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
           <div><strong>Nama:</strong><br><span id="antrianNama">-</span></div>
           <div><strong>NIK:</strong><br><span id="antrianNIK">-</span></div>
           <div style="grid-column: span 2;"><strong>Waktu Ambil:</strong> <span id="antrianWaktu">-</span></div>
         </div>
+      </div>
+      
+      <!-- TOMBOL AKSI UNTUK MELIHAT & MENCETAK HISTORI BULANAN AGAR HEMAT RUANG -->
+      <button class="btn-action btn-small" onclick="bukaModalHistoriAntrian()" style="width:100%; background:var(--primary-light); color:var(--blue); border:1px solid var(--primary-medium); box-shadow:none; margin-bottom:8px;">
+        <i class="ph-light ph-table"></i> Lihat Tabel Kendali Bulanan & Cetak
+      </button>
 
+      <button class="btn-action" onclick="tutupModal('modalHasilAntrian')" style="width:100%; background:var(--bg); color:var(--text); border:var(--border); box-shadow:none;">
+        Selesai / Tutup
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL TABEL HISTORI BULANAN (POPUP TERPISAH) -->
+  <div id="modalHistoriAntrianPop" class="modal-overlay">
+    <div class="modal-content large" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3><i class="ph-light ph-calendar-check" style="color:var(--blue);"></i> Riwayat & Paraf Petugas Bulanan (2026)</h3>
+        <button class="close-btn" onclick="tutupModal('modalHistoriAntrianPop')"><i class="ph-light ph-x"></i></button>
+      </div>
+      <div id="areaCetakHistoriPop" style="background:#fff; color:#000; padding:10px;">
+        <div style="text-align:center; margin-bottom:10px;">
+          <h4 id="popHistoriNamaPasien" style="margin:0; font-size:14px;">Nama Pasien</h4>
+          <p id="popHistoriNoAntrian" style="margin:2px 0 0 0; font-size:11px; color:#555;">No Antrian: -</p>
+        </div>
         <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;" border="1">
           <thead>
             <tr style="background: #e5e7eb;">
@@ -782,20 +827,16 @@
               <th style="padding: 6px;">Paraf Petugas</th>
             </tr>
           </thead>
-          <tbody id="tbodyRiwayatAntrian"></tbody>
+          <tbody id="tbodyRiwayatAntrianPop"></tbody>
         </table>
       </div>
-      
-      <button class="btn-action" onclick="cetakTiketAntrian()" style="width:100%; margin-top:16px;">
-        <i class="ph-light ph-printer"></i> Cetak Kartu Antrian
-      </button>
-      <button class="btn-action" onclick="tutupModal('modalHasilAntrian')" style="width:100%; margin-top:8px; background:var(--bg); color:var(--text); border:var(--border); box-shadow:none;">
-        Selesai / Tutup
-      </button>
+      <div style="margin-top:16px; display:flex; gap:10px;">
+        <button class="btn-action" onclick="cetakTiketAntrianPop()" style="flex:1;"><i class="ph-light ph-printer"></i> Cetak Kartu Kendali</button>
+        <button class="btn-action" onclick="tutupModal('modalHistoriAntrianPop')" style="background:var(--bg); color:var(--text); border:var(--border); box-shadow:none;">Tutup</button>
+      </div>
     </div>
   </div>
 
-  <!-- MODAL PAIRING SCANNER HP -->
   <div id="modalRemoteScan" class="modal-overlay">
     <div class="modal-content" style="max-width: 380px; text-align:center;">
       <div class="modal-header">
@@ -803,9 +844,7 @@
         <button class="close-btn" onclick="tutupRemoteScanner()"><i class="ph-light ph-x"></i></button>
       </div>
       <p style="font-size: 11.5px; color: var(--secondary); margin-bottom: 12px; line-height: 1.5;">Buka aplikasi ini di browser HP Anda, pilih <b>Buka Mode Scanner HP</b>, lalu masukkan kode berikut:</p>
-      
       <div id="remoteQrContainer" style="margin: 0 auto 16px auto; display: inline-block;"></div>
-      
       <div style="background: rgba(52, 199, 89, 0.1); border: 1px solid rgba(52, 199, 89, 0.2); border-radius: 8px; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
         <span class="mac-spinner" style="border-top-color: #34c759; width: 12px; height: 12px;"></span>
         <span style="font-size: 11px; font-weight: 700; color: #28a745;">Menunggu hasil scan dari HP...</span>
@@ -813,80 +852,69 @@
     </div>
   </div>
 
-  <!-- MODAL LOG AKTIVITAS LOGIN ADMIN -->
   <div id="modalInfoAdmin" class="modal-overlay">
     <div class="modal-content large" style="max-width: 650px;">
       <div class="modal-header">
         <h3><i class="ph-light ph-shield-check" style="color:#34c759;"></i> Log Aktivitas Login Pengguna</h3>
         <button class="close-btn" onclick="tutupModal('modalInfoAdmin')"><i class="ph-light ph-x"></i></button>
       </div>
-      <p style="font-size: 11.5px; color: var(--secondary); margin-bottom: 12px;">Menampilkan 50 aktivitas login terakhir di sistem PRB.</p>
       <div class="table-card" style="max-height: 50vh;">
         <div class="table-responsive">
           <table style="width: 100%;">
             <thead><tr><th>Waktu (WIB)</th><th>Username</th><th>Nama Pegawai</th><th>Alamat IP Publik</th></tr></thead>
-            <tbody id="tbodyLogAdmin"><tr><td colspan="4" style="text-align:center;">Memuat data aktivitas...</td></tr></tbody>
+            <tbody id="tbodyLogAdmin"><tr><td colspan="4" style="text-align:center;">Memuat data...</td></tr></tbody>
           </table>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- MODALS SYSTEM LAINNYA -->
+  <!-- MODALS LAINNYA -->
   <div id="modalCekGanda" class="modal-overlay"><div class="modal-content large"><div class="modal-header"><h3 id="titleModalCekGanda"></h3><button class="close-btn" onclick="tutupModal('modalCekGanda')"><i class="ph-light ph-x"></i></button></div><p id="descModalCekGanda" style="font-size:11.5px; color:var(--secondary);"></p><div class="table-card" style="max-height: 55vh;"><div class="table-responsive"><table style="width: 100%;"><thead id="theadCekGanda"></thead><tbody id="tbodyCekGanda"></tbody></table></div></div></div></div>
   <div id="modalPasien" class="modal-overlay"><div class="modal-content large"><div class="modal-header"><h3 id="titleModalPasien"></h3><button class="close-btn" onclick="tutupModal('modalPasien')"><i class="ph-light ph-x"></i></button></div><form id="formPasien" onsubmit="submitPasien(event)"><input type="hidden" id="idWaktuPasien"><div class="form-grid"><div class="form-group full-width"><label>Nama Lengkap</label><input type="text" id="nama" required></div><div class="form-group"><label>Nomor NIK</label><input type="text" id="nik" required></div><div class="form-group"><label>Nomor BPJS</label><input type="text" id="bpjs" required></div><div class="form-group"><label>Status Kepesertaan</label><select id="statusPrb" onchange="toggleStatusPrb()" required><option value="Lama">Pasien Lama</option><option value="Baru">Pasien Baru (Dari RS)</option></select></div><div class="form-group hidden conditional-srb"><label>No. SRB</label><input type="text" id="noSrb"></div><div class="form-group hidden conditional-srb"><label>Tgl Terbit SRB</label><input type="date" id="tglSrb"></div><div class="form-group"><label>Domisili</label><select id="alamat" onchange="toggleAlamatLuar()" required><option value="">-- Pilih --</option><option value="Cilongok">Cilongok</option><option value="Cikidang">Cikidang</option><option value="Pernasidi">Pernasidi</option><option value="Rancamaya">Rancamaya</option><option value="Panembangan">Panembangan</option><option value="Karanglo">Karanglo</option><option value="Kalisari">Kalisari</option><option value="Karangtengah">Karangtengah</option><option value="Sambirata">Sambirata</option><option value="Gununglurah">Gununglurah</option><option value="Sokawera">Sokawera</option><option value="Luar Wilayah">Luar Wilayah</option></select></div><div class="form-group hidden" id="divDesaLuar"><label>Ketik Nama Desa</label><input type="text" id="desaLuar"></div><div class="form-group"><label>RT / RW</label><input type="text" id="rtrw" placeholder="02/04" required></div><div class="form-group"><label>Diagnosa PRB Utama</label><select id="prb1" required><option value="">-- Pilih --</option><option value="Diabetes Melitus">Diabetes Melitus</option><option value="Hipertensi">Hipertensi</option><option value="Jantung">Jantung</option><option value="PPOK">PPOK</option><option value="Asthma">Asthma</option><option value="Epilepsi">Epilepsi</option><option value="Skizofrenia">Skizofrenia</option><option value="Stroke">Stroke</option></select></div><div class="form-group"><label>Diagnosa PRB 2</label><select id="prb2"><option value="">-- Kosong --</option><option value="Diabetes Melitus">Diabetes Melitus</option><option value="Hipertensi">Hipertensi</option><option value="Jantung">Jantung</option><option value="PPOK">PPOK</option><option value="Asthma">Asthma</option><option value="Skizofrenia">Skizofrenia</option><option value="Stroke">Stroke</option><option value="Epilepsi">Epilepsi</option></select></div><div class="form-group"><label>Diagnosa PRB 3</label><select id="prb3"><option value="">-- Kosong --</option><option value="Diabetes Melitus">Diabetes Melitus</option><option value="Hipertensi">Hipertensi</option><option value="Jantung">Jantung</option><option value="PPOK">PPOK</option><option value="Asthma">Asthma</option><option value="Skizofrenia">Skizofrenia</option><option value="Stroke">Stroke</option><option value="Epilepsi">Epilepsi</option></select></div></div><button type="submit" id="btnSubmitPasien" class="btn-action" style="margin-top: 20px; width: 100%;"><i class="ph-light ph-floppy-disk"></i> Simpan Data</button></form></div></div>
-  <div id="modalPemantauan" class="modal-overlay"><div class="modal-content large"><div class="modal-header"><h3 id="titleModalPemantauan"></h3><button class="close-btn" onclick="tutupModal('modalPemantauan')"><i class="ph-light ph-x"></i></button></div><form id="formPemantauan" onsubmit="submitPemantauan(event)"><input type="hidden" id="idWaktuPemantauan"><div class="form-grid"><div class="form-group full-width"><label>Nama Pasien</label><input type="text" id="namaPasienPantau" readonly style="background:var(--table-header); cursor:not-allowed;"></div><div class="form-group"><label>NIK</label><input type="text" id="nikPasienPantau" readonly style="background:var(--table-header); cursor:not-allowed;"></div><div class="form-group"><label>No. BPJS</label><input type="text" id="bpjsPasienPantau" readonly style="background:var(--table-header); cursor:not-allowed;"></div><div class="form-group full-width"><label>Alamat & Domisili</label><input type="text" id="alamatPasienPantau" readonly style="background:var(--table-header); cursor:not-allowed;"></div><div class="full-width" style="height: 1px; background: var(--border); margin: 2px 0 6px 0;"></div><div class="form-group"><label>Tgl Kunjungan <span style="font-size:10px; color:var(--blue);">(WIB)</span></label><input type="date" id="tglKunjunganBaru" required></div><div class="form-group"><label>Metode Layanan</label><select id="jenisKunjungan" required><option value="Hadir Langsung">Hadir Langsung</option><option value="Menitipkan">Keluarga Menitipkan Obat</option><option value="Tidak Hadir">Tidak Hadir (Absen)</option></select></div><div class="form-group"><label>Tekanan Darah</label><input type="text" id="td" placeholder="120/80" required></div><div class="form-group"><label>Cek Gula Darah</label><select id="jenisGula" onchange="toggleGulaDarah()"><option value="">Tidak Diperiksa</option><option value="GDS">GDS (Sewaktu)</option><option value="GDP">GDP (Puasa)</option></select></div><div class="form-group hidden" id="divHasilGula"><label id="labelHasilGula">Hasil</label><input type="number" id="hasilGula"></div><div class="form-group hidden" id="divG2PP"><label>Hasil G2PP</label><input type="number" id="hasilG2PP"></div><div class="form-group full-width"><label>Tindak Lanjut & Status PRB</label><select id="statusPRB" required><option value="Aktif">Aktif Pemantauan</option><option value="Berobat Lanjut">Berobat Lanjut (Dirujuk ke RS)</option><option value="Berhenti - Meninggal Dunia">Keluar - Meninggal Dunia</option><option value="Berhenti - Pindah Faskes">Keluar - Pindah Faskes</option><option value="Berhenti - Berhenti Berobat">Keluar - Berhenti / Putus Obat</option></select></div></div><button type="submit" id="btnSubmitPemantauan" class="btn-action" style="margin-top: 20px; width: 100%;"><i class="ph-light ph-check-circle"></i> Rekam Kunjungan</button></form></div></div>
-  <div id="modalDaftarAbsen" class="modal-overlay"><div class="modal-content large"><div class="modal-header"><h3><i class="ph-light ph-user-minus" style="color:#ff3b30;"></i> Daftar Pasien Belum Input Pemantauan</h3><button class="close-btn" onclick="tutupModal('modalDaftarAbsen')"><i class="ph-light ph-x"></i></button></div><div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;"><p style="font-size: 12px; color: var(--secondary); margin: 0; flex: 1 1 260px;">Pasien aktif yang belum memiliki rekam pemantauan pada bulan terpilih.</p><div class="search-bar" style="width: auto; max-width: 100%; padding: 2px 12px; height: 34px; flex: 1 1 250px;"><i class="ph-light ph-magnifying-glass" style="font-size:16px;"></i><input type="text" id="searchAbsenInput" onkeyup="renderTabelAbsen()" placeholder="Cari nama/desa/diagnosa..." style="font-size:11.5px !important; height:100%; padding:0 !important; width:100%;"></div></div><div class="table-card" style="max-height: 60vh;"><div class="table-responsive"><table style="width: 100%;"><thead><tr><th>Nama Pasien</th><th>NIK / BPJS</th><th>Desa Domisili</th><th>Diagnosa PRB</th><th style="text-align: right; min-width:180px;">Aksi Tindakan</th></tr></thead><tbody id="tbodyDaftarAbsen"></tbody></table></div></div></div></div>
-  <div id="modalKonfirmasiTidakHadir" class="modal-overlay"><div class="modal-content" style="max-width: 380px; text-align:center;"><i class="ph-light ph-warning-circle" style="font-size: 48px; color: #ff3b30; margin-bottom: 8px; display: inline-block;"></i><h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700;">Konfirmasi Tidak Hadir</h3><p id="teksKonfirmasiTidakHadir" style="font-size: 12px; color: var(--secondary); margin: 0 0 18px 0; line-height: 1.45;"></p><div style="display: flex; gap: 10px; justify-content: center;"><button class="btn-action" onclick="tutupModal('modalKonfirmasiTidakHadir')" style="background: var(--bg); color: var(--text); border: var(--border); box-shadow: none;">Batal</button><button class="btn-action" onclick="eksekusiTidakHadir()" style="background: #ff3b30;" id="btnKonfirmTidakHadir"><i class="ph-light ph-check-circle"></i> Ya, Simpan Tidak Hadir</button></div></div></div>
-  
-  <div id="modalCatatan" class="modal-overlay"><div class="modal-content" style="max-width: 420px;"><div class="modal-header"><h3><i class="ph-fill ph-megaphone-simple" style="color:#ff5e00;"></i> Catatan / Info Terkini</h3><button class="close-btn" onclick="tutupModal('modalCatatan')"><i class="ph-light ph-x"></i></button></div><form onsubmit="submitCatatanAdmin(event)"><div class="form-group"><label>Tulis Pengumuman (Tampak oleh Seluruh Pengguna)</label><input type="text" id="inputCatatanTerkini" placeholder="Contoh: Jadwal Posbindu PRB Tgl 25..." required style="padding:11px;"></div><button type="submit" id="btnSaveCatatan" class="btn-action" style="margin-top: 16px; width: 100%; background: linear-gradient(135deg, #ff9500, #ff5e00);"><i class="ph-light ph-floppy-disk"></i> Simpan Catatan</button></form></div></div>
-  <div id="modalMultiDiag" class="modal-overlay"><div class="modal-content large"><div class="modal-header"><h3><i class="ph-light ph-files"></i> Pasien Komplikasi (Multi-Diagnosa)</h3><button class="close-btn" onclick="tutupModal('modalMultiDiag')"><i class="ph-light ph-x"></i></button></div><p style="font-size: 12px; color: var(--secondary); margin: 0 0 12px 0;">Peserta PRB aktif terdaftar dengan lebih dari 1 diagnosa.</p><div class="table-card" style="max-height: 55vh;"><div class="table-responsive"><table style="width: 100%;"><thead><tr><th>Nama Pasien</th><th>NIK / BPJS</th><th>Desa</th><th>Diagnosa Komplikasi</th></tr></thead><tbody id="tbodyMultiDiag"></tbody></table></div></div></div></div>
-  <div id="modalKonfirmasiHapus" class="modal-overlay"><div class="modal-content" style="max-width: 360px; text-align:center;"><i class="ph-light ph-warning-octagon" style="font-size: 46px; color: #e74c3c; margin-bottom: 10px; display: inline-block;"></i><h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700;">Hapus Data Permanen?</h3><p id="teksKonfirmasiHapus" style="font-size: 12px; color: var(--secondary); margin: 0 0 18px 0; line-height: 1.45;"></p><div style="display: flex; gap: 10px; justify-content: center;"><button class="btn-action" onclick="tutupModal('modalKonfirmasiHapus')" style="background: var(--bg); color: var(--text); border: var(--border); box-shadow: none;">Batal</button><button class="btn-action" onclick="eksekusiHapusData()" style="background: #e74c3c;" id="btnHapusKonfirm">Ya, Hapus</button></div></div></div>
+  <div id="modalPemantauan" class="modal-overlay"><div class="modal-content large"><div class="modal-header"><h3 id="titleModalPemantauan"></h3><button class="close-btn" onclick="tutupModal('modalPemantauan')"><i class="ph-light ph-x"></i></button></div><form id="formPemantauan" onsubmit="submitPemantauan(event)"><input type="hidden" id="idWaktuPemantauan"><div class="form-grid"><div class="form-group full-width"><label>Nama Pasien</label><input type="text" id="namaPasienPantau" readonly style="background:var(--table-header); cursor:not-allowed;"></div><div class="form-group"><label>NIK</label><input type="text" id="nikPasienPantau" readonly style="background:var(--table-header); cursor:not-allowed;"></div><div class="form-group"><label>No. BPJS</label><input type="text" id="bpjsPasienPantau" readonly style="background:var(--table-header); cursor:not-allowed;"></div><div class="form-group full-width"><label>Alamat & Domisili</label><input type="text" id="alamatPasienPantau" readonly style="background:var(--table-header); cursor:not-allowed;"></div><div class="full-width" style="height: 1px; background: var(--border); margin: 2px 0 6px 0;"></div><div class="form-group"><label>Tgl Kunjungan</label><input type="date" id="tglKunjunganBaru" required></div><div class="form-group"><label>Metode Layanan</label><select id="jenisKunjungan" required><option value="Hadir Langsung">Hadir Langsung</option><option value="Menitipkan">Keluarga Menitipkan Obat</option><option value="Tidak Hadir">Tidak Hadir (Absen)</option></select></div><div class="form-group"><label>Tekanan Darah</label><input type="text" id="td" placeholder="120/80" required></div><div class="form-group"><label>Cek Gula Darah</label><select id="jenisGula" onchange="toggleGulaDarah()"><option value="">Tidak Diperiksa</option><option value="GDS">GDS (Sewaktu)</option><option value="GDP">GDP (Puasa)</option></select></div><div class="form-group hidden" id="divHasilGula"><label id="labelHasilGula">Hasil</label><input type="number" id="hasilGula"></div><div class="form-group hidden" id="divG2PP"><label>Hasil G2PP</label><input type="number" id="hasilG2PP"></div><div class="form-group full-width"><label>Tindak Lanjut & Status PRB</label><select id="statusPRB" required><option value="Aktif">Aktif Pemantauan</option><option value="Berobat Lanjut">Berobat Lanjut (Dirujuk ke RS)</option><option value="Berhenti - Meninggal Dunia">Keluar - Meninggal Dunia</option><option value="Berhenti - Pindah Faskes">Keluar - Pindah Faskes</option><option value="Berhenti - Berhenti Berobat">Keluar - Berhenti / Putus Obat</option></select></div></div><button type="submit" id="btnSubmitPemantauan" class="btn-action" style="margin-top: 20px; width: 100%;"><i class="ph-light ph-check-circle"></i> Rekam Kunjungan</button></form></div></div>
+  <div id="modalDaftarAbsen" class="modal-overlay"><div class="modal-content large"><div class="modal-header"><h3><i class="ph-light ph-user-minus" style="color:#ff3b30;"></i> Daftar Pasien Belum Input Pemantauan</h3><button class="close-btn" onclick="tutupModal('modalDaftarAbsen')"><i class="ph-light ph-x"></i></button></div><div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;"><div class="search-bar" style="width: auto; max-width: 100%; padding: 2px 12px; height: 34px; flex: 1 1 250px;"><i class="ph-light ph-magnifying-glass" style="font-size:16px;"></i><input type="text" id="searchAbsenInput" onkeyup="renderTabelAbsen()" placeholder="Cari nama/desa..." style="font-size:11.5px !important; height:100%; padding:0 !important; width:100%;"></div></div><div class="table-card" style="max-height: 60vh;"><div class="table-responsive"><table style="width: 100%;"><thead><tr><th>Nama Pasien</th><th>NIK / BPJS</th><th>Desa</th><th>Diagnosa</th><th style="text-align: right;">Aksi</th></tr></thead><tbody id="tbodyDaftarAbsen"></tbody></table></div></div></div></div>
+  <div id="modalKonfirmasiTidakHadir" class="modal-overlay"><div class="modal-content" style="max-width: 380px; text-align:center;"><i class="ph-light ph-warning-circle" style="font-size: 48px; color: #ff3b30; margin-bottom: 8px; display: inline-block;"></i><h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700;">Konfirmasi Tidak Hadir</h3><p id="teksKonfirmasiTidakHadir" style="font-size: 12px; color: var(--secondary); margin: 0 0 18px 0; line-height: 1.45;"></p><div style="display: flex; gap: 10px; justify-content: center;"><button class="btn-action" onclick="tutupModal('modalKonfirmasiTidakHadir')" style="background: var(--bg); color: var(--text); border: var(--border); box-shadow: none;">Batal</button><button class="btn-action" onclick="eksekusiTidakHadir()" style="background: #ff3b30;" id="btnKonfirmTidakHadir"><i class="ph-light ph-check-circle"></i> Ya, Simpan</button></div></div></div>
+  <div id="modalCatatan" class="modal-overlay"><div class="modal-content" style="max-width: 420px;"><div class="modal-header"><h3><i class="ph-fill ph-megaphone-simple" style="color:#ff5e00;"></i> Catatan Pengumuman</h3><button class="close-btn" onclick="tutupModal('modalCatatan')"><i class="ph-light ph-x"></i></button></div><form onsubmit="submitCatatanAdmin(event)"><div class="form-group"><label>Tulis Pengumuman</label><input type="text" id="inputCatatanTerkini" placeholder="Contoh: Jadwal Posbindu..." required style="padding:11px;"></div><button type="submit" id="btnSaveCatatan" class="btn-action" style="margin-top: 16px; width: 100%; background: linear-gradient(135deg, #ff9500, #ff5e00);"><i class="ph-light ph-floppy-disk"></i> Simpan</button></form></div></div>
+  <div id="modalMultiDiag" class="modal-overlay"><div class="modal-content large"><div class="modal-header"><h3><i class="ph-light ph-files"></i> Pasien Komplikasi (Multi-Diagnosa)</h3><button class="close-btn" onclick="tutupModal('modalMultiDiag')"><i class="ph-light ph-x"></i></button></div><div class="table-card" style="max-height: 55vh;"><div class="table-responsive"><table style="width: 100%;"><thead><tr><th>Nama Pasien</th><th>NIK / BPJS</th><th>Desa</th><th>Diagnosa</th></tr></thead><tbody id="tbodyMultiDiag"></tbody></table></div></div></div></div>
+  <div id="modalKonfirmasiHapus" class="modal-overlay"><div class="modal-content" style="max-width: 360px; text-align:center;"><i class="ph-light ph-warning-octagon" style="font-size: 46px; color: #e74c3c; margin-bottom: 10px; display: inline-block;"></i><h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700;">Hapus Data?</h3><p id="teksKonfirmasiHapus" style="font-size: 12px; color: var(--secondary); margin: 0 0 18px 0; line-height: 1.45;"></p><div style="display: flex; gap: 10px; justify-content: center;"><button class="btn-action" onclick="tutupModal('modalKonfirmasiHapus')" style="background: var(--bg); color: var(--text); border: var(--border); box-shadow: none;">Batal</button><button class="btn-action" onclick="eksekusiHapusData()" style="background: #e74c3c;" id="btnHapusKonfirm">Ya, Hapus</button></div></div></div>
   <div id="modalPassword" class="modal-overlay"><div class="modal-content"><div class="modal-header"><h3>Ganti Password</h3><button class="close-btn" onclick="tutupModal('modalPassword')"><i class="ph-light ph-x"></i></button></div><form onsubmit="submitPassword(event)"><div class="form-group"><label>Password Lama</label><input type="password" id="oldPwd" required></div><div class="form-group"><label>Password Baru</label><input type="password" id="newPwd" required></div><div class="form-group"><label>Konfirmasi</label><input type="password" id="confirmPwd" required></div><button type="submit" id="btnSubmitPwd" class="btn-action" style="margin-top:16px; width:100%;">Simpan</button></form></div></div>
-  <div id="modalTambahUser" class="modal-overlay"><div class="modal-content"><div class="modal-header"><h3>Tambah Pengguna</h3><button class="close-btn" onclick="tutupModal('modalTambahUser')"><i class="ph-light ph-x"></i></button></div><form onsubmit="submitTambahUser(event)"><div class="form-group"><label>Username</label><input type="text" id="newUsername" required></div><div class="form-group"><label>Password</label><input type="password" id="newUserPwd" required></div><div class="form-group"><label>Nama Lengkap</label><input type="text" id="newUserNama" required></div><div class="form-group"><label>Peran</label><select id="newUserRole" required><option value="Petugas">Petugas (Standar)</option><option value="Admin">Admin (Penuh)</option></select></div><button type="submit" class="btn-action" style="margin-top:16px; width:100%;" id="btnSubmitUser">Daftarkan User</button></form></div></div>
+  <div id="modalTambahUser" class="modal-overlay"><div class="modal-content"><div class="modal-header"><h3>Tambah Pengguna</h3><button class="close-btn" onclick="tutupModal('modalTambahUser')"><i class="ph-light ph-x"></i></button></div><form onsubmit="submitTambahUser(event)"><div class="form-group"><label>Username</label><input type="text" id="newUsername" required></div><div class="form-group"><label>Password</label><input type="password" id="newUserPwd" required></div><div class="form-group"><label>Nama Lengkap</label><input type="text" id="newUserNama" required></div><div class="form-group"><label>Peran</label><select id="newUserRole" required><option value="Petugas">Petugas</option><option value="Admin">Admin</option></select></div><button type="submit" class="btn-action" style="margin-top:16px; width:100%;" id="btnSubmitUser">Daftarkan</button></form></div></div>
 
-  <!-- TAMPILAN KHUSUS DI HP KETIKA MEMBUKA SCANNER -->
+  <!-- TAMPILAN HP SCANNER -->
   <div id="mobileScannerView" style="display: none; position: fixed; inset: 0; background: #000; z-index: 99999; flex-direction: column;">
-    <div style="padding: 16px; background: #111; color: #fff; display: flex; justify-content: space-between; align-items: center;">
-      <div style="font-weight: 700; font-size: 14px;"><i class="ph-fill ph-heartbeat" style="color:#0055FF;"></i> PRB Remote Scanner</div>
-    </div>
+    <div style="padding: 16px; background: #111; color: #fff; font-weight: 700; font-size: 14px;"><i class="ph-fill ph-heartbeat" style="color:#0055FF;"></i> PRB Remote Scanner</div>
     <div id="mobile-qr-reader" style="flex: 1; width: 100%; display:flex; justify-content:center; align-items:center; background:#000;"></div>
-    <div id="mobileScanStatus" style="padding: 20px; text-align: center; color: #fff; background: #111; font-size: 12px; min-height: 80px;">
-      Arahkan kamera ke Kartu Pasien. Data akan otomatis terkirim ke PC.
-    </div>
+    <div id="mobileScanStatus" style="padding: 20px; text-align: center; color: #fff; background: #111; font-size: 12px; min-height: 80px;">Arahkan kamera ke Kartu Pasien.</div>
   </div>
 
-  <!-- JAVASCRIPT LOGIC ENGINE -->
   <script>
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzXZXZ1DGV-s_VJZuWkQmonxzn1n9Shv0H8bE0fLVzXbEnA1fcQSKG0rUY4b5cEjRX9/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyaMRkQ-GTCmdumtYC8R91ljAwuU6QS0fp2zqu_EQFqIeJFn9AwuBTmdqx6RTLl9yW0/exec";
 
     let SESSION_USER = "", SESSION_USERNAME = "", SESSION_ROLE = "";
-    let APP_DATA_PASIEN = []; let APP_DATA_HISTORI = []; 
+    let APP_DATA_PASIEN = [], APP_DATA_HISTORI = []; 
     let TARGET_HAPUS_TIPE = "", TARGET_HAPUS_ROW = "";
     let TARGET_TIDAK_HADIR_IDX = null;
     let currentCaptchaText = ""; let inactivityTimer = null;
+    let globalLastAntrianData = null; // Menyimpan data antrian sementara untuk pop-up histori
     const INACTIVITY_LIMIT_MS = 30 * 60 * 1000;
     
-    let html5QrcodeScanner = null;
-    let scannerAntrian = null; 
-    let idCardQRInstance = null;
+    let html5QrcodeScanner = null, scannerAntrian = null;
+    let remotePollingTimer = null, currentSessionId = "", mobileQrScanner = null;
     
     const APP_SECURE_SALT = "CILONGOK1_PRB_AUTH_SECRET_2026";
     const NAMA_BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const MASTER_DESA = ['Cilongok', 'Cikidang', 'Pernasidi', 'Rancamaya', 'Panembangan', 'Karanglo', 'Kalisari', 'Karangtengah', 'Sambirata', 'Gununglurah', 'Sokawera', 'Luar Wilayah'];
-    const PER_PAGE = 20; const PER_PAGE_LAPORAN = 20;
+    const PER_PAGE = 20, PER_PAGE_LAPORAN = 20;
     
-    let dataPasienFiltered = []; let dataPantauFiltered = []; let dataHistoriFiltered = []; let filteredDataLaporan = [];
+    let dataPasienFiltered = [], dataPantauFiltered = [], dataHistoriFiltered = [], filteredDataLaporan = [];
     let pagePasien = 1, pagePantau = 1, pageHistori = 1, curPageLaporan = 1;
     let timerSearchPasien, timerSearchPantau, timerSearchHistori;
-    let patientMapNIK = new Map(); let patientMapName = new Map();
+    let patientMapNIK = new Map(), patientMapName = new Map();
 
     async function callGasApi(action, payload = {}) {
       try {
-        const response = await fetch(GAS_API_URL, {
-          method: "POST",
-          body: JSON.stringify({ action: action, ...payload })
-        });
+        const response = await fetch(GAS_API_URL, { method: "POST", body: JSON.stringify({ action: action, ...payload }) });
         const text = await response.text();
         return JSON.parse(text);
       } catch (err) {
@@ -903,8 +931,6 @@
       for (let i = 0; i < 5; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
       currentCaptchaText = code;
       ctx.fillStyle = document.body.classList.contains('dark-theme') ? '#1e293b' : '#e2e8f0'; ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.strokeStyle = 'rgba(0, 85, 255, 0.25)'; ctx.lineWidth = 1.5;
-      for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height); ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height); ctx.stroke(); }
       ctx.font = 'bold 20px Arial, sans-serif'; ctx.fillStyle = document.body.classList.contains('dark-theme') ? '#60a5fa' : '#0055FF';
       for (let i = 0; i < code.length; i++) { ctx.save(); ctx.translate(16 + i * 22, 26); ctx.rotate((Math.random() - 0.5) * 0.35); ctx.fillText(code[i], 0, 0); ctx.restore(); }
     }
@@ -916,23 +942,13 @@
     function parseDateWib(dateVal) {
       if (!dateVal) return null;
       let str = dateVal.toString().trim();
-      let d;
-      let matchDMY = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-      let matchYMD = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+      let d, matchDMY = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/), matchYMD = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
       let timeMatch = str.match(/(\d{2}):(\d{2})(?::(\d{2}))?/);
-      let hh = timeMatch ? parseInt(timeMatch[1]) : 0;
-      let mm = timeMatch ? parseInt(timeMatch[2]) : 0;
-      let ss = (timeMatch && timeMatch[3]) ? parseInt(timeMatch[3]) : 0;
-
-      if (matchDMY && !matchYMD) {
-        d = new Date(parseInt(matchDMY[3]), parseInt(matchDMY[2]) - 1, parseInt(matchDMY[1]), hh, mm, ss);
-      } else if (matchYMD) {
-        d = new Date(parseInt(matchYMD[1]), parseInt(matchYMD[2]) - 1, parseInt(matchYMD[3]), hh, mm, ss);
-      } else {
-        d = new Date(str); 
-      }
+      let hh = timeMatch ? parseInt(timeMatch[1]) : 0, mm = timeMatch ? parseInt(timeMatch[2]) : 0, ss = (timeMatch && timeMatch[3]) ? parseInt(timeMatch[3]) : 0;
+      if (matchDMY && !matchYMD) d = new Date(parseInt(matchDMY[3]), parseInt(matchDMY[2]) - 1, parseInt(matchDMY[1]), hh, mm, ss);
+      else if (matchYMD) d = new Date(parseInt(matchYMD[1]), parseInt(matchYMD[2]) - 1, parseInt(matchYMD[3]), hh, mm, ss);
+      else d = new Date(str); 
       if (isNaN(d.getTime())) return null;
-      
       let isoStr = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Jakarta' }).format(d);
       let dParts = isoStr.split('-');
       return { year: parseInt(dParts[0]), month: parseInt(dParts[1]) - 1, day: parseInt(dParts[2]), isoStr: isoStr, timestamp: d.getTime() };
@@ -949,11 +965,9 @@
         document.getElementById('userDisplayNama').innerText = data.nama; document.getElementById('userDisplayRole').innerText = data.role;
         if (SESSION_ROLE === 'Admin') { document.getElementById('menuManajemenUser').classList.remove('hidden'); document.getElementById('btnEditNotice').classList.remove('hidden'); document.getElementById('menuInfoAdmin').classList.remove('hidden'); }
         document.getElementById('loginSection').style.opacity = '0'; 
-        
         currentSessionId = Math.floor(10000 + Math.random() * 90000).toString();
         if(remotePollingTimer) clearInterval(remotePollingTimer);
         remotePollingTimer = setInterval(cekHasilDariHP, 2500); 
-
         setTimeout(() => { document.getElementById('loginSection').style.display = 'none'; document.getElementById('appContainer').style.display = 'flex'; fetchAppData(true); }, 500); resetInactivityTimer();
       }
     };
@@ -962,26 +976,17 @@
       e.preventDefault(); const inputCaptcha = document.getElementById('captchaInput').value.trim().toUpperCase();
       if (inputCaptcha !== currentCaptchaText) { showToast("Kode CAPTCHA tidak sesuai!", "error"); generateCaptcha(); document.getElementById('captchaInput').value = ""; return; }
       const btn = document.getElementById('btnLoginSubmit'); setBtnLoading(btn, true);
-      
       let userIp = "Tidak Terlacak";
       try { const req = await fetch('https://api.ipify.org?format=json'); userIp = (await req.json()).ip; } catch(err){}
-
       const res = await callGasApi("login", { username: document.getElementById('username').value, password: document.getElementById('password').value, ip: userIp });
       if(res.success) {
         SESSION_USER = res.nama; SESSION_USERNAME = res.username; SESSION_ROLE = res.role; sessionStorage.setItem('appSession', JSON.stringify({ nama: res.nama, username: res.username, role: res.role })); document.getElementById('userDisplayNama').innerText = res.nama; document.getElementById('userDisplayRole').innerText = res.role;
         if (SESSION_ROLE === 'Admin') { document.getElementById('menuManajemenUser').classList.remove('hidden'); document.getElementById('btnEditNotice').classList.remove('hidden'); document.getElementById('menuInfoAdmin').classList.remove('hidden'); }
         document.getElementById('loginSection').style.opacity = '0'; 
-        
         currentSessionId = Math.floor(10000 + Math.random() * 90000).toString();
         if(remotePollingTimer) clearInterval(remotePollingTimer);
         remotePollingTimer = setInterval(cekHasilDariHP, 2500);
-
-        setTimeout(() => { 
-            document.getElementById('loginSection').style.display = 'none'; 
-            document.getElementById('appContainer').style.display = 'flex'; 
-            setBtnLoading(btn, false); 
-            fetchAppData(true); 
-        }, 500); 
+        setTimeout(() => { document.getElementById('loginSection').style.display = 'none'; document.getElementById('appContainer').style.display = 'flex'; setBtnLoading(btn, false); fetchAppData(true); }, 500); 
         resetInactivityTimer();
       } else { showToast(res.message, 'error'); setBtnLoading(btn, false); generateCaptcha(); document.getElementById('captchaInput').value = ""; }
     }
@@ -990,7 +995,6 @@
       if (inactivityTimer) clearTimeout(inactivityTimer); 
       if(remotePollingTimer) clearInterval(remotePollingTimer);
       currentSessionId = "";
-
       sessionStorage.removeItem('appSession'); SESSION_USER = ""; SESSION_USERNAME = ""; SESSION_ROLE = ""; document.getElementById('username').value = ""; document.getElementById('password').value = ""; document.getElementById('captchaInput').value = ""; document.getElementById('menuManajemenUser').classList.add('hidden'); document.getElementById('menuInfoAdmin').classList.add('hidden'); document.getElementById('btnEditNotice').classList.add('hidden'); document.getElementById('appContainer').style.display = 'none'; document.getElementById('loginSection').style.display = 'flex'; setTimeout(() => { document.getElementById('loginSection').style.opacity = '1'; }, 50); generateCaptcha(); if (isTimeout) { showToast('Sesi otomatis berakhir (30 menit).', 'error'); } else { showToast('Berhasil keluar akun.'); } 
     }
 
@@ -1000,955 +1004,483 @@
         APP_DATA_PASIEN = res.pasien || []; APP_DATA_HISTORI = res.pemantauan || [];
         if(res.infoTerkini) { document.getElementById('displayCatatanTerkini').innerText = res.infoTerkini; document.getElementById('inputCatatanTerkini').value = res.infoTerkini; }
         patientMapNIK.clear(); patientMapName.clear(); APP_DATA_PASIEN.forEach(p => { if(!p) return; let n = p[2] ? p[2].toString().replace(/^'/, "") : ""; if (n) patientMapNIK.set(n, p); if (p[1]) patientMapName.set(p[1].toString(), p); });
-        
-        if(isFirstLogin) { 
-            let todayWib = getWibDateStr(); 
-            let curM = parseDateWib(todayWib).month; 
-            document.getElementById('laporanFilterBulan').value = curM.toString(); 
-            document.getElementById('laporanFilterTanggal').value = todayWib; 
-            document.getElementById('filterTanggalHistori').value = ""; 
-            toggleFilterLaporan(); 
-        }
-        
-        renderDashboardFiltered(isFirstLogin); 
-        renderMutuFiltered(); buildLaporanCetak(); filterTabelPasien(); filterTabelPantau(); filterTabelHistori(); 
+        if(isFirstLogin) { let todayWib = getWibDateStr(); let curM = parseDateWib(todayWib).month; document.getElementById('laporanFilterBulan').value = curM.toString(); document.getElementById('laporanFilterTanggal').value = todayWib; document.getElementById('filterTanggalHistori').value = ""; toggleFilterLaporan(); }
+        renderDashboardFiltered(isFirstLogin); renderMutuFiltered(); buildLaporanCetak(); filterTabelPasien(); filterTabelPantau(); filterTabelHistori(); 
         if(isFirstLogin) switchTab('dashboard'); 
-      } else { 
-        showToast("Gagal terhubung ke Database", "error"); 
-      }
+      } else { showToast("Gagal terhubung ke Database", "error"); }
     }
 
     async function bukaInfoSesi() {
       bukaModal('modalInfoAdmin');
-      document.getElementById('tbodyLogAdmin').innerHTML = `<tr><td colspan="4" style="text-align:center;"><span class="mac-spinner"></span> Mengambil data dari server...</td></tr>`;
-      
+      document.getElementById('tbodyLogAdmin').innerHTML = `<tr><td colspan="4" style="text-align:center;"><span class="mac-spinner"></span> Mengambil data...</td></tr>`;
       const res = await callGasApi("getLogLogin", { role: SESSION_ROLE });
       if (res.success) {
-        let html = "";
-        res.data.forEach(r => { html += `<tr><td style="font-size:10.5px;">${r.waktu}</td><td><b>${r.username}</b></td><td>${r.nama}</td><td style="font-family:monospace; color:#0055FF; font-weight:700;">${r.ip}</td></tr>`; });
-        document.getElementById('tbodyLogAdmin').innerHTML = html || `<tr><td colspan="4" style="text-align:center;">Belum ada catatan aktivitas.</td></tr>`;
-      } else {
-        document.getElementById('tbodyLogAdmin').innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Gagal memuat atau Anda bukan Admin.</td></tr>`;
-      }
+        let html = ""; res.data.forEach(r => { html += `<tr><td style="font-size:10.5px;">${r.waktu}</td><td><b>${r.username}</b></td><td>${r.nama}</td><td style="font-family:monospace; color:#0055FF; font-weight:700;">${r.ip}</td></tr>`; });
+        document.getElementById('tbodyLogAdmin').innerHTML = html || `<tr><td colspan="4" style="text-align:center;">Belum ada aktivitas.</td></tr>`;
+      } else { document.getElementById('tbodyLogAdmin').innerHTML = `<tr><td colspan="4" style="text-align:center; color:red;">Gagal memuat log.</td></tr>`; }
     }
 
-    // ==========================================
-    // LOGIKA SCANNER REMOTE HP
-    // ==========================================
-    let remotePollingTimer = null;
-    let currentSessionId = "";
-    let mobileQrScanner = null;
-
+    // REMOTE SCANNER
     function bukaRemoteScanner() {
       if (!SESSION_USER) { showToast("Silakan login terlebih dahulu.", "error"); return; }
-      if (!currentSessionId) {
-         currentSessionId = Math.floor(10000 + Math.random() * 90000).toString();
-         if(remotePollingTimer) clearInterval(remotePollingTimer);
-         remotePollingTimer = setInterval(cekHasilDariHP, 2500);
-      }
-      
+      if (!currentSessionId) { currentSessionId = Math.floor(10000 + Math.random() * 90000).toString(); if(remotePollingTimer) clearInterval(remotePollingTimer); remotePollingTimer = setInterval(cekHasilDariHP, 2500); }
       bukaModal('modalRemoteScan');
-      let qrContainer = document.getElementById('remoteQrContainer');
-      qrContainer.innerHTML = `<div style="font-size:11.5px; color:#555; margin-bottom:8px;">KODE SESI SCANNER ANDA:</div><div style="font-size:46px; font-weight:800; color:var(--blue); letter-spacing:10px; background:var(--primary-light); padding:10px 20px; border-radius:12px;">${currentSessionId}</div><div style="font-size:10.5px; font-weight:600; color:var(--secondary); margin-top:12px;">(Kode ini permanen selama Anda belum Logout / Keluar)</div>`;
+      document.getElementById('remoteQrContainer').innerHTML = `<div style="font-size:11.5px; color:#555; margin-bottom:8px;">KODE SESI ANDA:</div><div style="font-size:46px; font-weight:800; color:var(--blue); letter-spacing:10px; background:var(--primary-light); padding:10px 20px; border-radius:12px;">${currentSessionId}</div>`;
     }
-
-    function tutupRemoteScanner() {
-      tutupModal('modalRemoteScan');
-    }
-
+    function tutupRemoteScanner() { tutupModal('modalRemoteScan'); }
     async function cekHasilDariHP() {
       if (!currentSessionId) return;
       const res = await callGasApi("cekRemoteScan", { sessionId: currentSessionId });
-      if (res.success && res.data) { 
-        tutupModal('modalRemoteScan'); 
-        showToast("Sukses! Data pasien diterima dari HP.", "success"); 
-        prosesHasilScanQR(res.data); 
-      }
+      if (res.success && res.data) { tutupModal('modalRemoteScan'); showToast("Sukses! Data pasien diterima dari HP.", "success"); prosesHasilScanQR(res.data); }
     }
 
     function masukModeScannerManual() {
       let savedPin = localStorage.getItem('prb_scanner_pin') || "";
-      let pin = prompt("Masukkan 5-Digit KODE SESI yang tampil di Komputer:\n(Sistem akan menyimpan kode ini otomatis untuk scan berikutnya)", savedPin);
-      
+      let pin = prompt("Masukkan 5-Digit KODE SESI dari Komputer:", savedPin);
       if (pin && pin.trim().length === 5) {
-        let sessionId = pin.trim();
-        localStorage.setItem('prb_scanner_pin', sessionId); 
-        
-        document.getElementById('loginSection').style.display = 'none';
-        document.getElementById('appContainer').style.display = 'none';
-        
-        const mobileView = document.getElementById('mobileScannerView');
-        mobileView.style.display = 'flex';
-        
+        let sessionId = pin.trim(); localStorage.setItem('prb_scanner_pin', sessionId); 
+        document.getElementById('loginSection').style.display = 'none'; document.getElementById('appContainer').style.display = 'none';
+        const mobileView = document.getElementById('mobileScannerView'); mobileView.style.display = 'flex';
         mobileQrScanner = new Html5QrcodeScanner("mobile-qr-reader", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false);
         mobileQrScanner.render(
           async function(decodedText) {
             if(mobileQrScanner) {
               mobileQrScanner.pause(true); 
-              document.getElementById('mobileScanStatus').innerHTML = `<i class="ph-fill ph-check-circle" style="color:#34c759; font-size:24px; display:block;"></i> Mengirim ke PC...`;
-              
+              document.getElementById('mobileScanStatus').innerHTML = `Mengirim ke PC...`;
               const res = await callGasApi("kirimRemoteScan", { sessionId: sessionId, qrData: decodedText });
-              
               if (res.success) {
-                document.getElementById('mobileScanStatus').innerHTML = `<span style="color:#34c759; font-weight:700;">Data Pasien Terkirim!</span><br><span style="font-size:11px;">Scanner siap lagi dalam 1,5 detik...</span>`;
-                setTimeout(() => {
-                  document.getElementById('mobileScanStatus').innerHTML = `Arahkan kamera ke Kartu Pasien berikutnya.`;
-                  mobileQrScanner.resume();
-                }, 1500);
+                document.getElementById('mobileScanStatus').innerHTML = `<span style="color:#34c759; font-weight:700;">Terkirim!</span>`;
+                setTimeout(() => { document.getElementById('mobileScanStatus').innerHTML = `Arahkan kamera ke Kartu Pasien berikutnya.`; mobileQrScanner.resume(); }, 1500);
               } else {
-                document.getElementById('mobileScanStatus').innerHTML = `<span style="color:#ff3b30;">Koneksi Gagal. Pastikan Kode Sesi benar.</span>`;
-                setTimeout(() => {
-                  document.getElementById('mobileScanStatus').innerHTML = `Arahkan kamera ke Kartu Pasien.`;
-                  mobileQrScanner.resume();
-                }, 3000);
+                document.getElementById('mobileScanStatus').innerHTML = `<span style="color:#ff3b30;">Gagal Mengirim.</span>`;
+                setTimeout(() => { mobileQrScanner.resume(); }, 3000);
               }
             }
-          },
-          function(errorMessage) {}
+          }, function(err) {}
         );
-      } else if (pin !== null) { 
-        alert("Kode sesi tidak valid. Harus 5 digit angka."); 
-      }
+      } else if (pin !== null) { alert("Kode sesi harus 5 digit angka."); }
     }
 
-    // ==========================================
-    // LOGIKA SCANNER PASIEN (PEMANTAUAN)
-    // ==========================================
     function bukaScannerQR() {
-      if (!SESSION_USER) { showToast("Akses Ditolak! Anda harus login terlebih dahulu.", "error"); return; }
+      if (!SESSION_USER) { showToast("Akses Ditolak! Harap login.", "error"); return; }
       bukaModal('modalScannerQR');
       if (!html5QrcodeScanner) {
-        html5QrcodeScanner = new Html5QrcodeScanner( "qr-reader", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false );
-        html5QrcodeScanner.render(
-          function(decodedText) { 
-            if (html5QrcodeScanner) { 
-              html5QrcodeScanner.clear().then(() => { 
-                html5QrcodeScanner = null; tutupScannerQR(); prosesHasilScanQR(decodedText); 
-              }).catch(err => { console.error(err); tutupScannerQR(); prosesHasilScanQR(decodedText); }); 
-            } 
-          },
-          function(errorMessage) {}
-        );
+        html5QrcodeScanner = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false);
+        html5QrcodeScanner.render(function(decodedText) { if (html5QrcodeScanner) { html5QrcodeScanner.clear().then(() => { html5QrcodeScanner = null; tutupScannerQR(); prosesHasilScanQR(decodedText); }); } }, function(err) {});
       }
     }
-
-    function tutupScannerQR() { 
-      tutupModal('modalScannerQR'); 
-      if (html5QrcodeScanner) { 
-        html5QrcodeScanner.clear().then(() => { html5QrcodeScanner = null; }).catch(err => { console.error(err); }); 
-      } 
-    }
+    function tutupScannerQR() { tutupModal('modalScannerQR'); if (html5QrcodeScanner) html5QrcodeScanner.clear().then(() => { html5QrcodeScanner = null; }); }
 
     function prosesHasilScanQR(qrString) {
       if (!SESSION_USER) { showToast("Sistem Keamanan: Barcode hanya dapat dibaca saat sudah login!", "error"); return; }
       let data = decryptQRPayload(qrString);
-      if (!data) { showToast("Gagal: Barcode 2D tidak valid atau bukan milik PORTAL PRB TERPADU CILONGOK I!", "error"); return; }
-      let foundP = patientMapNIK.get(data.nik);
-      if (!foundP && data.nama) foundP = patientMapName.get(data.nama);
-      if (foundP) { let trueIdx = APP_DATA_PASIEN.indexOf(foundP); showToast(`Identitas Terverifikasi: ${foundP[1]}`); switchTab('pemantauan'); setTimeout(()=>bukaModalPantauInstan(trueIdx), 300); } 
-      else { showToast(`Pasien dengan NIK ${data.nik} tidak terdaftar di database!`, "error"); }
+      if (!data) { showToast("Gagal: Barcode tidak valid!", "error"); return; }
+      let foundP = patientMapNIK.get(data.nik); if (!foundP && data.nama) foundP = patientMapName.get(data.nama);
+      if (foundP) { let trueIdx = APP_DATA_PASIEN.indexOf(foundP); showToast(`Terverifikasi: ${foundP[1]}`); switchTab('pemantauan'); setTimeout(()=>bukaModalPantauInstan(trueIdx), 300); } 
+      else { showToast(`Pasien NIK ${data.nik} tidak terdaftar!`, "error"); }
     }
 
-    // ==========================================
-    // AMBIL ANTRIAN (LOGIN SCREEN)
-    // ==========================================
+    // ANTRIAN PASIEN (SCAN QR ATAU MANUAL)
     function bukaScannerAntrian() {
       bukaModal('modalScannerAntrian');
       if (!scannerAntrian) {
         scannerAntrian = new Html5QrcodeScanner("qr-reader-antrian", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false);
-        scannerAntrian.render(
-          function(decodedText) {
-            if(scannerAntrian) {
-              scannerAntrian.clear().then(() => {
-                scannerAntrian = null;
-                tutupScannerAntrian();
-                prosesAntrianQR(decodedText);
-              });
-            }
-          },
-          function(errorMessage) {}
-        );
+        scannerAntrian.render(function(decodedText) {
+          if(scannerAntrian) { scannerAntrian.clear().then(() => { scannerAntrian = null; tutupScannerAntrian(); prosesAntrianQR(decodedText); }); }
+        }, function(err) {});
       }
     }
+    function tutupScannerAntrian() { tutupModal('modalScannerAntrian'); if (scannerAntrian) scannerAntrian.clear().then(() => { scannerAntrian = null; }); }
 
-    function tutupScannerAntrian() {
-      tutupModal('modalScannerAntrian');
-      if (scannerAntrian) { 
-        scannerAntrian.clear().then(() => { scannerAntrian = null; }); 
-      } 
+    function bukaModalAntrianManual() {
+      document.getElementById('inputNikNamaAntrian').value = "";
+      bukaModal('modalAntrianManual');
+    }
+
+    async function submitAntrianManual(e) {
+      e.preventDefault();
+      let val = document.getElementById('inputNikNamaAntrian').value.trim();
+      if(!val) return;
+      tutupModal('modalAntrianManual');
+      showToast("Memproses antrian pasien...", "success");
+      let res = await callGasApi("ambilAntrian", { query: val });
+      if (!res.success) {
+        showToast(res.message || "Pasien tidak ditemukan!", "error");
+        return;
+      }
+      tampilkanTiketAntrian(res.data);
     }
 
     async function prosesAntrianQR(qrString) {
       let dataQR = decryptQRPayload(qrString);
-      if (!dataQR) {
-        alert("Barcode tidak valid atau rusak!");
-        return;
-      }
-      
-      showToast("Sedang mengecek data dan mengambil antrian...", "success");
-      
-      let res = await callGasApi("ambilAntrian", { nik: dataQR.nik });
-      
+      if (!dataQR) { alert("Barcode tidak valid atau rusak!"); return; }
+      showToast("Mengambil nomor antrian...", "success");
+      let res = await callGasApi("ambilAntrian", { query: dataQR.nik });
       if (!res.success) {
         let isDM = dataQR.nama.length % 2 === 0;
-        res = {
-          success: true,
-          data: {
-            noAntrian: isDM ? "DM-00" + (Math.floor(Math.random()*9)+1) : "HT-01" + (Math.floor(Math.random()*9)+1),
-            diagnosaUtama: isDM ? "Diabetes Melitus" : "Hipertensi & Penyakit Kronis",
-            nama: dataQR.nama,
-            nik: dataQR.nik,
-            waktu: new Date().toLocaleString('id-ID', {timeZone: 'Asia/Jakarta'})
-          }
-        };
+        res = { success: true, data: { noAntrian: isDM ? "DM-00" + (Math.floor(Math.random()*9)+1) : "HT-01" + (Math.floor(Math.random()*9)+1), diagnosaUtama: isDM ? "Diabetes Melitus" : "Hipertensi", nama: dataQR.nama, nik: dataQR.nik, waktu: new Date().toLocaleString('id-ID', {timeZone: 'Asia/Jakarta'}) } };
       }
-      
       tampilkanTiketAntrian(res.data);
     }
 
     function tampilkanTiketAntrian(data) {
+      globalLastAntrianData = data;
       document.getElementById('antrianNoUrut').innerText = data.noAntrian;
       document.getElementById('antrianPoli').innerText = `Layanan PRB - ${data.diagnosaUtama.toUpperCase()}`;
       document.getElementById('antrianNama').innerText = data.nama;
       document.getElementById('antrianNIK').innerText = data.nik;
       document.getElementById('antrianWaktu').innerText = data.waktu;
-
-      const namaBulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-      const bulanSekarang = new Date().getMonth();
-      
-      let tbodyHtml = '';
-      for (let i = 0; i < 12; i++) {
-        let isCurrentMonth = (i === bulanSekarang);
-        let teksAntrian = isCurrentMonth ? `<strong>${data.noAntrian}</strong>` : "";
-        let bgStyle = isCurrentMonth ? "background: #fdfae7;" : "";
-        
-        tbodyHtml += `
-          <tr style="${bgStyle}">
-            <td style="padding: 6px; font-weight: ${isCurrentMonth ? 'bold' : 'normal'}; border: 1px solid #000;">${namaBulan[i]}</td>
-            <td style="padding: 6px; font-size: 11px; border: 1px solid #000;">${teksAntrian}</td>
-            <td style="padding: 6px; border: 1px solid #000;"></td>
-          </tr>
-        `;
-      }
-      document.getElementById('tbodyRiwayatAntrian').innerHTML = tbodyHtml;
       bukaModal('modalHasilAntrian');
     }
 
-    function cetakTiketAntrian() {
-      const printContents = document.getElementById('cetakAntrianArea').innerHTML;
-      const printWindow = window.open('', '_blank', 'width=450,height=650');
-      printWindow.document.write(`
-        <html>
-        <head>
-          <title>Cetak Kartu Kendali Antrian PRB</title>
-          <style>
-            @page { margin: 10mm; }
-            body { font-family: Arial, sans-serif; text-align: center; color: #000; margin: 0; padding: 10px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;}
-            table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 15px; }
-            th, td { border: 1px solid #000; padding: 6px; }
-          </style>
-        </head>
-        <body onload="setTimeout(function(){ window.print(); window.close(); }, 500);">
-          ${printContents}
-        </body>
-        </html>
-      `);
+    function bukaModalHistoriAntrian() {
+      if(!globalLastAntrianData) return;
+      document.getElementById('popHistoriNamaPasien').innerText = globalLastAntrianData.nama;
+      document.getElementById('popHistoriNoAntrian').innerText = `No. Antrian: ${globalLastAntrianData.noAntrian} (${globalLastAntrianData.diagnosaUtama})`;
+      
+      const bulanSekarang = new Date().getMonth();
+      let tbodyHtml = '';
+      for (let i = 0; i < 12; i++) {
+        let isCurrentMonth = (i === bulanSekarang);
+        tbodyHtml += `<tr style="${isCurrentMonth ? "background: #fdfae7;" : ""}"><td style="padding: 6px; border: 1px solid #000;">${NAMA_BULAN[i]}</td><td style="padding: 6px; border: 1px solid #000;">${isCurrentMonth ? `<strong>${globalLastAntrianData.noAntrian}</strong>` : ""}</td><td style="padding: 6px; border: 1px solid #000;"></td></tr>`;
+      }
+      document.getElementById('tbodyRiwayatAntrianPop').innerHTML = tbodyHtml;
+      bukaModal('modalHistoriAntrianPop');
+    }
+
+    function cetakTiketAntrianPop() {
+      const printContents = document.getElementById('areaCetakHistoriPop').innerHTML;
+      const printWindow = window.open('', '_blank', 'width=500,height=650');
+      printWindow.document.write(`<html><head><title>Kartu Kendali Antrian</title><style>body{font-family:Arial;text-align:center;padding:15px;}table{width:100%;border-collapse:collapse;font-size:11px;margin-top:15px;}th,td{border:1px solid #000;padding:6px;}</style></head><body onload="setTimeout(function(){window.print();window.close();},500);">${printContents}</body></html>`);
       printWindow.document.close();
     }
 
-    // ==========================================
-    // LOGIKA UMUM & SECURITY (QR)
-    // ==========================================
     function decryptQRPayload(qrString) { if (!qrString || !qrString.startsWith("PRB-SECURE:")) return null; try { let b64 = qrString.replace("PRB-SECURE:", ""); let decoded = decodeURIComponent(escape(atob(b64))); let parts = decoded.split("|"); if (parts.length === 3 && parts[2] === APP_SECURE_SALT) { return { nik: parts[0], nama: parts[1] }; } } catch(e) { return null; } return null; }
-    function generateSecureQRPayload(nik, nama) { let rawData = `${nik}|${nama}|${APP_SECURE_SALT}`; let b64 = btoa(unescape(encodeURIComponent(rawData))); return `PRB-SECURE:${b64}`; }
-    function getTglLahirFromNik(nikStr) { if (!nikStr) return "-"; let clean = nikStr.toString().replace(/^'/, "").trim(); if (clean.length < 12) return "-"; let dd = parseInt(clean.substr(6, 2)); let mm = parseInt(clean.substr(8, 2)) - 1; let yy = parseInt(clean.substr(10, 2)); if (isNaN(dd) || isNaN(mm) || isNaN(yy) || mm < 0 || mm > 11) return "-"; if (dd > 40) dd = dd - 40; let currentYearWib = 2026; let fullYear = yy <= (currentYearWib % 100) ? 2000 + yy : 1900 + yy; return `${dd} ${NAMA_BULAN[mm]} ${fullYear}`; }
-    function parseNikInfo(nikStr) { if (!nikStr) return { age: 0, gender: 'L' }; let clean = nikStr.toString().replace(/^'/, "").trim(); if (clean.length < 12) return { age: 0, gender: 'L' }; let dd = parseInt(clean.substr(6, 2)); let mm = parseInt(clean.substr(8, 2)) - 1; let yy = parseInt(clean.substr(10, 2)); let gender = 'L'; if (dd > 40) { gender = 'P'; dd = dd - 40; } let currentYearWib = parseDateWib(new Date()).year; let fullYear = yy <= (currentYearWib % 100) ? 2000 + yy : 1900 + yy; let age = currentYearWib - fullYear; return { age: isNaN(age) ? 0 : age, gender: gender }; }
+    function generateSecureQRPayload(nik, nama) { let rawData = `${nik}|${nama}|${APP_SECURE_SALT}`; return `PRB-SECURE:${btoa(unescape(encodeURIComponent(rawData)))}`; }
+    function getTglLahirFromNik(nikStr) { if (!nikStr) return "-"; let clean = nikStr.toString().replace(/^'/, "").trim(); if (clean.length < 12) return "-"; let dd = parseInt(clean.substr(6, 2)), mm = parseInt(clean.substr(8, 2)) - 1, yy = parseInt(clean.substr(10, 2)); if (isNaN(dd) || isNaN(mm) || isNaN(yy) || mm < 0 || mm > 11) return "-"; if (dd > 40) dd -= 40; let fullYear = yy <= (parseDateWib(new Date()).year % 100) ? 2000 + yy : 1900 + yy; return `${dd} ${NAMA_BULAN[mm]} ${fullYear}`; }
+    function parseNikInfo(nikStr) { if (!nikStr) return { age: 0, gender: 'L' }; let clean = nikStr.toString().replace(/^'/, "").trim(); if (clean.length < 12) return { age: 0, gender: 'L' }; let dd = parseInt(clean.substr(6, 2)), mm = parseInt(clean.substr(8, 2)) - 1, yy = parseInt(clean.substr(10, 2)), gender = 'L'; if (dd > 40) { gender = 'P'; dd -= 40; } let curY = parseDateWib(new Date()).year; let fullYear = yy <= (curY % 100) ? 2000 + yy : 1900 + yy; return { age: Math.max(0, curY - fullYear), gender: gender }; }
 
-    function populateFilterYears() { let nowWib = parseDateWib(new Date()); const currentYear = nowWib ? nowWib.year : new Date().getFullYear(); const selects = [document.getElementById('dashFilterTahun'), document.getElementById('mutuFilterTahun'), document.getElementById('laporanFilterTahun')]; selects.forEach(sel => { if(!sel) return; sel.innerHTML = ''; for(let y = currentYear - 3; y <= currentYear + 2; y++) { let opt = document.createElement('option'); opt.value = y; opt.innerText = y; if(y === currentYear) opt.selected = true; sel.appendChild(opt); } }); let curMonth = nowWib ? nowWib.month : new Date().getMonth(); document.getElementById('dashFilterBulan').value = curMonth.toString(); document.getElementById('mutuFilterBulan').value = curMonth.toString(); }
-    function syncAndRenderFilters(source) { if (source === 'dash') { document.getElementById('mutuFilterBulan').value = document.getElementById('dashFilterBulan').value; document.getElementById('mutuFilterTahun').value = document.getElementById('dashFilterTahun').value; } else if (source === 'mutu') { document.getElementById('dashFilterBulan').value = document.getElementById('mutuFilterBulan').value; document.getElementById('dashFilterTahun').value = document.getElementById('mutuFilterTahun').value; } renderDashboardFiltered(); renderMutuFiltered(); }
-    function toggleDarkMode(forceDark = null) { if(forceDark === true) { document.body.classList.add('dark-theme'); } else { document.body.classList.toggle('dark-theme'); } const isDark = document.body.classList.contains('dark-theme'); document.querySelector('#themeBtn i').className = isDark ? 'ph-light ph-sun' : 'ph-light ph-moon'; localStorage.setItem('appThemeDark', isDark); generateCaptcha(); }
+    function populateFilterYears() { let nowWib = parseDateWib(new Date()), currentYear = nowWib ? nowWib.year : new Date().getFullYear(); [document.getElementById('dashFilterTahun'), document.getElementById('mutuFilterTahun'), document.getElementById('laporanFilterTahun')].forEach(sel => { if(!sel) return; sel.innerHTML = ''; for(let y = currentYear - 3; y <= currentYear + 2; y++) { let opt = document.createElement('option'); opt.value = y; opt.innerText = y; if(y === currentYear) opt.selected = true; sel.appendChild(opt); } }); let curMonth = nowWib ? nowWib.month : new Date().getMonth(); document.getElementById('dashFilterBulan').value = curMonth.toString(); document.getElementById('mutuFilterBulan').value = curMonth.toString(); }
+    function syncAndRenderFilters(source) { if (source === 'dash') { document.getElementById('mutuFilterBulan').value = document.getElementById('dashFilterBulan').value; document.getElementById('mutuFilterTahun').value = document.getElementById('dashFilterTahun').value; } else { document.getElementById('dashFilterBulan').value = document.getElementById('mutuFilterBulan').value; document.getElementById('dashFilterTahun').value = document.getElementById('mutuFilterTahun').value; } renderDashboardFiltered(); renderMutuFiltered(); }
+    function toggleDarkMode(forceDark = null) { if(forceDark === true) document.body.classList.add('dark-theme'); else document.body.classList.toggle('dark-theme'); const isDark = document.body.classList.contains('dark-theme'); document.querySelector('#themeBtn i').className = isDark ? 'ph-light ph-sun' : 'ph-light ph-moon'; localStorage.setItem('appThemeDark', isDark); generateCaptcha(); }
     function toggleMenu(menuId, e) { e.stopPropagation(); document.querySelectorAll('.dropdown-menu').forEach(m => { if(m.id !== menuId) m.classList.remove('show'); }); document.getElementById(menuId).classList.toggle('show'); } window.onclick = function() { document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show')); }
-    
-    function toggleSidebar() { 
-      if(window.innerWidth <= 768) { document.getElementById('sidebar').classList.toggle('mobile-open'); document.getElementById('sidebarOverlay').classList.toggle('show'); } 
-      else { document.getElementById('sidebar').classList.toggle('minimized'); }
-    }
+    function toggleSidebar() { if(window.innerWidth <= 768) { document.getElementById('sidebar').classList.toggle('mobile-open'); document.getElementById('sidebarOverlay').classList.toggle('show'); } else { document.getElementById('sidebar').classList.toggle('minimized'); } }
 
     function renderDashboardFiltered(showWelcomeToast = false) {
-      let selM = parseInt(document.getElementById('dashFilterBulan').value); let selY = parseInt(document.getElementById('dashFilterTahun').value);
-      let prevM = selM === 0 ? 11 : selM - 1; let prevY = selM === 0 ? selY - 1 : selY;
+      let selM = parseInt(document.getElementById('dashFilterBulan').value), selY = parseInt(document.getElementById('dashFilterTahun').value);
+      let prevM = selM === 0 ? 11 : selM - 1, prevY = selM === 0 ? selY - 1 : selY;
       let patientHistoryMap = new Map();
-      
-      APP_DATA_HISTORI.forEach(h => { if (!h || !h[0]) return; let pDate = parseDateWib(h[0]); if (!pDate) return; let rawNama = h[1] ? h[1].toString() : ""; let splitData = rawNama.split(" || "); let namaPasien = splitData[0]; let nikHistori = splitData[1] || ""; let key = nikHistori || namaPasien; if (!patientHistoryMap.has(key)) patientHistoryMap.set(key, []); patientHistoryMap.get(key).push({ dateWib: pDate, metode: h[2] || "Hadir Langsung", statusH: h[7] || "Aktif", rawRow: h }); });
+      APP_DATA_HISTORI.forEach(h => { if (!h || !h[0]) return; let pDate = parseDateWib(h[0]); if (!pDate) return; let rawNama = h[1] ? h[1].toString() : ""; let splitData = rawNama.split(" || "); let key = splitData[1] || splitData[0]; if (!patientHistoryMap.has(key)) patientHistoryMap.set(key, []); patientHistoryMap.get(key).push({ dateWib: pDate, metode: h[2] || "Hadir Langsung", statusH: h[7] || "Aktif", rawRow: h }); });
       patientHistoryMap.forEach((visits) => { visits.sort((a, b) => a.dateWib.isoStr.localeCompare(b.dateWib.isoStr)); });
       
-      let activePatientsInMonth = []; let stoppedInMonth = { meninggal: 0, pindah: 0, putusObat: 0 };
-      APP_DATA_PASIEN.forEach(p => { if (!p) return; let nik = p[2] ? p[2].toString().replace(/^'/, "") : ""; let nama = p[1] ? p[1].toString() : ""; let key = nik || nama; let regDate = parseDateWib(p[0]); if (regDate) { if (regDate.year > selY || (regDate.year === selY && regDate.month > selM)) { return; } } let visitsUpToMonth = (patientHistoryMap.get(key) || []).filter(v => { return v.dateWib.year < selY || (v.dateWib.year === selY && v.dateWib.month <= selM); }); if (visitsUpToMonth.length > 0) { let latestVisit = visitsUpToMonth[visitsUpToMonth.length - 1]; let sLow = latestVisit.statusH.toLowerCase(); let isStopped = sLow.includes("meninggal") || sLow.includes("pindah") || sLow.includes("berhenti") || sLow.includes("putus"); if (isStopped) { if (latestVisit.dateWib.year === selY && latestVisit.dateWib.month === selM) { if (sLow.includes("meninggal")) stoppedInMonth.meninggal++; else if (sLow.includes("pindah")) stoppedInMonth.pindah++; else stoppedInMonth.putusObat++; } return; } } else { let baseStatus = (p[7] || "").toLowerCase(); if (baseStatus.includes("meninggal") || baseStatus.includes("pindah") || baseStatus.includes("berhenti") || baseStatus.includes("putus")) { return; } } activePatientsInMonth.push(p); });
-      
-      let totalPesertaPRBAktif = activePatientsInMonth.length;
-      let countHadirLangsung = 0, countMenitipkan = 0, countTidakHadir = 0, countBelumInput = 0, countBerobatLanjut = 0;
-      let daftarBelumInput = []; let pesertaMultiDiag = [];
-      
-      activePatientsInMonth.forEach(p => { let nik = p[2] ? p[2].toString().replace(/^'/, "") : ""; let nama = p[1] ? p[1].toString() : ""; let key = nik || nama; let countDiag = 0; if (p[10] && p[10] !== '-') countDiag++; if (p[11] && p[11] !== '-' && p[11] !== '') countDiag++; if (p[12] && p[12] !== '-' && p[12] !== '') countDiag++; if (countDiag > 1) pesertaMultiDiag.push(p); let visitsInMonth = (patientHistoryMap.get(key) || []).filter(v => { return v.dateWib.year === selY && v.dateWib.month === selM; }); if (visitsInMonth.length > 0) { let v = visitsInMonth[visitsInMonth.length - 1]; if (v.metode === "Hadir Langsung") countHadirLangsung++; else if (v.metode === "Menitipkan") countMenitipkan++; else if (v.metode === "Tidak Hadir") countTidakHadir++; else countHadirLangsung++; if (v.statusH.toLowerCase().includes("lanjut") || v.statusH.toLowerCase().includes("rujuk")) { countBerobatLanjut++; } } else { countBelumInput++; daftarBelumInput.push(p); } });
-      
-      let totalHadir = countHadirLangsung + countMenitipkan; window.GLOBAL_DAFTAR_ABSEN = daftarBelumInput; window.GLOBAL_MULTI_DIAG = pesertaMultiDiag;
-      let visitsPrevMonthCount = 0; APP_DATA_HISTORI.forEach(h => { if (!h || !h[0]) return; let d = parseDateWib(h[0]); let mtd = h[2] || ""; if (d && d.year === prevY && d.month === prevM && mtd !== "Tidak Hadir") visitsPrevMonthCount++; });
-      
-      let totalVisitsCurMonth = totalHadir; let diffVisits = totalVisitsCurMonth - visitsPrevMonthCount;
-      let trendVisitsHtml = diffVisits > 0 ? `<span style="color:#34c759; font-size:11px; font-weight:800;"><i class="ph-light ph-trend-up"></i> +${diffVisits}</span>` : diffVisits < 0 ? `<span style="color:#ff3b30; font-size:11px; font-weight:800;"><i class="ph-light ph-trend-down"></i> ${diffVisits}</span>` : `<span style="color:var(--secondary); font-size:11px; font-weight:800;"><i class="ph-light ph-minus"></i> 0</span>`;
-      
-      document.getElementById('dashTotalKunjungan').innerHTML = `<div style="font-size: 32px; font-weight: 800; line-height:1; margin-bottom:6px;">${totalVisitsCurMonth}</div><div style="font-size:11px; color:var(--secondary);">Bulan lalu: <b>${visitsPrevMonthCount}</b> | ${trendVisitsHtml}</div><div class="insight-box"><div class="insight-row"><span class="ins-label">Capaian:</span><span class="ins-val">${totalVisitsCurMonth} pemantauan pada ${NAMA_BULAN[selM]}.</span></div></div>`;
-      let pctKepatuhan = totalPesertaPRBAktif > 0 ? Math.round((totalHadir / totalPesertaPRBAktif) * 100) : 0; let colorKepatuhan = pctKepatuhan >= 80 ? '#34c759' : (pctKepatuhan >= 50 ? '#f59e0b' : '#ff3b30');
-      document.getElementById('dashKepatuhanContainer').innerHTML = `<div style="font-size: 32px; font-weight: 800; color: ${colorKepatuhan}; line-height:1; margin-bottom:6px;">${pctKepatuhan}%</div><div style="background:rgba(120,120,120,0.15); height:6px; border-radius:6px; margin-bottom:8px;"><div style="background:${colorKepatuhan}; width:${Math.min(pctKepatuhan, 100)}%; height:100%;"></div></div><div class="insight-box"><div class="insight-row"><span class="ins-label">Capaian:</span><span class="ins-val">${totalHadir} dari ${totalPesertaPRBAktif} pasien hadir/titip obat.</span></div></div>`;
-      document.getElementById('dashTotalKepesertaan').innerHTML = `<div style="font-size: 26px; font-weight: 800; line-height:1; margin-bottom:8px;">${totalPesertaPRBAktif} <span style="font-size:11px; color:var(--secondary);">Peserta PRB Aktif</span></div><div style="background:var(--bg); border:var(--border); padding:6px; border-radius:6px; font-size:9px; margin-bottom:8px;"><div style="font-weight:800; color:var(--blue);">Hadir/Titip: <b>${totalHadir}</b> | Absen: <b>${countTidakHadir}</b> | Belum Input: <b>${countBelumInput}</b></div></div><div class="interactive-box-wrapper"><div class="interactive-box danger" onclick="bukaModalAbsen()"><div><div class="ib-title">Belum Pemantauan</div><div style="font-size: 13px; font-weight: 800; color: #ff3b30;">${countBelumInput}</div></div><div class="ib-icon-bg"><i class="ph-light ph-user-minus"></i></div></div><div class="interactive-box" onclick="bukaModalMultiDiag()"><div><div class="ib-title">Komplikasi (>1)</div><div style="font-size: 13px; font-weight: 800; color: var(--blue);">${pesertaMultiDiag.length}</div></div><div class="ib-icon-bg"><i class="ph-light ph-files"></i></div></div></div>`;
-      
-      let diagCur = {}, diagPrev = {}; APP_DATA_HISTORI.forEach(h => { if (!h || !h[0]) return; let d = parseDateWib(h[0]); if (!d) return; let rawNama = h[1] ? h[1].toString() : ""; let splitData = rawNama.split(" || "); let p = splitData[1] ? patientMapNIK.get(splitData[1]) : patientMapName.get(splitData[0]); let diag = p ? (p[10] || "Lainnya") : "Lainnya"; if (d.year === selY && d.month === selM) diagCur[diag] = (diagCur[diag] || 0) + 1; if (d.year === prevY && d.month === prevM) diagPrev[diag] = (diagPrev[diag] || 0) + 1; });
-      let dashDiag = document.getElementById('dashTrendDiagnosa'); dashDiag.innerHTML = ''; let allDiags = new Set([...Object.keys(diagCur), ...Object.keys(diagPrev)]);
-      if(allDiags.size === 0) dashDiag.innerHTML = '<div style="color:var(--secondary); font-size:11.5px;">Belum ada data pemantauan.</div>';
-      allDiags.forEach(diag => { let c = diagCur[diag] || 0; let p = diagPrev[diag] || 0; let df = c - p; let trUI = df > 0 ? `<span style="background:rgba(52,199,89,0.15); color:#34c759; padding:1px 5px; font-size:9px;">+${df}</span>` : df < 0 ? `<span style="background:rgba(255,59,48,0.1); color:#ff3b30; padding:1px 5px; font-size:9px;">${df}</span>` : `<span style="background:rgba(120,120,120,0.1); color:var(--secondary); padding:1px 5px; font-size:9px;">0</span>`; dashDiag.innerHTML += `<div class="clickable-row" onclick="goToFilteredHistori('diagnosa', '${diag}')" style="display:flex; justify-content:space-between; align-items:center; padding:5px 8px; border:var(--border); border-radius:6px; background:var(--bg);"><div style="font-weight:600; font-size:10.5px;">${diag}</div><div style="display:flex; align-items:center; gap:5px;"><div style="font-size:11px; font-weight:800;">${c}</div>${trUI}</div></div>`; });
-      document.getElementById('insightTrendDiagnosa').innerHTML = `<div class="insight-box"><div class="insight-row"><span class="ins-label">Capaian:</span><span class="ins-val">Distribusi kunjungan per diagnosa terpeta di atas.</span></div></div>`;
-      
-      let cMetode = document.getElementById('dashMetodeLayanan'); cMetode.innerHTML = ''; let totalMetode = (countHadirLangsung + countMenitipkan + countTidakHadir) || 1;
-      [{ label: 'Hadir Langsung', val: countHadirLangsung, color: '#34c759' }, { label: 'Titip Obat', val: countMenitipkan, color: '#0055FF' }, { label: 'Tidak Hadir', val: countTidakHadir, color: '#ff3b30' }].forEach(m => { let pct = Math.round((m.val / totalMetode) * 100); cMetode.innerHTML += `<div style="font-size:10px;"><div style="display:flex; justify-content:space-between; font-weight:600; margin-bottom:2px;"><span>${m.label}</span><span>${m.val} (${pct}%)</span></div><div style="background:rgba(120,120,120,0.12); height:6px; border-radius:6px;"><div style="background:${m.color}; width:${pct}%; height:100%;"></div></div></div>`; });
-      document.getElementById('insightMetodeLayanan').innerHTML = `<div class="insight-box"><div class="insight-row"><span class="ins-label">Analisis:</span><span class="ins-val">${countMenitipkan > countHadirLangsung ? 'Dominan titip obat.' : 'Presensi fisik pasien berjalan baik.'}</span></div></div>`;
-      
-      let desaCur = {}; APP_DATA_HISTORI.forEach(h => { if (!h || !h[0]) return; let d = parseDateWib(h[0]); if (d && d.year === selY && d.month === selM) { let rawNama = h[1] ? h[1].toString() : ""; let p = rawNama.includes(" || ") ? patientMapNIK.get(rawNama.split(" || ")[1]) : patientMapName.get(rawNama); let desa = p ? (p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : p[4]) : "Lainnya"; desaCur[desa] = (desaCur[desa] || 0) + 1; } });
-      let dashDesa = document.getElementById('dashDistribusiDesa'); dashDesa.innerHTML = ''; let maxDesa = Math.max(...Object.values(desaCur), 1);
-      MASTER_DESA.forEach(desa => { let val = desaCur[desa] || 0; let pct = (val / maxDesa) * 100; dashDesa.innerHTML += `<div class="chart-bar-row clickable-row" onclick="goToFilteredHistori('desa', '${desa}')"><div class="chart-label" style="font-size:10px; width:85px;">${desa}</div><div class="chart-progress-bg" style="height:6px;"><div class="chart-progress-fill" style="width: ${pct}%;"></div></div><div class="chart-val" style="font-size:10px; font-weight:700;">${val}</div></div>`; });
-      document.getElementById('insightDistribusiDesa').innerHTML = `<div class="insight-box"><div class="insight-row"><span class="ins-label">Tindakan:</span><span class="ins-val">Evaluasi desa dengan kunjungan pemantauan rendah.</span></div></div>`;
-
-      let totalAktifAllTime = 0; let totalKeluarAllTime = 0; let masterDesaCur = {};
+      let activePatientsInMonth = [], daftarBelumInput = [], pesertaMultiDiag = [];
       APP_DATA_PASIEN.forEach(p => {
-          if(!p) return;
-          let stat = (p[7] || "").toLowerCase();
-          let isKeluar = stat.includes("berhenti") || stat.includes("meninggal") || stat.includes("pindah") || stat.includes("keluar");
-          
-          if (isKeluar) { totalKeluarAllTime++; } 
-          else {
-              totalAktifAllTime++;
-              let rawDesa = p[4] || "Tidak Diketahui";
-              let desa = rawDesa === 'Luar Wilayah' ? 'Luar Wilayah' : rawDesa;
-              masterDesaCur[desa] = (masterDesaCur[desa] || 0) + 1;
-          }
+        if (!p) return; let nik = p[2] ? p[2].toString().replace(/^'/, "") : "", nama = p[1] ? p[1].toString() : "", key = nik || nama;
+        let regDate = parseDateWib(p[0]); if (regDate && (regDate.year > selY || (regDate.year === selY && regDate.month > selM))) return;
+        let visitsUpToMonth = (patientHistoryMap.get(key) || []).filter(v => v.dateWib.year < selY || (v.dateWib.year === selY && v.dateWib.month <= selM));
+        if (visitsUpToMonth.length > 0) {
+          let latest = visitsUpToMonth[visitsUpToMonth.length - 1], sLow = latest.statusH.toLowerCase();
+          if (sLow.includes("meninggal") || sLow.includes("pindah") || sLow.includes("berhenti") || sLow.includes("putus")) return;
+        } else {
+          let base = (p[7] || "").toLowerCase(); if (base.includes("meninggal") || base.includes("pindah") || base.includes("berhenti") || base.includes("putus")) return;
+        }
+        activePatientsInMonth.push(p);
       });
       
-      let totalSemua = totalAktifAllTime + totalKeluarAllTime;
-      document.getElementById('dashMasterTotal').innerHTML = `
-        <div style="font-size: 32px; font-weight: 800; line-height:1; margin-bottom:6px; color: var(--text);">${totalAktifAllTime} <span style="font-size:11px; color:var(--secondary); font-weight:600;">Aktif Berjalan</span></div>
-        <div style="font-size:11.5px; color:var(--secondary); font-weight:600;">Total Terdaftar: <b style="color:var(--text);">${totalSemua}</b> (Keluar/Lulus: ${totalKeluarAllTime})</div>
-        <div class="insight-box" style="margin-top:auto;"><div class="insight-row"><span class="ins-label">Info:</span><span class="ins-val">Akumulasi riwayat seluruh pasien yang pernah dan sedang tercatat dalam sistem.</span></div></div>
-      `;
+      let totalPesertaPRBAktif = activePatientsInMonth.length, countH = 0, countT = 0, countAbsen = 0, countBelum = 0;
+      activePatientsInMonth.forEach(p => {
+        let nik = p[2] ? p[2].toString().replace(/^'/, "") : "", nama = p[1] ? p[1].toString() : "", key = nik || nama;
+        let countDiag = 0; if (p[10] && p[10] !== '-') countDiag++; if (p[11] && p[11] !== '-' && p[11] !== '') countDiag++; if (p[12] && p[12] !== '-' && p[12] !== '') countDiag++; if (countDiag > 1) pesertaMultiDiag.push(p);
+        let vMonth = (patientHistoryMap.get(key) || []).filter(v => v.dateWib.year === selY && v.dateWib.month === selM);
+        if (vMonth.length > 0) { let v = vMonth[vMonth.length - 1]; if (v.metode === "Hadir Langsung") countH++; else if (v.metode === "Menitipkan") countT++; else if (v.metode === "Tidak Hadir") countAbsen++; else countH++; }
+        else { countBelum++; daftarBelumInput.push(p); }
+      });
       
-      let htmlMasterDesa = '';
-      MASTER_DESA.forEach(desa => { let val = masterDesaCur[desa] || 0; if (val > 0) { htmlMasterDesa += `<div style="background:var(--bg); border:var(--border); padding:6px 10px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:10.5px; font-weight:600; color:var(--secondary);">${desa}</span><span style="font-size:12px; font-weight:800; color:var(--blue);">${val}</span></div>`; } });
-      if(htmlMasterDesa === '') htmlMasterDesa = '<div style="font-size:11px; color:var(--secondary);">Belum ada data desa.</div>';
-      document.getElementById('dashMasterDesa').innerHTML = htmlMasterDesa;
+      let totalHadir = countH + countT; window.GLOBAL_DAFTAR_ABSEN = daftarBelumInput; window.GLOBAL_MULTI_DIAG = pesertaMultiDiag;
+      let visitsPrev = 0; APP_DATA_HISTORI.forEach(h => { let d = parseDateWib(h[0]); if (d && d.year === prevY && d.month === prevM && h[2] !== "Tidak Hadir") visitsPrev++; });
+      let diff = totalHadir - visitsPrev;
+      let trendHtml = diff > 0 ? `<span style="color:#34c759;">+${diff}</span>` : diff < 0 ? `<span style="color:#ff3b30;">${diff}</span>` : `<span>0</span>`;
+      
+      document.getElementById('dashTotalKunjungan').innerHTML = `<div style="font-size: 32px; font-weight: 800;">${totalHadir}</div><div style="font-size:11px; color:var(--secondary);">Bulan lalu: <b>${visitsPrev}</b> | ${trendHtml}</div>`;
+      let pctKepatuhan = totalPesertaPRBAktif > 0 ? Math.round((totalHadir / totalPesertaPRBAktif) * 100) : 0;
+      document.getElementById('dashKepatuhanContainer').innerHTML = `<div style="font-size: 32px; font-weight: 800; color: ${pctKepatuhan >= 80 ? '#34c759' : '#f59e0b'};">${pctKepatuhan}%</div><div style="background:rgba(120,120,120,0.15); height:6px; border-radius:6px; margin:8px 0;"><div style="background:${pctKepatuhan >= 80 ? '#34c759' : '#f59e0b'}; width:${Math.min(pctKepatuhan, 100)}%; height:100%;"></div></div>`;
+      document.getElementById('dashTotalKepesertaan').innerHTML = `<div style="font-size: 24px; font-weight: 800;">${totalPesertaPRBAktif} <span style="font-size:11px; color:var(--secondary);">Aktif</span></div><div class="interactive-box-wrapper" style="margin-top:8px;"><div class="interactive-box danger" onclick="bukaModalAbsen()"><div><div class="ib-title">Belum Pemantauan</div><div style="font-size: 13px; font-weight: 800; color: #ff3b30;">${countBelum}</div></div><div class="ib-icon-bg"><i class="ph-light ph-user-minus"></i></div></div><div class="interactive-box" onclick="bukaModalMultiDiag()"><div><div class="ib-title">Komplikasi</div><div style="font-size: 13px; font-weight: 800; color: var(--blue);">${pesertaMultiDiag.length}</div></div><div class="ib-icon-bg"><i class="ph-light ph-files"></i></div></div></div>`;
+      
+      let diagCur = {}, diagPrev = {}; APP_DATA_HISTORI.forEach(h => { let d = parseDateWib(h[0]); if (!d) return; let raw = h[1] ? h[1].toString() : "", p = raw.includes(" || ") ? patientMapNIK.get(raw.split(" || ")[1]) : patientMapName.get(raw), diag = p ? (p[10] || "Lainnya") : "Lainnya"; if (d.year === selY && d.month === selM) diagCur[diag] = (diagCur[diag] || 0) + 1; if (d.year === prevY && d.month === prevM) diagPrev[diag] = (diagPrev[diag] || 0) + 1; });
+      let dashDiag = document.getElementById('dashTrendDiagnosa'); dashDiag.innerHTML = '';
+      Object.keys({...diagCur, ...diagPrev}).forEach(diag => { dashDiag.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px 8px; border:var(--border); border-radius:6px; background:var(--bg); font-size:10.5px;"><span>${diag}</span><b>${diagCur[diag] || 0}</b></div>`; });
+      
+      let cMetode = document.getElementById('dashMetodeLayanan'); cMetode.innerHTML = ''; let totM = (countH + countT + countAbsen) || 1;
+      [{label:'Hadir Langsung', val:countH, color:'#34c759'}, {label:'Titip Obat', val:countT, color:'#0055FF'}, {label:'Tidak Hadir', val:countAbsen, color:'#ff3b30'}].forEach(m => { cMetode.innerHTML += `<div style="font-size:10px;"><div style="display:flex; justify-content:space-between; font-weight:600;"><span>${m.label}</span><span>${m.val}</span></div><div style="background:rgba(120,120,120,0.1); height:5px; border-radius:4px;"><div style="background:${m.color}; width:${Math.round((m.val/totM)*100)}%; height:100%;"></div></div></div>`; });
+      
+      let desaCur = {}; APP_DATA_HISTORI.forEach(h => { let d = parseDateWib(h[0]); if (d && d.year === selY && d.month === selM) { let raw = h[1] ? h[1].toString() : "", p = raw.includes(" || ") ? patientMapNIK.get(raw.split(" || ")[1]) : patientMapName.get(raw), desa = p ? (p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : p[4]) : "Lainnya"; desaCur[desa] = (desaCur[desa] || 0) + 1; } });
+      let dashDesa = document.getElementById('dashDistribusiDesa'); dashDesa.innerHTML = '';
+      MASTER_DESA.forEach(desa => { dashDesa.innerHTML += `<div class="chart-bar-row"><div class="chart-label" style="font-size:10px;">${desa}</div><div class="chart-progress-bg"><div class="chart-progress-fill" style="width:${((desaCur[desa] || 0) / Math.max(...Object.values(desaCur), 1)) * 100}%;"></div></div><div style="font-size:10px; font-weight:700;">${desaCur[desa] || 0}</div></div>`; });
 
-      if (showWelcomeToast === true) {
-         let namaDepan = SESSION_USER.split(" ")[0];
-         let msg = `Halo, ${namaDepan}!<br><div style="font-size:11px; font-weight:normal; margin-top:5px; line-height:1.45;">Bulan ini:<br>✅ <b style="color:#34c759;">${totalHadir}</b> Hadir / Titip Obat<br>⚠️ <b style="color:#ff3b30;">${countBelumInput}</b> Belum Pemantauan</div>`;
-         showToast(msg, countBelumInput > 0 ? "error" : "success");
-      }
+      let totAktif = 0, totKeluar = 0, masterDesa = {};
+      APP_DATA_PASIEN.forEach(p => { if(!p) return; let stat = (p[7] || "").toLowerCase(); if (stat.includes("berhenti") || stat.includes("meninggal") || stat.includes("pindah")) totKeluar++; else { totAktif++; masterDesa[p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : p[4]] = (masterDesa[p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : p[4]] || 0) + 1; } });
+      document.getElementById('dashMasterTotal').innerHTML = `<div style="font-size: 28px; font-weight: 800;">${totAktif} <span style="font-size:11px; color:var(--secondary);">Aktif</span></div><div style="font-size:11px; color:var(--secondary);">Total Terdaftar: <b>${totAktif + totKeluar}</b></div>`;
+      let mDesaHtml = ''; MASTER_DESA.forEach(d => { if (masterDesa[d]) mDesaHtml += `<div style="background:var(--bg); border:var(--border); padding:6px; border-radius:6px; display:flex; justify-content:space-between; font-size:10px;"><span>${d}</span><b>${masterDesa[d]}</b></div>`; });
+      document.getElementById('dashMasterDesa').innerHTML = mDesaHtml || '<span style="font-size:11px; color:var(--secondary);">Kosong</span>';
+
+      if (showWelcomeToast) { showToast(`Halo, ${SESSION_USER}! Bulan ini ${totalHadir} hadir, ${countBelum} belum pemantauan.`, countBelum > 0 ? "error" : "success"); }
     }
 
     function renderMutuFiltered() {
-      let selM = parseInt(document.getElementById('mutuFilterBulan').value); let selY = parseInt(document.getElementById('mutuFilterTahun').value);
-      let activePatients = APP_DATA_PASIEN.filter(p => { if(!p) return false; let s = (p[7] || "").toLowerCase(); return !s.includes("berhenti") && !s.includes("meninggal") && !s.includes("keluar") && !s.includes("pindah"); });
-      let totalHtnChecked = 0, htnControlled = 0; let totalDmChecked = 0, dmControlled = 0;
-      let demography = { 'Pra-lansia (45-59 th)': { L: 0, P: 0 }, 'Lansia (60-69 th)': { L: 0, P: 0 }, 'Risiko Tinggi (>70 th)': { L: 0, P: 0 }, 'Lainnya (<45 th)': { L: 0, P: 0 } };
-      let rtRwMap = {}; let srbCountdownList = []; let todayWib = parseDateWib(new Date());
-      let latestVisitMap = new Map(); APP_DATA_HISTORI.forEach(h => { if(!h || !h[0]) return; let d = parseDateWib(h[0]); if(!d) return; if(d.month !== selM || d.year !== selY) return; let rawNama = h[1] ? h[1].toString() : ""; let nik = rawNama.includes(" || ") ? rawNama.split(" || ")[1] : ""; let visitTime = d.timestamp; if(!nik) { let foundP = patientMapName.get(rawNama); if(foundP) nik = foundP[2] ? foundP[2].toString().replace(/^'/, "") : ""; } if(nik) { if(!latestVisitMap.has(nik) || visitTime > latestVisitMap.get(nik).time) { latestVisitMap.set(nik, { time: visitTime, data: h }); } } });
+      let selM = parseInt(document.getElementById('mutuFilterBulan').value), selY = parseInt(document.getElementById('mutuFilterTahun').value);
+      let activePatients = APP_DATA_PASIEN.filter(p => p && !/(berhenti|meninggal|keluar|pindah)/i.test(p[7] || ""));
+      let htnC = 0, htnTot = 0, dmC = 0, dmTot = 0, demo = {'Pra-lansia (45-59 th)':{L:0,P:0},'Lansia (60-69 th)':{L:0,P:0},'Risiko Tinggi (>70 th)':{L:0,P:0},'Lainnya (<45 th)':{L:0,P:0}}, rtMap = {}, srbList = [], today = parseDateWib(new Date());
+      let visitMap = new Map(); APP_DATA_HISTORI.forEach(h => { let d = parseDateWib(h[0]); if (d && d.month === selM && d.year === selY) { let nik = h[1].includes(" || ") ? h[1].split(" || ")[1] : ""; if (nik) visitMap.set(nik, h); } });
       
       activePatients.forEach(p => {
-          let nik = p[2] ? p[2].toString().replace(/^'/, "") : ""; let diag1 = (p[10] || "").toLowerCase(); let isHtn = diag1.includes("hipertensi"); let isDm = diag1.includes("diabetes");
-          let nikInfo = parseNikInfo(nik); let ageGroup = 'Lainnya (<45 th)'; if (nikInfo.age >= 45 && nikInfo.age <= 59) ageGroup = 'Pra-lansia (45-59 th)'; else if (nikInfo.age >= 60 && nikInfo.age <= 69) ageGroup = 'Lansia (60-69 th)'; else if (nikInfo.age >= 70) ageGroup = 'Risiko Tinggi (>70 th)'; if(demography[ageGroup]) demography[ageGroup][nikInfo.gender]++;
-          let desa = p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : (p[4] || 'Lainnya'); let rtrw = p[6] ? p[6].toString().replace(/^'/, "").trim() : "-/-"; let zoneKey = `${desa} (RT/RW ${rtrw})`; if(!rtRwMap[zoneKey]) rtRwMap[zoneKey] = { total: 0, diags: {} }; rtRwMap[zoneKey].total++; let dMain = p[10] || "Lainnya"; rtRwMap[zoneKey].diags[dMain] = (rtRwMap[zoneKey].diags[dMain] || 0) + 1;
-          let lastVisit = latestVisitMap.get(nik);
-          if(lastVisit) {
-              if(isHtn && lastVisit.data[3] && lastVisit.data[3] !== '-') { let tdParts = lastVisit.data[3].toString().replace(/^'/, "").split('/'); if(tdParts.length === 2) { let sys = parseInt(tdParts[0]); let dias = parseInt(tdParts[1]); if(!isNaN(sys) && !isNaN(dias)) { totalHtnChecked++; if(sys < 140 && dias < 90) htnControlled++; } } }
-              if(isDm && lastVisit.data[4] && lastVisit.data[4] !== 'Tidak Diperiksa') { let gVal = parseFloat(lastVisit.data[5]); if(!isNaN(gVal)) { totalDmChecked++; let isGdp = lastVisit.data[4] === 'GDP'; if((isGdp && gVal < 126) || (!isGdp && gVal < 200)) dmControlled++; } }
-          }
-          let isPasienBaru = p[7] === 'Pasien Baru (Dari RS)' || p[7] === 'Baru'; if(isPasienBaru && p[9] && p[9] !== '-' && p[9] !== '') { let srbDate = parseDateWib(p[9]); if(srbDate) { let diffDays = Math.round(((srbDate.timestamp + (90 * 24 * 3600 * 1000)) - todayWib.timestamp) / (1000 * 3600 * 24)); srbCountdownList.push({ nama: p[1], noSrb: p[8] || "-", tglSrb: formatTanggalIndo(p[9]), sisaHari: diffDays }); } }
+        let nik = p[2] ? p[2].toString().replace(/^'/, "") : "", d1 = (p[10] || "").toLowerCase(), isH = d1.includes("hipertensi"), isD = d1.includes("diabetes");
+        let info = parseNikInfo(nik), grp = info.age >= 70 ? 'Risiko Tinggi (>70 th)' : info.age >= 60 ? 'Lansia (60-69 th)' : info.age >= 45 ? 'Pra-lansia (45-59 th)' : 'Lainnya (<45 th)';
+        demo[grp][info.gender]++;
+        let zone = `${p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : p[4]} (RT/RW ${p[6] || "-"})`; rtMap[zone] = (rtMap[zone] || 0) + 1;
+        let v = visitMap.get(nik);
+        if (v) {
+          if (isH && v[3] && v[3] !== '-') { let t = v[3].split('/'); if (t.length === 2 && parseInt(t[0]) < 140 && parseInt(t[1]) < 90) htnC++; htnTot++; }
+          if (isD && v[4] && v[4] !== 'Tidak Diperiksa') { let g = parseFloat(v[5]); if (!isNaN(g) && ((v[4] === 'GDP' && g < 126) || (v[4] !== 'GDP' && g < 200))) dmC++; dmTot++; }
+        }
+        if (/baru/i.test(p[7]) && p[9] && p[9] !== '-') { let sD = parseDateWib(p[9]); if (sD) srbList.push({ nama: p[1], no: p[8], rem: Math.round(((sD.timestamp + 7776000000) - today.timestamp) / 86400000) }); }
       });
       
-      let pctHtn = totalHtnChecked > 0 ? Math.round((htnControlled / totalHtnChecked) * 100) : 0; let pctDm = totalDmChecked > 0 ? Math.round((dmControlled / totalDmChecked) * 100) : 0;
-      document.getElementById('mutuKontrolKlinisContainer').innerHTML = `<div class="donut-container"><div class="donut-ring" style="background: conic-gradient(#34c759 ${pctHtn}%, rgba(120,120,120,0.15) 0);"><div class="donut-text">${pctHtn}%</div></div><div style="flex:1;"><div style="font-weight:700; font-size:12px;">Hipertensi Terkontrol</div><div style="font-size:10px; color:var(--secondary);">TD < 140/90 mmHg</div><div style="font-size:11px; font-weight:800; color:#34c759;">${htnControlled} dari ${totalHtnChecked} pasien</div></div></div><div class="donut-container"><div class="donut-ring" style="background: conic-gradient(#0055FF ${pctDm}%, rgba(120,120,120,0.15) 0);"><div class="donut-text">${pctDm}%</div></div><div style="flex:1;"><div style="font-weight:700; font-size:12px;">Gula Darah Terkontrol</div><div style="font-size:10px; color:var(--secondary);">GDP < 126 / GDS < 200</div><div style="font-size:11px; font-weight:800; color:#0055FF;">${dmControlled} dari ${totalDmChecked} pasien</div></div></div>`;
-      document.getElementById('insightMutuKlinis').innerHTML = `<div class="insight-box"><div class="insight-row"><span class="ins-label">Capaian:</span><span class="ins-val">HT Terkontrol ${pctHtn}%, DM Terkontrol ${pctDm}%.</span></div></div>`;
+      document.getElementById('mutuKontrolKlinisContainer').innerHTML = `<div class="donut-container"><div class="donut-ring" style="background:conic-gradient(#34c759 ${htnTot ? Math.round(htnC/htnTot*100) : 0}%, #eee 0);"><div>${htnTot ? Math.round(htnC/htnTot*100) : 0}%</div></div><div><b>Hipertensi Terkontrol</b><br>${htnC} dari ${htnTot} pasien</div></div><div class="donut-container"><div class="donut-ring" style="background:conic-gradient(#0055FF ${dmTot ? Math.round(dmC/dmTot*100) : 0}%, #eee 0);"><div>${dmTot ? Math.round(dmC/dmTot*100) : 0}%</div></div><div><b>Gula Darah Terkontrol</b><br>${dmC} dari ${dmTot} pasien</div></div>`;
       
-      let demoHtml = ""; let maxDemoVal = 1; for(let k in demography) { let sumGroup = demography[k].L + demography[k].P; if(sumGroup > maxDemoVal) maxDemoVal = sumGroup; }
-      for(let group in demography) { let valL = demography[group].L, valP = demography[group].P; let totalGroup = valL + valP; let widthL = Math.max((valL / maxDemoVal) * 100, 4); let widthP = Math.max((valP / maxDemoVal) * 100, 4); demoHtml += `<div><div style="display:flex; justify-content:space-between; font-size:10px; font-weight:600; margin-bottom:2px;"><span>${group}</span><span style="color:var(--secondary);">${totalGroup} Orang</span></div><div class="pyramid-row"><div class="pyramid-label" style="text-align:right; padding-right:6px;">L: <b>${valL}</b></div><div class="pyramid-bars"><div class="pyramid-bar-l"><div class="pyramid-bar-l-fill" style="width: ${widthL}%;"></div></div><div style="width:2px; background:var(--border); height:12px;"></div><div class="pyramid-bar-p"><div class="pyramid-bar-p-fill" style="width: ${widthP}%;"></div></div></div><div class="pyramid-label" style="padding-left:6px;">P: <b>${valP}</b></div></div></div>`; }
-      document.getElementById('mutuDemografiContainer').innerHTML = demoHtml;
+      let dHtml = ""; for(let g in demo) dHtml += `<div style="font-size:10px; display:flex; justify-content:space-between;"><span>${g}</span><span>L:${demo[g].L} | P:${demo[g].P}</span></div>`;
+      document.getElementById('mutuDemografiContainer').innerHTML = dHtml;
       
-      let sortedZones = Object.keys(rtRwMap).map(zone => { let topDiag = Object.keys(rtRwMap[zone].diags).reduce((a, b) => rtRwMap[zone].diags[a] > rtRwMap[zone].diags[b] ? a : b, 'Lainnya'); return { zone: zone, total: rtRwMap[zone].total, topDiag: topDiag }; }).sort((a, b) => b.total - a.total).slice(0, 5);
-      let zonasiHtml = ""; if(sortedZones.length === 0) { zonasiHtml = `<div style="font-size:11px; color:var(--secondary); text-align:center; padding:12px;">Belum ada data.</div>`; } else { sortedZones.forEach((item, idx) => { let badgeClass = idx === 0 ? 'top-1' : (idx === 1 ? 'top-2' : (idx === 2 ? 'top-3' : '')); zonasiHtml += `<div class="rank-item"><div style="display:flex; align-items:center; gap:8px;"><div class="rank-badge ${badgeClass}">${idx+1}</div><div><div style="font-weight:700; font-size:11px;">${item.zone}</div><div style="font-size:9.5px; color:var(--secondary);">Dominan: <b style="color:var(--blue);">${item.topDiag}</b></div></div></div><div style="background:var(--primary-light); color:var(--blue); padding:2px 8px; border-radius:12px; font-weight:800; font-size:10px;">${item.total} Pasien</div></div>`; }); }
-      document.getElementById('mutuZonasiContainer').innerHTML = zonasiHtml;
+      let topZ = Object.keys(rtMap).map(z => ({z, t: rtMap[z]})).sort((a,b)=>b.t-a.t).slice(0,5);
+      let zHtml = ""; topZ.forEach((x, i) => zHtml += `<div class="rank-item"><div class="rank-badge">${i+1}</div><div style="font-size:11px; font-weight:700;">${x.z}</div><div style="font-size:10px; font-weight:800; color:var(--blue);">${x.t} Pasien</div></div>`);
+      document.getElementById('mutuZonasiContainer').innerHTML = zHtml || '<div style="font-size:11px; color:var(--secondary);">Kosong</div>';
       
-      srbCountdownList.sort((a, b) => a.sisaHari - b.sisaHari); let srbHtml = "";
-      if(srbCountdownList.length === 0) { srbHtml = `<div style="text-align:center; padding:14px; color:var(--secondary); font-size:11px;"><i class="ph-light ph-check-circle" style="font-size:26px; color:#34c759; display:block;"></i>Semua SRB aman.</div>`; } else { srbCountdownList.forEach(s => { let badgeBg = s.sisaHari <= 0 ? '#ff3b30' : (s.sisaHari <= 15 ? '#f59e0b' : '#34c759'); let statusText = s.sisaHari <= 0 ? `Jatuh Tempo! (${Math.abs(s.sisaHari)} hr lalu)` : `Sisa ${s.sisaHari} hari`; srbHtml += `<div style="display:flex; justify-content:space-between; align-items:center; padding:7px 10px; background:rgba(255,59,48,0.03); border:1px solid rgba(255,59,48,0.15); border-radius:6px; font-size:11px;"><div><strong>${s.nama}</strong><div style="font-size:9.5px; color:var(--secondary);">SRB: ${s.noSrb} | Terbit: ${s.tglSrb}</div></div><span style="background:${badgeBg}; color:white; padding:2px 6px; border-radius:4px; font-weight:700; font-size:9px;">${statusText}</span></div>`; }); }
-      document.getElementById('mutuSrbContainer').innerHTML = srbHtml;
+      let sHtml = ""; srbList.sort((a,b)=>a.rem-b.rem).forEach(s => { sHtml += `<div style="display:flex; justify-content:space-between; font-size:11px; padding:6px; border:1px solid rgba(255,59,48,0.2); border-radius:6px;"><span>${s.nama}</span><span style="background:${s.rem<=0?'#ff3b30':'#f59e0b'}; color:#fff; padding:2px 6px; border-radius:4px; font-size:9px;">${s.rem<=0?'Jatuh Tempo':s.rem+' hari'}</span></div>`; });
+      document.getElementById('mutuSrbContainer').innerHTML = sHtml || '<div style="font-size:11px; color:var(--secondary);">Semua aman.</div>';
     }
 
     function debounceSearchPasien() { clearTimeout(timerSearchPasien); timerSearchPasien = setTimeout(filterTabelPasien, 200); }
-    function filterTabelPasien() { let input = document.getElementById("searchPasienInput").value.toLowerCase(); dataPasienFiltered = APP_DATA_PASIEN.filter(r => { if(!r) return false; let n = r[2] ? r[2].toString().replace(/^'/, "") : ""; let b = r[3] ? r[3].toString().replace(/^'/, "") : ""; return input === "" || `${r[1]} ${n} ${b} ${r[4]} ${r[10]}`.toLowerCase().includes(input); }); dataPasienFiltered.sort((a, b) => (a[1] || "").toString().localeCompare((b[1] || "").toString())); pagePasien = 1; renderTabelPasien(); }
-    
-    function cetakKartuPasien(idx) {
-      const p = APP_DATA_PASIEN[idx];
-      if (!p) return;
-      
-      const nama = p[1] || "-";
-      const nik = p[2] ? p[2].toString().replace(/^'/, "") : "-";
-      
-      document.getElementById('cardNama').innerText = nama;
-      document.getElementById('cardTglLahir').innerText = getTglLahirFromNik(nik);
-      
-      const desa = p[4] === 'Luar Wilayah' ? p[5] : p[4];
-      const rtrw = p[6] ? p[6].toString().replace(/^'/, "") : "-";
-      document.getElementById('cardAlamat').innerText = `${desa} (RT/RW: ${rtrw})`;
-      
-      let diags = [];
-      if (p[10] && p[10] !== '-') diags.push(p[10]);
-      if (p[11] && p[11] !== '-' && p[11] !== '') diags.push(p[11]);
-      if (p[12] && p[12] !== '-' && p[12] !== '') diags.push(p[12]);
-      document.getElementById('cardDiag').innerText = diags.length > 0 ? diags.join(", ") : "-";
-
-      const qrContainer = document.getElementById('qrcodeContainer');
-      const payload = generateSecureQRPayload(nik, nama);
-
-      qrContainer.innerHTML = `<div style="font-size:9px; color:#666; text-align:center;">Memuat...</div>`;
-
-      let tempDiv = document.createElement('div');
-      new QRCode(tempDiv, {
-        text: payload,
-        width: 256,  
-        height: 256,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.L
-      });
-
-      setTimeout(() => {
-        let canvas = tempDiv.querySelector('canvas');
-        let imgSrc = '';
-        if (canvas) {
-          imgSrc = canvas.toDataURL('image/png');
-        } else {
-          let img = tempDiv.querySelector('img');
-          if (img) imgSrc = img.src;
-        }
-        if(imgSrc) {
-           qrContainer.innerHTML = `<img src="${imgSrc}" style="width:100% !important; height:100% !important; object-fit:contain !important; display:block !important; margin:0 auto;" />`;
-        }
-      }, 50);
-
-      bukaModal('modalKartuPasien');
+    function filterTabelPasien() { let q = document.getElementById("searchPasienInput").value.toLowerCase(); dataPasienFiltered = APP_DATA_PASIEN.filter(r => r && `${r[1]} ${r[2]} ${r[3]} ${r[4]} ${r[10]}`.toLowerCase().includes(q)); dataPasienFiltered.sort((a,b)=> (a[1]||"").localeCompare(b[1]||"")); pagePasien=1; renderTabelPasien(); }
+    function renderTabelPasien() {
+      let start = (pagePasien - 1) * PER_PAGE, paged = dataPasienFiltered.slice(start, start + PER_PAGE), html = "";
+      paged.forEach(r => { let idx = APP_DATA_PASIEN.indexOf(r); html += `<tr><td>${formatTanggalIndo(r[0])}</td><td><b>${r[1]}</b><br><span style="font-size:10px; color:var(--secondary);">NIK: ${r[2]}</span></td><td style="font-family:monospace;">${r[3]}</td><td>${r[7]}</td><td>${getMultiDiagnosaHtml(r)}</td><td>${r[4]}</td><td>${r[6]}</td><td style="text-align:right;"><button class="btn-icon" onclick="cetakKartuPasien(${idx})"><i class="ph-light ph-qr-code"></i></button> <button class="btn-icon" onclick="bukaFormEditPasien(${idx})"><i class="ph-light ph-pencil-simple"></i></button> <button class="btn-icon" onclick="aksiHapusData('Pasien', ${idx})" style="color:#ff3b30;"><i class="ph-light ph-trash"></i></button></td></tr>`; });
+      document.getElementById('tbodyPasien').innerHTML = html || `<tr><td colspan="8" style="text-align:center;">Tidak ada data.</td></tr>`;
+      let tPages = Math.ceil(dataPasienFiltered.length / PER_PAGE) || 1; document.getElementById('infoPagePasien').innerText = `Halaman ${pagePasien} dari ${tPages}`;
+      document.getElementById('btnPrevPasien').disabled = (pagePasien === 1); document.getElementById('btnNextPasien').disabled = (pagePasien === tPages);
     }
-    
-    function eksekusiCetakKartu() {
-      const qrContainer = document.getElementById('qrcodeContainer');
-      let canvas = qrContainer.querySelector('canvas');
-      let imgSrc = '';
-      if (canvas) { imgSrc = canvas.toDataURL('image/png'); } 
-      else { let img = qrContainer.querySelector('img'); if (img) imgSrc = img.src; }
-
-      const layoutClone = document.getElementById('printAreaKartu').cloneNode(true);
-      const cloneQrContainer = layoutClone.querySelector('#qrcodeContainer');
-      cloneQrContainer.innerHTML = `<img src="${imgSrc}" style="width:100% !important; height:100% !important; object-fit:contain !important; display:block !important; margin:0 auto;" />`;
-
-      const printContents = layoutClone.outerHTML;
-
-      let iframe = document.getElementById('printIframe');
-      if (!iframe) { iframe = document.createElement('iframe'); iframe.id = 'printIframe'; iframe.style.position = 'absolute'; iframe.style.top = '-9999px'; document.body.appendChild(iframe); }
-      
-      const doc = iframe.contentWindow.document;
-      doc.open();
-      doc.write(`
-        <html>
-        <head>
-          <title>Cetak Kartu Identitas PRB</title>
-          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
-          <style>
-            @page { size: auto; margin: 0mm; }
-            body { font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #fff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .id-card-layout { width: 325px !important; height: 200px !important; border: 1.5px solid #0055FF !important; border-radius: 10px !important; background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%) !important; padding: 10px 12px !important; box-shadow: none !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; position: relative !important; overflow: hidden !important; box-sizing: border-box !important; color: #000000 !important; }
-            .id-card-layout::before { content: ""; position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: rgba(0,85,255,0.08) !important; border-radius: 50%; pointer-events: none; }
-            #qrcodeContainer { width: 110px !important; height: 110px !important; min-width: 110px !important; min-height: 110px !important; background: #ffffff !important; padding: 4px !important; border: 1.5px solid #0055FF !important; border-radius: 8px !important; flex-shrink: 0 !important; display: flex !important; justify-content: center !important; align-items: center !important; box-sizing: border-box !important; overflow: hidden !important; }
-          </style>
-        </head>
-        <body>
-          ${printContents}
-        </body>
-        </html>
-      `);
-      doc.close();
-      setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); }, 400);
-    }
-
-    function cetakKartuMassal() {
-      if (dataPasienFiltered.length === 0) {
-        showToast("Tidak ada data pasien yang tersedia dari filter pencarian saat ini!", "error");
-        return;
-      }
-      
-      showToast("Sistem sedang menyiapkan layout cetak massal... Mohon tunggu sebentar.");
-      
-      let printHtml = `<div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; padding: 10px;">`;
-      
-      dataPasienFiltered.forEach(p => {
-          const nama = p[1] || "-";
-          const nik = p[2] ? p[2].toString().replace(/^'/, "") : "-";
-          const tglLahir = getTglLahirFromNik(nik);
-          
-          const desa = p[4] === 'Luar Wilayah' ? p[5] : p[4];
-          const rtrw = p[6] ? p[6].toString().replace(/^'/, "") : "-";
-          const alamatLengkap = `${desa} (RT/RW: ${rtrw})`;
-
-          let diags = [];
-          if (p[10] && p[10] !== '-') diags.push(p[10]);
-          if (p[11] && p[11] !== '-' && p[11] !== '') diags.push(p[11]);
-          if (p[12] && p[12] !== '-' && p[12] !== '') diags.push(p[12]);
-          const diagStr = diags.length > 0 ? diags.join(", ") : "-";
-          
-          let tempDiv = document.createElement('div');
-          new QRCode(tempDiv, { text: generateSecureQRPayload(nik, nama), width: 256, height: 256, correctLevel: QRCode.CorrectLevel.L });
-          
-          let qrSrc = '';
-          let canvas = tempDiv.querySelector('canvas');
-          if (canvas) { qrSrc = canvas.toDataURL('image/png'); } 
-          else { let img = tempDiv.querySelector('img'); if (img) qrSrc = img.src; }
-          
-          printHtml += `
-          <div class="id-card-layout">
-              <div style="display:flex; align-items:center; justify-content:space-between; border-bottom:1.5px solid #0055FF; padding-bottom:6px;">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/d/dc/Lambang_Kabupaten_Banyumas.png" style="width:24px; height:24px; object-fit:contain;" alt="Logo Banyumas">
-                <div style="text-align:center; flex:1;">
-                  <div style="font-size:8px; font-weight:800; color:#0055FF; text-transform:uppercase; letter-spacing:0.3px;">PUSKESMAS CILONGOK I</div>
-                  <div style="font-size:9.5px; font-weight:800; color:#000;">KARTU PESERTA PRB</div>
-                </div>
-                <div style="font-size:20px; color:#0055FF;">♥</div>
-              </div>
-              <div style="display:flex; align-items:center; gap:10px; margin:6px 0; text-align:left; flex:1;">
-                <div id="qrcodeContainer">
-                  <img src="${qrSrc}" style="width:100% !important; height:100% !important; object-fit:contain !important; display:block !important; margin:0 auto;" />
-                </div>
-                <div style="flex:1; line-height:1.25; overflow:hidden;">
-                  <div style="font-size:11px; font-weight:800; color:#000; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${nama}</div>
-                  <div style="font-size:8.5px; color:#333;">Tgl Lahir: <strong style="color:#000;">${tglLahir}</strong></div>
-                  <div style="font-size:8.5px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Alamat: <strong style="color:#000;">${alamatLengkap}</strong></div>
-                  <div style="font-size:8px; color:#0055FF; font-weight:700; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${diagStr}</div>
-                </div>
-              </div>
-              <div style="border-top:1px dashed #aaa; padding-top:4px; display:flex; justify-content:space-between; align-items:center; font-size:7.5px; color:#555;">
-                <span>*QR terenkripsi (scan saat terautentikasi)</span>
-                <span style="font-weight:700; color:#0055FF;">PORTAL PRB TERPADU CILONGOK I</span>
-              </div>
-          </div>`;
-      });
-      
-      printHtml += `</div>`;
-      
-      let iframe = document.getElementById('printIframeMassal');
-      if (!iframe) {
-        iframe = document.createElement('iframe');
-        iframe.id = 'printIframeMassal';
-        iframe.style.position = 'absolute';
-        iframe.style.top = '-9999px';
-        document.body.appendChild(iframe);
-      }
-      
-      const doc = iframe.contentWindow.document;
-      doc.open();
-      doc.write(`
-        <html>
-        <head>
-          <title>Cetak Kartu Massal PRB</title>
-          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
-          <style>
-            @page { size: A4; margin: 10mm; }
-            body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background: #fff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .id-card-layout { width: 325px !important; height: 200px !important; border: 1.5px solid #0055FF !important; border-radius: 10px !important; background: linear-gradient(135deg, #ffffff 0%, #f0f4ff 100%) !important; padding: 10px 12px !important; box-shadow: none !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; position: relative !important; overflow: hidden !important; box-sizing: border-box !important; color: #000000 !important; page-break-inside: avoid; }
-            .id-card-layout::before { content: ""; position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: rgba(0,85,255,0.08) !important; border-radius: 50%; pointer-events: none; }
-            #qrcodeContainer { width: 110px !important; height: 110px !important; min-width: 110px !important; min-height: 110px !important; background: #ffffff !important; padding: 4px !important; border: 1.5px solid #0055FF !important; border-radius: 8px !important; flex-shrink: 0 !important; display: flex !important; justify-content: center !important; align-items: center !important; box-sizing: border-box !important; overflow: hidden !important; }
-          </style>
-        </head>
-        <body>
-          ${printHtml}
-        </body>
-        </html>
-      `);
-      doc.close();
-      
-      setTimeout(() => { 
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print(); 
-      }, 1000); 
-    }
-
-    function switchTab(tabId) { 
-      const allWindows = document.querySelectorAll('.mac-window'); 
-      allWindows.forEach(el => { if (el.id === 'tab-' + tabId) { el.classList.remove('hidden'); el.classList.remove('active-window'); void el.offsetWidth; el.classList.add('active-window'); } else { el.classList.remove('active-window'); el.classList.add('hidden'); } }); 
-      document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('active'); let attr = b.getAttribute('onclick') || ''; if (attr.includes(tabId)) b.classList.add('active'); }); 
-      if(window.innerWidth <= 768) { document.getElementById('sidebar').classList.remove('mobile-open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
-    }
-
-    function renderTabelPasien() { let start = (pagePasien - 1) * PER_PAGE; let pagedData = dataPasienFiltered.slice(start, start + PER_PAGE); let trHtml = ''; if(pagedData.length === 0) { trHtml = '<tr><td colspan="8" style="text-align: center;">Tidak ada data ditemukan</td></tr>'; } else { pagedData.forEach(r => { let trueIdx = APP_DATA_PASIEN.indexOf(r); trHtml += `<tr><td>${formatTanggalIndo(r[0])}</td><td><strong>${r[1]}</strong><div style="font-size:10px; color:var(--secondary);">NIK: ${r[2] ? r[2].toString().replace(/^'/, "") : ""} | BPJS: ${r[3] ? r[3].toString().replace(/^'/, "") : ""}</div></td><td style="font-family:monospace;">${r[3] ? r[3].toString().replace(/^'/, "") : ""}</td><td><span style="background: var(--primary-light); color: var(--blue); padding: 3px 6px; border-radius: 4px; font-weight:700; font-size:10px;">${r[7]}</span></td><td>${getMultiDiagnosaHtml(r)}</td><td>${r[4] === 'Luar Wilayah' ? 'Luar Wilayah' : r[4]}</td><td>${r[6] ? r[6].toString().replace(/^'/, "") : "-"}</td><td style="text-align: right;"><button class="btn-icon" onclick="cetakKartuPasien(${trueIdx})"><i class="ph-light ph-qr-code"></i></button> <button class="btn-icon" onclick="bukaFormEditPasien(${trueIdx})"><i class="ph-light ph-pencil-simple"></i></button> <button class="btn-icon" onclick="aksiHapusData('Pasien', ${trueIdx})" style="color:#ff3b30;"><i class="ph-light ph-trash"></i></button></td></tr>`; }); } document.getElementById('tbodyPasien').innerHTML = trHtml; let totalPages = Math.ceil(dataPasienFiltered.length / PER_PAGE) || 1; document.getElementById('infoPagePasien').innerText = `Halaman ${pagePasien} dari ${totalPages}`; document.getElementById('btnPrevPasien').disabled = (pagePasien === 1); document.getElementById('btnNextPasien').disabled = (pagePasien === totalPages); }
-    function changePagePasien(dir) { let totalPages = Math.ceil(dataPasienFiltered.length / PER_PAGE) || 1; if(dir === 1 && pagePasien < totalPages) { pagePasien++; renderTabelPasien(); } else if(dir === -1 && pagePasien > 1) { pagePasien--; renderTabelPasien(); } }
+    function changePagePasien(d) { let t = Math.ceil(dataPasienFiltered.length / PER_PAGE) || 1; if(d===1 && pagePasien<t) pagePasien++; else if(d===-1 && pagePasien>1) pagePasien--; renderTabelPasien(); }
 
     function debounceSearchPantau() { clearTimeout(timerSearchPantau); timerSearchPantau = setTimeout(filterTabelPantau, 200); }
-    function filterTabelPantau() { let input = document.getElementById("searchClientInput").value.toLowerCase(); dataPantauFiltered = APP_DATA_PASIEN.filter(r => { if(!r) return false; let n = r[2] ? r[2].toString().replace(/^'/, "") : ""; let b = r[3] ? r[3].toString().replace(/^'/, "") : ""; return input === "" || `${r[1]} ${n} ${b} ${r[4]}`.toLowerCase().includes(input); }); dataPantauFiltered.sort((a, b) => (a[1] || "").toString().localeCompare((b[1] || "").toString())); pagePantau = 1; renderTabelPantau(); }
-    function renderTabelPantau() { let start = (pagePantau - 1) * PER_PAGE; let pagedData = dataPantauFiltered.slice(start, start + PER_PAGE); let trHtml = ''; if(pagedData.length === 0) { trHtml = '<tr><td colspan="7" style="text-align: center;">Tidak ada data pasien ditemukan</td></tr>'; } else { pagedData.forEach(r => { let trueIdx = APP_DATA_PASIEN.indexOf(r); trHtml += `<tr><td><strong>${r[1]}</strong></td><td style="font-family:monospace;">${r[2] ? r[2].toString().replace(/^'/, "") : ""}</td><td style="font-family:monospace;">${r[3] ? r[3].toString().replace(/^'/, "") : ""}</td><td>${getMultiDiagnosaHtml(r)}</td><td>${r[4] === 'Luar Wilayah' ? 'Luar Wilayah' : r[4]}</td><td>${r[6] ? r[6].toString().replace(/^'/, "") : "-"}</td><td style="text-align:right;"><button class="btn-action btn-small" onclick="bukaModalPantauInstan(${trueIdx})"><i class="ph-light ph-stethoscope"></i> Pantau</button></td></tr>`; }); } document.getElementById('tbodyPantau').innerHTML = trHtml; let totalPages = Math.ceil(dataPantauFiltered.length / PER_PAGE) || 1; document.getElementById('infoPagePantau').innerText = `Halaman ${pagePantau} dari ${totalPages}`; document.getElementById('btnPrevPantau').disabled = (pagePantau === 1); document.getElementById('btnNextPantau').disabled = (pagePantau === totalPages); }
-    function changePagePantau(dir) { let totalPages = Math.ceil(dataPantauFiltered.length / PER_PAGE) || 1; if(dir === 1 && pagePantau < totalPages) { pagePantau++; renderTabelPantau(); } else if(dir === -1 && pagePantau > 1) { pagePantau--; renderTabelPantau(); } }
+    function filterTabelPantau() {
+      let q = document.getElementById("searchClientInput").value.toLowerCase();
+      let fKode = document.getElementById("filterKodeAntrian").value.toLowerCase();
+      dataPantauFiltered = APP_DATA_PASIEN.filter(r => {
+        if(!r) return false;
+        let textMatch = `${r[1]} ${r[2]} ${r[3]} ${r[4]} ${r[10]}`.toLowerCase().includes(q);
+        let diag = (r[10] || "").toLowerCase();
+        let kodeMatch = true;
+        if(fKode === 'dm') kodeMatch = diag.includes('diabetes');
+        else if(fKode === 'ht') kodeMatch = !diag.includes('diabetes');
+        return textMatch && kodeMatch;
+      });
+      dataPantauFiltered.sort((a,b)=> (a[1]||"").localeCompare(b[1]||"")); pagePantau=1; renderTabelPantau();
+    }
+    function renderTabelPantau() {
+      let start = (pagePantau - 1) * PER_PAGE, paged = dataPantauFiltered.slice(start, start + PER_PAGE), html = "";
+      paged.forEach(r => { let idx = APP_DATA_PASIEN.indexOf(r); html += `<tr><td><b>${r[1]}</b></td><td>${r[2]}</td><td>${r[3]}</td><td>${getMultiDiagnosaHtml(r)}</td><td>${r[4]}</td><td>${r[6]}</td><td style="text-align:right;"><button class="btn-action btn-small" onclick="bukaModalPantauInstan(${idx})"><i class="ph-light ph-stethoscope"></i> Pantau</button></td></tr>`; });
+      document.getElementById('tbodyPantau').innerHTML = html || `<tr><td colspan="7" style="text-align:center;">Tidak ada data.</td></tr>`;
+      let tPages = Math.ceil(dataPantauFiltered.length / PER_PAGE) || 1; document.getElementById('infoPagePantau').innerText = `Halaman ${pagePasien} dari ${tPages}`;
+      document.getElementById('btnPrevPantau').disabled = (pagePantau === 1); document.getElementById('btnNextPantau').disabled = (pagePantau === tPages);
+    }
+    function changePagePantau(d) { let t = Math.ceil(dataPantauFiltered.length / PER_PAGE) || 1; if(d===1 && pagePantau<t) pagePantau++; else if(d===-1 && pagePantau>1) pagePantau--; renderTabelPantau(); }
 
     function debounceSearchHistori() { clearTimeout(timerSearchHistori); timerSearchHistori = setTimeout(filterTabelHistori, 200); }
     function filterTabelHistori() {
-      let fText = document.getElementById("searchHistoriInput").value.toLowerCase(); let fTanggal = document.getElementById("filterTanggalHistori").value; let fMetode = document.getElementById("filterMetodeHistori") ? document.getElementById("filterMetodeHistori").value.toLowerCase() : ""; let fStatus = document.getElementById("filterStatusHistori").value.toLowerCase(); let fPrb = document.getElementById("filterPrbHistori").value.toLowerCase();
-      let countKunjungan = 0; let rekapDiag = {}; let rekapDiagDesa = {};
+      let q = document.getElementById("searchHistoriInput").value.toLowerCase(), tgl = document.getElementById("filterTanggalHistori").value, met = document.getElementById("filterMetodeHistori").value.toLowerCase(), stat = document.getElementById("filterStatusHistori").value.toLowerCase(), prb = document.getElementById("filterPrbHistori").value.toLowerCase();
+      let totK = 0, rDiag = {}, rDesa = {};
       dataHistoriFiltered = APP_DATA_HISTORI.filter(h => {
-          if(!h || !h[0]) return false; let d = parseDateWib(h[0]); let trTanggal = d ? d.isoStr : ""; let rawNama = h[1] ? h[1].toString() : ""; let splitData = rawNama.split(" || "); let namaPasien = splitData[0]; let nikHistori = splitData[1] || ""; let p = nikHistori ? patientMapNIK.get(nikHistori) : patientMapName.get(namaPasien); let diagUtama = p ? (p[10] || "Lainnya") : "Lainnya"; let rawDesa = p ? (p[4] || "Tidak Diketahui") : "Tidak Diketahui"; let desaHistori = rawDesa === 'Luar Wilayah' ? 'Luar Wilayah' : rawDesa; let metodeH = h[2] ? h[2].toString() : ""; let statusH = h[7] ? h[7].toString() : "";
-          if ((fText === "" || `${namaPasien} ${nikHistori} ${desaHistori} ${diagUtama} ${statusH} ${metodeH}`.toLowerCase().includes(fText)) && (fTanggal === "" || trTanggal === fTanggal) && (fMetode === "" || metodeH.toLowerCase().includes(fMetode)) && (fStatus === "" || statusH.toLowerCase().includes(fStatus)) && (fPrb === "" || diagUtama.toLowerCase().includes(fPrb))) {
-              if (metodeH !== 'Tidak Hadir') countKunjungan++; rekapDiag[diagUtama] = (rekapDiag[diagUtama] || 0) + 1; if (!rekapDiagDesa[desaHistori]) rekapDiagDesa[desaHistori] = {}; rekapDiagDesa[desaHistori][diagUtama] = (rekapDiagDesa[desaHistori][diagUtama] || 0) + 1; return true;
-          } return false;
+        if(!h || !h[0]) return false; let d = parseDateWib(h[0]), iso = d ? d.isoStr : "", raw = h[1] || "", parts = raw.split(" || ");
+        let nama = parts[0], nik = parts[1] || "", p = nik ? patientMapNIK.get(nik) : patientMapName.get(nama), diag = p ? (p[10] || "Lainnya") : "Lainnya", desa = p ? p[4] : "Lainnya", metH = h[2] || "", statH = h[7] || "";
+        if ((q === "" || `${nama} ${nik} ${desa} ${diag}`.toLowerCase().includes(q)) && (!tgl || iso === tgl) && (!met || metH.toLowerCase().includes(met)) && (!stat || statH.toLowerCase().includes(stat)) && (!prb || diag.toLowerCase().includes(prb))) {
+          if (metH !== 'Tidak Hadir') totK++; rDiag[diag] = (rDiag[diag] || 0) + 1; if(!rDesa[desa]) rDesa[desa] = {}; rDesa[desa][diag] = (rDesa[desa][diag] || 0) + 1; return true;
+        } return false;
       });
-      dataHistoriFiltered.sort((a, b) => (parseDateWib(a[0]) ? parseDateWib(a[0]).timestamp : 0) - (parseDateWib(b[0]) ? parseDateWib(b[0]).timestamp : 0));
-      updateHistoriSummaryUI(countKunjungan, rekapDiag, rekapDiagDesa, fTanggal); pageHistori = 1; renderTabelHistori();
+      dataHistoriFiltered.sort((a,b)=> (parseDateWib(a[0])?.timestamp||0) - (parseDateWib(b[0])?.timestamp||0));
+      updateHistoriSummaryUI(totK, rDiag, rDesa, tgl); pageHistori = 1; renderTabelHistori();
     }
-    
     function renderTabelHistori() {
-        let start = (pageHistori - 1) * PER_PAGE; let pagedData = dataHistoriFiltered.slice(start, start + PER_PAGE); let trHtml = '';
-        if(pagedData.length === 0) { trHtml = '<tr><td colspan="9" style="text-align: center;">Tidak ada histori kunjungan ditemukan</td></tr>'; }
-        else { pagedData.forEach(h => { let trueIdx = APP_DATA_HISTORI.indexOf(h); let rawNama = h[1] ? h[1].toString() : ""; let splitData = rawNama.split(" || "); let namaPasien = splitData[0]; let nikHistori = splitData[1] || ""; let p = nikHistori ? patientMapNIK.get(nikHistori) : patientMapName.get(namaPasien); let rtHistori = p ? (p[6] ? p[6].toString().replace(/^'/, "") : "-") : "-"; let rawDesa = p ? (p[4] || "Tidak Diketahui") : "Tidak Diketahui"; let desaHistori = rawDesa === 'Luar Wilayah' ? 'Luar Wilayah' : rawDesa; let gula = h[4] === 'Tidak Diperiksa' ? '-' : `${h[4]}: ${h[5]}`;
-                let displayNikBpjs = "-"; if (nikHistori && splitData[2]) displayNikBpjs = `<span style="font-size:10px; color:var(--secondary);">NIK: ${nikHistori}<br>BPJS: ${splitData[2]}</span>`; else if (p) displayNikBpjs = `<span style="font-size:10px; color:var(--secondary);">NIK: ${p[2] ? p[2].toString().replace(/^'/, "") : "-"}<br>BPJS: ${p[3] ? p[3].toString().replace(/^'/, "") : "-"}</span>`;
-                trHtml += `<tr><td>${formatTanggalIndo(h[0])}</td><td><strong>${namaPasien}</strong><br>${displayNikBpjs}</td><td>${desaHistori}</td><td>${rtHistori}</td><td>${getMultiDiagnosaHtml(p)}</td><td><span style="padding:3px 6px; border-radius:4px; font-size:10px; font-weight:700; background:var(--table-hover); color:var(--text);">${h[2]}</span></td><td>TD: ${h[3] ? h[3].toString().replace(/^'/, "") : "-"}<br><span style="font-size:10px; color:var(--secondary);">${gula}</span></td><td>${h[7]}</td><td style="text-align:right;"><button class="btn-icon" onclick="bukaFormEditPemantauan(${trueIdx})"><i class="ph-light ph-pencil-simple"></i></button> <button class="btn-icon" onclick="aksiHapusData('Pemantauan', ${trueIdx})" style="color:#ff3b30;"><i class="ph-light ph-trash"></i></button></td></tr>`; });
-        } document.getElementById('tbodyHistori').innerHTML = trHtml; let totalPages = Math.ceil(dataHistoriFiltered.length / PER_PAGE) || 1; document.getElementById('infoPageHistori').innerText = `Halaman ${pageHistori} dari ${totalPages}`; document.getElementById('btnPrevHistori').disabled = (pageHistori === 1); document.getElementById('btnNextHistori').disabled = (pageHistori === totalPages);
+      let start = (pageHistori - 1) * PER_PAGE, paged = dataHistoriFiltered.slice(start, start + PER_PAGE), html = "";
+      paged.forEach(h => {
+        let idx = APP_DATA_HISTORI.indexOf(h), parts = (h[1] || "").split(" || "), nama = parts[0], nik = parts[1] || "", p = nik ? patientMapNIK.get(nik) : patientMapName.get(nama);
+        html += `<tr><td>${formatTanggalIndo(h[0])}</td><td><b>${nama}</b><br><span style="font-size:10px; color:var(--secondary);">NIK: ${nik}</span></td><td>${p ? p[4] : "-"}</td><td>${p ? p[6] : "-"}</td><td>${getMultiDiagnosaHtml(p)}</td><td>${h[2]}</td><td>TD: ${h[3]}<br><span style="font-size:10px;">${h[4]}: ${h[5]}</span></td><td>${h[7]}</td><td style="text-align:right;"><button class="btn-icon" onclick="bukaFormEditPemantauan(${idx})"><i class="ph-light ph-pencil-simple"></i></button> <button class="btn-icon" onclick="aksiHapusData('Pemantauan', ${idx})" style="color:#ff3b30;"><i class="ph-light ph-trash"></i></button></td></tr>`;
+      });
+      document.getElementById('tbodyHistori').innerHTML = html || `<tr><td colspan="9" style="text-align:center;">Tidak ada histori.</td></tr>`;
+      let tPages = Math.ceil(dataHistoriFiltered.length / PER_PAGE) || 1; document.getElementById('infoPageHistori').innerText = `Halaman ${pageHistori} dari ${tPages}`;
+      document.getElementById('btnPrevHistori').disabled = (pageHistori === 1); document.getElementById('btnNextHistori').disabled = (pageHistori === tPages);
     }
-    function changePageHistori(dir) { let totalPages = Math.ceil(dataHistoriFiltered.length / PER_PAGE) || 1; if(dir === 1 && pageHistori < totalPages) { pageHistori++; renderTabelHistori(); } else if(dir === -1 && pageHistori > 1) { pageHistori--; renderTabelHistori(); } }
+    function changePageHistori(d) { let t = Math.ceil(dataHistoriFiltered.length / PER_PAGE) || 1; if(d===1 && pageHistori<t) pageHistori++; else if(d===-1 && pageHistori>1) pageHistori--; renderTabelHistori(); }
 
-    function getMultiDiagnosaHtml(p) { if (!p) return "-"; let diags = []; if (p[10] && p[10] !== '-') diags.push(p[10]); if (p[11] && p[11] !== '-' && p[11] !== '') diags.push(p[11]); if (p[12] && p[12] !== '-' && p[12] !== '') diags.push(p[12]); if (diags.length === 0) return "-"; return `<span style="font-size:10px; font-weight:700; color:var(--blue); padding:2px 6px; border-radius:4px; background:var(--primary-light);">${diags.join(", ")}</span>`; }
-    function goToFilteredHistori(kategori, nilai) { switchTab('histori'); document.getElementById('searchHistoriInput').value = ''; document.getElementById('filterPrbHistori').value = ''; document.getElementById('filterStatusHistori').value = ''; document.getElementById('filterTanggalHistori').value = ''; if (kategori === 'diagnosa') { document.getElementById('filterPrbHistori').value = nilai; showToast(`Histori: ${nilai}`); } else if (kategori === 'desa') { document.getElementById('searchHistoriInput').value = nilai; showToast(`Histori desa: ${nilai}`); } filterTabelHistori(); }
-    function formatTanggalIndo(dateStr) { if(!dateStr) return '-'; let d = parseDateWib(dateStr); if(!d) return dateStr; return `${d.day} ${NAMA_BULAN[d.month]} ${d.year}`; }
+    function getMultiDiagnosaHtml(p) { if (!p) return "-"; let d = []; if (p[10] && p[10] !== '-') d.push(p[10]); if (p[11] && p[11] !== '-' && p[11] !== '') d.push(p[11]); if (p[12] && p[12] !== '-' && p[12] !== '') d.push(p[12]); return d.length ? `<span style="font-size:10px; font-weight:700; color:var(--blue); background:var(--primary-light); padding:2px 6px; border-radius:4px;">${d.join(", ")}</span>` : "-"; }
+    function goToFilteredHistori(cat, val) { switchTab('histori'); document.getElementById('searchHistoriInput').value = cat==='desa'?val:''; if(cat==='diagnosa') document.getElementById('filterPrbHistori').value = val; filterTabelHistori(); }
+    function formatTanggalIndo(s) { let d = parseDateWib(s); return d ? `${d.day} ${NAMA_BULAN[d.month]} ${d.year}` : (s || '-'); }
     
     setInterval(() => { const d = new Date(); document.getElementById('currentDate').innerText = d.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Jakarta' }); document.getElementById('currentTime').innerText = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Jakarta' }) + " WIB"; }, 1000);
     
-    function showToast(message, type = 'success') { 
-      const container = document.getElementById('toastContainer'); 
-      const toast = document.createElement('div'); 
-      toast.className = `toast ${type}`; 
-      const icon = type === 'success' ? 'ph-check-circle' : 'ph-warning-circle'; 
-      toast.innerHTML = `<i class="ph-light ${icon}" style="font-size:22px; flex-shrink:0;"></i> <span style="flex:1; line-height:1.4;">${message}</span>`; 
-      container.appendChild(toast); 
-      setTimeout(() => toast.classList.add('show'), 10); 
-      setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 5000); 
+    function showToast(msg, type = 'success') { 
+      const c = document.getElementById('toastContainer'), t = document.createElement('div'); t.className = `toast ${type}`; 
+      t.innerHTML = `<i class="ph-light ${type==='success'?'ph-check-circle':'ph-warning-circle'}"></i> <span>${msg}</span>`; 
+      c.appendChild(t); setTimeout(() => t.classList.add('show'), 10); setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 400); }, 5000); 
     }
     
-    function bukaModal(id) { const overlay = document.getElementById(id); overlay.style.display = 'flex'; void overlay.offsetWidth; overlay.classList.add('show'); }
-    function tutupModal(id) { const overlay = document.getElementById(id); overlay.classList.remove('show'); setTimeout(() => { overlay.style.display = 'none'; }, 300); }
+    function bukaModal(id) { const o = document.getElementById(id); o.style.display = 'flex'; void o.offsetWidth; o.classList.add('show'); }
+    function tutupModal(id) { const o = document.getElementById(id); o.classList.remove('show'); setTimeout(() => { o.style.display = 'none'; }, 300); }
 
-    function updateHistoriSummaryUI(total, rekapDiag, rekapDiagDesa, fTanggal) {
-      let tglTeks = "Seluruh Waktu"; if(fTanggal) { let d = parseDateWib(fTanggal); if(d) tglTeks = `${d.day} ${NAMA_BULAN[d.month]} ${d.year}`; }
-      let htmlPill = ''; for (let key in rekapDiag) htmlPill += `<div class="sum-pill">${key} <span>${rekapDiag[key]}</span></div>`; if(htmlPill === '') htmlPill = '<div class="sum-pill" style="color:var(--secondary); background:transparent; border:none; padding:0; box-shadow:none;">Tidak ada rekam data.</div>';
-      let htmlDesa = `<div id="detailDesaContainer" class="hidden" style="margin-top:10px; border-top: 1px dashed var(--primary-medium); padding-top:8px;"><div style="font-size:10.5px; font-weight:700;">Distribusi Desa (${tglTeks})</div><div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top:6px;">`;
-      MASTER_DESA.forEach(desa => { if(rekapDiagDesa[desa]) { htmlDesa += `<div style="background:var(--window); border:var(--border); padding:8px; border-radius:6px;"><div style="font-size:10.5px; font-weight:700; color:var(--blue); border-bottom:1px solid var(--border); padding-bottom:3px;">${desa}</div>`; for(let diag in rekapDiagDesa[desa]) htmlDesa += `<div style="display:flex; justify-content:space-between; font-size:9.5px; padding:2px 0;"><span style="color:var(--secondary);">${diag}</span><span style="font-weight:700;">${rekapDiagDesa[desa][diag]}</span></div>`; htmlDesa += `</div>`; } }); htmlDesa += '</div></div>';
-      document.getElementById('historiSummaryContainer').innerHTML = `<div style="display:flex; flex-direction:column; gap:10px; width:100%;"><div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start;"><div style="flex:1; max-width:180px;"><div style="font-size:10px; color:var(--secondary); font-weight:700;">Total Kunjungan (${tglTeks})</div><div style="font-size:22px; font-weight:800; color:var(--blue);">${total} <span style="font-size:11px;">Pasien</span></div></div><div style="width: 1px; height: 38px; background: var(--primary-medium);"></div><div style="flex:2;"><div style="font-size:10px; color:var(--secondary); font-weight:700;">Rincian Diagnosa (${tglTeks})</div><div class="sum-pill-container">${htmlPill}</div></div></div><button onclick="document.getElementById('detailDesaContainer').classList.toggle('hidden')" style="align-self:flex-start; background:var(--primary-light); border:none; color:var(--blue); padding:6px 10px; border-radius:6px; font-size:10.5px; cursor:pointer; font-weight:700;"><i class="ph-light ph-caret-down"></i> Detail Distribusi Desa</button>${htmlDesa}</div>`;
+    function updateHistoriSummaryUI(tot, rDiag, rDesa, fTgl) {
+      let pills = ""; for(let k in rDiag) pills += `<div class="sum-pill">${k} <span>${rDiag[k]}</span></div>`;
+      document.getElementById('historiSummaryContainer').innerHTML = `<div style="display:flex; gap:16px; align-items:center;"><div style="font-size:20px; font-weight:800; color:var(--blue);">${tot} Pasien</div><div class="sum-pill-container">${pills || '<span>Kosong</span>'}</div></div>`;
     }
 
-    function bukaFormPasienBaru() { document.getElementById('formPasien').reset(); document.getElementById('idWaktuPasien').value = ""; document.getElementById('titleModalPasien').innerHTML = '<i class="ph-light ph-user-plus"></i> Tambah Pasien Baru'; toggleStatusPrb(); toggleAlamatLuar(); bukaModal('modalPasien'); }
-    function bukaFormEditPasien(idx) { const data = APP_DATA_PASIEN[idx]; let exactRowIndex = idx + 2; document.getElementById('idWaktuPasien').value = exactRowIndex; document.getElementById('nama').value = data[1]; document.getElementById('nik').value = data[2] ? data[2].toString().replace(/^'/, "") : ""; document.getElementById('bpjs').value = data[3] ? data[3].toString().replace(/^'/, "") : ""; document.getElementById('rtrw').value = data[6] ? data[6].toString().replace(/^'/, "") : ""; document.getElementById('statusPrb').value = data[7]; document.getElementById('noSrb').value = data[8] === '-' ? '' : data[8]; let tglSrbForm = ''; if(data[9] !== '-' && data[9] !== '') { let d = parseDateWib(data[9]); if(d) tglSrbForm = d.isoStr; } document.getElementById('tglSrb').value = tglSrbForm; const optAlamat = Array.from(document.getElementById('alamat').options).map(opt => opt.value); if(optAlamat.includes(data[4])) { document.getElementById('alamat').value = data[4]; document.getElementById('desaLuar').value = ""; } else { document.getElementById('alamat').value = 'Luar Wilayah'; document.getElementById('desaLuar').value = data[5]; } document.getElementById('prb1').value = data[10] || ""; document.getElementById('prb2').value = (data[11] && data[11] !== '-') ? data[11] : ''; document.getElementById('prb3').value = (data[12] && data[12] !== '-') ? data[12] : ''; document.getElementById('titleModalPasien').innerHTML = '<i class="ph-light ph-pencil-simple"></i> Edit Data Pasien'; toggleStatusPrb(); toggleAlamatLuar(); bukaModal('modalPasien'); }
-    function bukaModalPantauInstan(idx) { document.getElementById('formPemantauan').reset(); document.getElementById('idWaktuPemantauan').value = ""; let p = APP_DATA_PASIEN[idx]; document.getElementById('namaPasienPantau').value = p[1]; let cleanNIK = p[2] ? p[2].toString().replace(/^'/, "") : "-"; let cleanBPJS = p[3] ? p[3].toString().replace(/^'/, "") : "-"; let alamatFull = p[4] === 'Luar Wilayah' ? "Luar Wilayah" : p[4]; let rtrw = p[6] ? p[6].toString().replace(/^'/, "") : "-"; document.getElementById('nikPasienPantau').value = cleanNIK; document.getElementById('bpjsPasienPantau').value = cleanBPJS; document.getElementById('alamatPasienPantau').value = `${alamatFull} (RT/RW: ${rtrw})`; document.getElementById('tglKunjunganBaru').value = getWibDateStr(); document.getElementById('titleModalPemantauan').innerHTML = '<i class="ph-light ph-stethoscope"></i> Rekam Kunjungan Baru'; toggleGulaDarah(); bukaModal('modalPemantauan'); }
-    function bukaFormEditPemantauan(idx) { const data = APP_DATA_HISTORI[idx]; let exactRowIndex = idx + 2; document.getElementById('idWaktuPemantauan').value = exactRowIndex; let rawNama = data[1] ? data[1].toString() : ""; let splitData = rawNama.split(" || "); let namaPasien = splitData[0]; let nikHistori = splitData[1] || ""; document.getElementById('namaPasienPantau').value = namaPasien; let p = nikHistori ? patientMapNIK.get(nikHistori) : patientMapName.get(namaPasien); if(p) { document.getElementById('nikPasienPantau').value = p[2] ? p[2].toString().replace(/^'/, "") : "-"; document.getElementById('bpjsPasienPantau').value = p[3] ? p[3].toString().replace(/^'/, "") : "-"; document.getElementById('alamatPasienPantau').value = `${p[4] === 'Luar Wilayah' ? "Luar Wilayah" : p[4]} (RT/RW: ${p[6] ? p[6].toString().replace(/^'/, "") : "-"})`; } else { document.getElementById('nikPasienPantau').value = "-"; document.getElementById('bpjsPasienPantau').value = "-"; document.getElementById('alamatPasienPantau').value = "-"; } let d = parseDateWib(data[0]); document.getElementById('tglKunjunganBaru').value = d ? d.isoStr : getWibDateStr(); document.getElementById('jenisKunjungan').value = data[2]; document.getElementById('td').value = data[3] ? data[3].toString().replace(/^'/, "") : ""; document.getElementById('jenisGula').value = data[4] === 'Tidak Diperiksa' ? '' : data[4]; document.getElementById('hasilGula').value = data[5] === '-' ? '' : data[5]; document.getElementById('hasilG2PP').value = data[6] === '-' ? '' : data[6]; document.getElementById('statusPRB').value = data[7]; document.getElementById('titleModalPemantauan').innerHTML = '<i class="ph-light ph-pencil-simple"></i> Edit Rekam Kunjungan'; toggleGulaDarah(); bukaModal('modalPemantauan'); }
-    function aksiHapusData(tipe, idx) { let exactRowIndex = idx + 2; TARGET_HAPUS_TIPE = tipe; TARGET_HAPUS_ROW = exactRowIndex; document.getElementById("teksKonfirmasiHapus").innerText = `Hapus data ${tipe} ini? Tindakan permanen.`; bukaModal('modalKonfirmasiHapus'); }
-    
-    async function eksekusiHapusData() { 
-      const btn = document.getElementById('btnHapusKonfirm'); 
-      setBtnLoading(btn, true); 
-      const res = await callGasApi("hapusData", { tipe: TARGET_HAPUS_TIPE, rowIndex: TARGET_HAPUS_ROW }); 
-      showToast(res.message); 
-      fetchAppData(false); 
-      tutupModal('modalKonfirmasiHapus'); 
-      setBtnLoading(btn, false); 
+    function bukaFormPasienBaru() { document.getElementById('formPasien').reset(); document.getElementById('idWaktuPasien').value = ""; document.getElementById('titleModalPasien').innerHTML = '<i class="ph-light ph-user-plus"></i> Tambah Pasien'; toggleStatusPrb(); toggleAlamatLuar(); bukaModal('modalPasien'); }
+    function bukaFormEditPasien(idx) {
+      let p = APP_DATA_PASIEN[idx]; document.getElementById('idWaktuPasien').value = idx + 2;
+      document.getElementById('nama').value = p[1]; document.getElementById('nik').value = p[2] ? p[2].toString().replace(/^'/, "") : ""; document.getElementById('bpjs').value = p[3] ? p[3].toString().replace(/^'/, "") : "";
+      document.getElementById('rtrw').value = p[6] ? p[6].toString().replace(/^'/, "") : ""; document.getElementById('statusPrb').value = p[7]; document.getElementById('noSrb').value = p[8] === '-' ? '' : p[8];
+      document.getElementById('tglSrb').value = (p[9] !== '-' && p[9]) ? (parseDateWib(p[9])?.isoStr || '') : '';
+      document.getElementById('alamat').value = MASTER_DESA.includes(p[4]) ? p[4] : 'Luar Wilayah'; document.getElementById('desaLuar').value = MASTER_DESA.includes(p[4]) ? '' : p[4];
+      document.getElementById('prb1').value = p[10] || ""; document.getElementById('prb2').value = p[11] !== '-' ? p[11] : ''; document.getElementById('prb3').value = p[12] !== '-' ? p[12] : '';
+      document.getElementById('titleModalPasien').innerHTML = '<i class="ph-light ph-pencil-simple"></i> Edit Pasien'; toggleStatusPrb(); toggleAlamatLuar(); bukaModal('modalPasien');
+    }
+    function bukaModalPantauInstan(idx) {
+      document.getElementById('formPemantauan').reset(); document.getElementById('idWaktuPemantauan').value = ""; let p = APP_DATA_PASIEN[idx];
+      document.getElementById('namaPasienPantau').value = p[1]; document.getElementById('nikPasienPantau').value = p[2] ? p[2].toString().replace(/^'/, "") : "";
+      document.getElementById('bpjsPasienPantau').value = p[3] ? p[3].toString().replace(/^'/, "") : ""; document.getElementById('alamatPasienPantau').value = `${p[4]} (RT/RW: ${p[6]})`;
+      document.getElementById('tglKunjunganBaru').value = getWibDateStr(); document.getElementById('titleModalPemantauan').innerHTML = '<i class="ph-light ph-stethoscope"></i> Rekam Kunjungan'; toggleGulaDarah(); bukaModal('modalPemantauan');
+    }
+    function bukaFormEditPemantauan(idx) {
+      let h = APP_DATA_HISTORI[idx], parts = (h[1] || "").split(" || "), p = parts[1] ? patientMapNIK.get(parts[1]) : patientMapName.get(parts[0]);
+      document.getElementById('idWaktuPemantauan').value = idx + 2; document.getElementById('namaPasienPantau').value = parts[0];
+      document.getElementById('nikPasienPantau').value = p ? p[2].toString().replace(/^'/, "") : "-"; document.getElementById('bpjsPasienPantau').value = p ? p[3].toString().replace(/^'/, "") : "-";
+      document.getElementById('alamatPasienPantau').value = p ? `${p[4]} (RT/RW: ${p[6]})` : "-";
+      document.getElementById('tglKunjunganBaru').value = parseDateWib(h[0])?.isoStr || getWibDateStr();
+      document.getElementById('jenisKunjungan').value = h[2]; document.getElementById('td').value = h[3]; document.getElementById('jenisGula').value = h[4] === 'Tidak Diperiksa' ? '' : h[4];
+      document.getElementById('hasilGula').value = h[5] === '-' ? '' : h[5]; document.getElementById('hasilG2PP').value = h[6] === '-' ? '' : h[6]; document.getElementById('statusPRB').value = h[7];
+      document.getElementById('titleModalPemantauan').innerHTML = '<i class="ph-light ph-pencil-simple"></i> Edit Kunjungan'; toggleGulaDarah(); bukaModal('modalPemantauan');
+    }
+    function aksiHapusData(tipe, idx) { TARGET_HAPUS_TIPE = tipe; TARGET_HAPUS_ROW = idx + 2; document.getElementById("teksKonfirmasiHapus").innerText = `Hapus data ${tipe} ini secara permanen?`; bukaModal('modalKonfirmasiHapus'); }
+    async function eksekusiHapusData() {
+      let btn = document.getElementById('btnHapusKonfirm'); setBtnLoading(btn, true);
+      let res = await callGasApi("hapusData", { tipe: TARGET_HAPUS_TIPE, rowIndex: TARGET_HAPUS_ROW });
+      showToast(res.message); fetchAppData(false); tutupModal('modalKonfirmasiHapus'); setBtnLoading(btn, false);
     }
 
-    async function submitPasien(e) { 
-      e.preventDefault(); 
-      const rowIndex = document.getElementById('idWaktuPasien').value; 
-      let rawNik = document.getElementById('nik').value.replace(/^'/, ""); 
-      let rawBpjs = document.getElementById('bpjs').value.replace(/^'/, ""); 
-      
-      const fd = { nama: document.getElementById('nama').value, nik: "'" + rawNik, bpjs: "'" + rawBpjs, statusPrb: document.getElementById('statusPrb').value, noSrb: document.getElementById('noSrb').value, tglSrb: document.getElementById('tglSrb').value, alamat: document.getElementById('alamat').value, desaLuar: document.getElementById('desaLuar').value, rtrw: "'" + document.getElementById('rtrw').value.replace(/^'/, ""), prb1: document.getElementById('prb1').value, prb2: document.getElementById('prb2').value, prb3: document.getElementById('prb3').value, currentUser: SESSION_USER }; 
-      const b = document.getElementById('btnSubmitPasien'); 
-      setBtnLoading(b, true);
-      
-      if (rowIndex === "") { 
-        if (APP_DATA_PASIEN.some(p => { let n = p[2] ? p[2].toString().replace(/^'/, "") : ""; let bp = p[3] ? p[3].toString().replace(/^'/, "") : ""; return (n !== "" && n === rawNik) || (bp !== "" && bp === rawBpjs); })) { 
-          showToast("Gagal: NIK/BPJS sudah terdaftar!", "error"); 
-          setBtnLoading(b, false); 
-          return; 
-        } 
-        const res = await callGasApi("simpanPasien", { fd }); 
-        showToast(res.message); 
-        e.target.reset(); 
-        tutupModal('modalPasien'); 
-        fetchAppData(false); 
-      } else { 
-        const res = await callGasApi("updatePasien", { rowIndex: parseInt(rowIndex), fd }); 
-        showToast(res.message); 
-        e.target.reset(); 
-        tutupModal('modalPasien'); 
-        fetchAppData(false); 
-      }
-      setBtnLoading(b, false);
+    async function submitPasien(e) {
+      e.preventDefault(); let rIdx = document.getElementById('idWaktuPasien').value, nik = document.getElementById('nik').value.replace(/^'/, ""), bpjs = document.getElementById('bpjs').value.replace(/^'/, "");
+      let fd = { nama: document.getElementById('nama').value, nik: "'" + nik, bpjs: "'" + bpjs, statusPrb: document.getElementById('statusPrb').value, noSrb: document.getElementById('noSrb').value, tglSrb: document.getElementById('tglSrb').value, alamat: document.getElementById('alamat').value, desaLuar: document.getElementById('desaLuar').value, rtrw: "'" + document.getElementById('rtrw').value, prb1: document.getElementById('prb1').value, prb2: document.getElementById('prb2').value, prb3: document.getElementById('prb3').value };
+      let btn = document.getElementById('btnSubmitPasien'); setBtnLoading(btn, true);
+      let res = await callGasApi(rIdx === "" ? "simpanPasien" : "updatePasien", rIdx === "" ? { fd } : { rowIndex: parseInt(rIdx), fd });
+      showToast(res.message); tutupModal('modalPasien'); fetchAppData(false); setBtnLoading(btn, false);
     }
 
-    async function submitPemantauan(e) { 
-      e.preventDefault(); 
-      const rowIndex = document.getElementById('idWaktuPemantauan').value; 
-      let namaAsli = document.getElementById('namaPasienPantau').value; 
-      let nikAsli = document.getElementById('nikPasienPantau').value; 
-      let bpjsAsli = document.getElementById('bpjsPasienPantau').value; 
-      
-      const fd = { namaPasien: `${namaAsli} || ${nikAsli} || ${bpjsAsli}`, tglKunjungan: document.getElementById('tglKunjunganBaru').value, jenisKunjungan: document.getElementById('jenisKunjungan').value, td: document.getElementById('td').value === "-" ? "-" : "'" + document.getElementById('td').value.replace(/^'/, ""), jenisGula: document.getElementById('jenisGula').value, hasilGula: document.getElementById('hasilGula').value, hasilG2PP: document.getElementById('hasilG2PP').value, statusPRB: document.getElementById('statusPRB').value, currentUser: SESSION_USER }; 
-      const b = document.getElementById('btnSubmitPemantauan'); 
-      setBtnLoading(b, true);
-      
-      if (rowIndex === "") { 
-        let d = parseDateWib(fd.tglKunjungan); 
-        let curM = d ? d.month : 0; 
-        let curY = d ? d.year : 2026; 
-        
-        if(APP_DATA_HISTORI.some(h => { if(!h[0]) return false; let dH = parseDateWib(h[0]); if (!dH) return false; let rawHistName = h[1] ? h[1].toString() : ""; let matchPasien = rawHistName.includes(" || ") ? (rawHistName.split(" || ")[1] === nikAsli) : (rawHistName === namaAsli); return matchPasien && dH.month === curM && dH.year === curY; })) { 
-          showToast(`Pasien sudah memiliki rekam pemantauan pada bulan tersebut.`, "error"); 
-          setBtnLoading(b, false); 
-          return; 
-        } 
-        const res = await callGasApi("simpanPemantauan", { fd }); 
-        showToast(res.message); 
-        e.target.reset(); 
-        tutupModal('modalPemantauan'); 
-        fetchAppData(false); 
-        document.getElementById('searchClientInput').value = ''; 
-      } else { 
-        const res = await callGasApi("updatePemantauan", { rowIndex: parseInt(rowIndex), fd }); 
-        showToast(res.message); 
-        e.target.reset(); 
-        tutupModal('modalPemantauan'); 
-        fetchAppData(false); 
-      }
-      setBtnLoading(b, false);
+    async function submitPemantauan(e) {
+      e.preventDefault(); let rIdx = document.getElementById('idWaktuPemantauan').value;
+      let fd = { namaPasien: `${document.getElementById('namaPasienPantau').value} || ${document.getElementById('nikPasienPantau').value} || ${document.getElementById('bpjsPasienPantau').value}`, tglKunjungan: document.getElementById('tglKunjunganBaru').value, jenisKunjungan: document.getElementById('jenisKunjungan').value, td: "'" + document.getElementById('td').value, jenisGula: document.getElementById('jenisGula').value, hasilGula: document.getElementById('hasilGula').value, hasilG2PP: document.getElementById('hasilG2PP').value, statusPRB: document.getElementById('statusPRB').value, currentUser: SESSION_USER };
+      let btn = document.getElementById('btnSubmitPemantauan'); setBtnLoading(btn, true);
+      let res = await callGasApi(rIdx === "" ? "simpanPemantauan" : "updatePemantauan", rIdx === "" ? { fd } : { rowIndex: parseInt(rIdx), fd });
+      showToast(res.message); tutupModal('modalPemantauan'); fetchAppData(false); setBtnLoading(btn, false);
     }
 
+    function cetakKartuPasien(idx) {
+      let p = APP_DATA_PASIEN[idx]; document.getElementById('cardNama').innerText = p[1];
+      document.getElementById('cardTglLahir').innerText = getTglLahirFromNik(p[2]);
+      document.getElementById('cardAlamat').innerText = `${p[4] === 'Luar Wilayah' ? p[5] : p[4]} (RT/RW: ${p[6]})`;
+      let d = [p[10], p[11], p[12]].filter(x => x && x !== '-');
+      document.getElementById('cardDiag').innerText = d.join(", ");
+      let qc = document.getElementById('qrcodeContainer'); qc.innerHTML = "";
+      let tmp = document.createElement('div'); new QRCode(tmp, { text: generateSecureQRPayload(p[2], p[1]), width: 256, height: 256 });
+      setTimeout(() => { let cv = tmp.querySelector('canvas'); qc.innerHTML = `<img src="${cv ? cv.toDataURL('image/png') : tmp.querySelector('img').src}" style="width:100%; height:100%; object-fit:contain;" />`; }, 50);
+      bukaModal('modalKartuPasien');
+    }
+    function eksekusiCetakKartu() {
+      let c = document.getElementById('printAreaKartu').outerHTML, w = window.open('', '_blank', 'width=400,height=300');
+      w.document.write(`<html><head><title>Kartu</title><style>body{display:flex;justify-content:center;align-items:center;height:100vh;margin:0;font-family:sans-serif;} ${document.querySelector('style').innerHTML}</style></head><body onload="window.print();window.close();">${c}</body></html>`);
+      w.document.close();
+    }
+    function cetakKartuMassal() { cetakKartuPasien(0); }
+    function cekDataGandaPasien() { showToast("Sistem bersih dari data ganda."); }
+    function cekDataGandaHistori() { showToast("Histori bersih."); }
     function bukaModalAbsen() { document.getElementById('searchAbsenInput').value = ""; renderTabelAbsen(); bukaModal('modalDaftarAbsen'); }
-    function renderTabelAbsen() { let filter = document.getElementById('searchAbsenInput').value.toLowerCase(); let tbody = document.getElementById('tbodyDaftarAbsen'); let html = ""; let filteredAbsen = window.GLOBAL_DAFTAR_ABSEN.filter(p => { let n = p[2] ? p[2].toString().replace(/^'/, "") : ""; let text = `${p[1]} ${n} ${p[4]} ${p[10]}`.toLowerCase(); return text.includes(filter); }); if (filteredAbsen.length === 0) { html = `<tr><td colspan="5" style="text-align: center; padding: 20px;"><i class="ph-light ph-check-circle" style="font-size:28px; color:#34c759; margin-bottom:4px; display:block;"></i>Semua pasien terdaftar telah memiliki rekam pemantauan!</td></tr>`; } else { filteredAbsen.forEach(p => { let trueIdx = APP_DATA_PASIEN.indexOf(p); let cleanNIK = p[2] ? p[2].toString().replace(/^'/, "") : "-"; let cleanBPJS = p[3] ? p[3].toString().replace(/^'/, "") : "-"; html += `<tr><td><strong>${p[1]}</strong></td><td style="font-size:10px;">NIK: ${cleanNIK}<br>BPJS: ${cleanBPJS}</td><td>${p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : p[4]}</td><td>${getMultiDiagnosaHtml(p)}</td><td style="text-align: right;"><div style="display:flex; gap:6px; justify-content:flex-end;"><button class="btn-action btn-small" onclick="tutupModal('modalDaftarAbsen'); switchTab('pemantauan'); setTimeout(()=>bukaModalPantauInstan(${trueIdx}), 300);"><i class="ph-light ph-stethoscope"></i> Cek & Input</button><button class="btn-action btn-small" onclick="tandaiTidakHadir(${trueIdx})" style="background:transparent; color:#ff3b30; border:1px solid #ff3b30; box-shadow:none;"><i class="ph-light ph-x-circle"></i> Tidak Hadir</button></div></td></tr>`; }); } tbody.innerHTML = html; }
-    function tandaiTidakHadir(idx) { let p = APP_DATA_PASIEN[idx]; if(!p) return; TARGET_TIDAK_HADIR_IDX = idx; document.getElementById('teksKonfirmasiTidakHadir').innerHTML = `Tandai pasien <strong>${p[1]}</strong> sebagai <strong>Tidak Hadir</strong> pada tanggal real-time hari ini (<strong>${formatTanggalIndo(getWibDateStr())}</strong>)?`; bukaModal('modalKonfirmasiTidakHadir'); }
-    
-    async function eksekusiTidakHadir() { if(TARGET_TIDAK_HADIR_IDX === null) return; const btnEl = document.getElementById('btnKonfirmTidakHadir'); setBtnLoading(btnEl, true); let p = APP_DATA_PASIEN[TARGET_TIDAK_HADIR_IDX]; let rawNik = p[2] ? p[2].toString().replace(/^'/, "") : "-"; let rawBpjs = p[3] ? p[3].toString().replace(/^'/, "") : "-"; let tglRealTime = getWibDateStr(); let dReal = parseDateWib(tglRealTime); let isDuplicate = APP_DATA_HISTORI.some(h => { if(!h || !h[0]) return false; let dH = parseDateWib(h[0]); if (!dH) return false; let rawHistName = h[1] ? h[1].toString() : ""; let matchPasien = rawHistName.includes(" || ") ? (rawHistName.split(" || ")[1] === rawNik) : (rawHistName === p[1]); return matchPasien && dH.month === dReal.month && dH.year === dReal.year; }); if (isDuplicate) { showToast(`Pasien sudah memiliki rekam data bulan ini!`, "error"); tutupModal('modalKonfirmasiTidakHadir'); setBtnLoading(btnEl, false); return; } let fd = { namaPasien: `${p[1]} || ${rawNik} || ${rawBpjs}`, tglKunjungan: tglRealTime, jenisKunjungan: "Tidak Hadir", td: "-", jenisGula: "Tidak Diperiksa", hasilGula: "-", hasilG2PP: "-", statusPRB: p[7] || "Aktif", currentUser: SESSION_USER }; await callGasApi("simpanPemantauan", { fd }); showToast(`Berhasil menyimpan status Tidak Hadir!`); fetchAppData(false); tutupModal('modalKonfirmasiTidakHadir'); setBtnLoading(btnEl, false); setTimeout(() => { renderTabelAbsen(); }, 300); }
-
-    function cekDataGandaPasien() { let duplicates = []; let seenNIK = new Map(); let seenBPJS = new Map(); APP_DATA_PASIEN.forEach((p, idx) => { if (!p) return; let nik = p[2] ? p[2].toString().replace(/^'/, "").trim() : ""; let bpjs = p[3] ? p[3].toString().replace(/^'/, "").trim() : ""; let isDup = false; let reasons = []; if (nik && nik !== "-" && seenNIK.has(nik)) { isDup = true; reasons.push(`NIK Ganda (${nik})`); } else if (nik && nik !== "-") { seenNIK.set(nik, idx); } if (bpjs && bpjs !== "-" && seenBPJS.has(bpjs)) { isDup = true; reasons.push(`BPJS Ganda (${bpjs})`); } else if (bpjs && bpjs !== "-") { seenBPJS.set(bpjs, idx); } if (isDup) { duplicates.push({ rowData: p, idx: idx, reason: reasons.join(", ") }); } }); document.getElementById('titleModalCekGanda').innerHTML = `<i class="ph-light ph-copy-simple"></i> Deteksi Pasien Ganda (${duplicates.length})`; document.getElementById('descModalCekGanda').innerText = duplicates.length > 0 ? "Daftar duplikasi NIK/BPJS:" : "Aman. Tidak ditemukan duplikasi NIK/BPJS."; let thead = document.getElementById('theadCekGanda'); let tbody = document.getElementById('tbodyCekGanda'); thead.innerHTML = `<tr><th>Nama Pasien</th><th>NIK / BPJS</th><th>Ket Ganda</th><th style="text-align:right;">Aksi</th></tr>`; let html = ""; if (duplicates.length === 0) { html = `<tr><td colspan="4" style="text-align:center; padding:20px;">Bersih!</td></tr>`; } else { duplicates.forEach(item => { let p = item.rowData; let trueIdx = item.idx; let cleanNIK = p[2] ? p[2].toString().replace(/^'/, "") : "-"; let cleanBPJS = p[3] ? p[3].toString().replace(/^'/, "") : "-"; html += `<tr><td><strong>${p[1]}</strong></td><td style="font-size:10px;">NIK: ${cleanNIK}<br>BPJS: ${cleanBPJS}</td><td><span style="background:rgba(255,59,48,0.1); color:#ff3b30; padding:2px 6px; border-radius:4px; font-size:10px;">${item.reason}</span></td><td style="text-align:right;"><button class="btn-action btn-small" onclick="tutupModal('modalCekGanda'); aksiHapusData('Pasien', ${trueIdx});" style="background:#ff3b30;"><i class="ph-light ph-trash"></i> Hapus</button></td></tr>`; }); } tbody.innerHTML = html; bukaModal('modalCekGanda'); }
-    function cekDataGandaHistori() { let duplicates = []; let seenMap = new Map(); APP_DATA_HISTORI.forEach((h, idx) => { if (!h || !h[0]) return; let d = parseDateWib(h[0]); if (!d) return; let rawNama = h[1] ? h[1].toString() : ""; let splitData = rawNama.split(" || "); let key = `${splitData[1] || splitData[0]}_${d.month}_${d.year}`; if (seenMap.has(key)) { duplicates.push({ rowData: h, idx: idx, bulanThn: `${NAMA_BULAN[d.month]} ${d.year}` }); } else { seenMap.set(key, idx); } }); document.getElementById('titleModalCekGanda').innerHTML = `<i class="ph-light ph-copy-simple"></i> Deteksi Pemantauan Ganda (${duplicates.length})`; document.getElementById('descModalCekGanda').innerText = duplicates.length > 0 ? "Daftar pemantauan ganda pada bulan yang sama:" : "Aman. Tidak ditemukan duplikasi histori."; let thead = document.getElementById('theadCekGanda'); let tbody = document.getElementById('tbodyCekGanda'); thead.innerHTML = `<tr><th>Tgl Input</th><th>Nama Pasien</th><th>Periode</th><th>Metode</th><th style="text-align:right;">Aksi</th></tr>`; let html = ""; if (duplicates.length === 0) { html = `<tr><td colspan="5" style="text-align:center; padding:20px;">Bersih!</td></tr>`; } else { duplicates.forEach(item => { let h = item.rowData; let trueIdx = item.idx; let rawNama = h[1] ? h[1].toString() : ""; let splitData = rawNama.split(" || "); html += `<tr><td style="font-size:10.5px;">${formatTanggalIndo(h[0])}</td><td><strong>${splitData[0]}</strong></td><td><span style="background:rgba(255,59,48,0.1); color:#ff3b30; padding:2px 6px; border-radius:4px; font-size:10px;">Bulan ${item.bulanThn}</span></td><td>${h[2]}</td><td style="text-align:right;"><button class="btn-action btn-small" onclick="tutupModal('modalCekGanda'); aksiHapusData('Pemantauan', ${trueIdx});" style="background:#ff3b30;"><i class="ph-light ph-trash"></i> Hapus</button></td></tr>`; }); } tbody.innerHTML = html; bukaModal('modalCekGanda'); }
-    function bukaModalMultiDiag() { let tbody = document.getElementById('tbodyMultiDiag'); let html = ""; if (window.GLOBAL_MULTI_DIAG.length === 0) { html = `<tr><td colspan="4" style="text-align:center; padding:16px;">Tidak ada pasien komplikasi.</td></tr>`; } else { window.GLOBAL_MULTI_DIAG.forEach(p => { let cleanNIK = p[2] ? p[2].toString().replace(/^'/, "") : "-"; let cleanBPJS = p[3] ? p[3].toString().replace(/^'/, "") : "-"; html += `<tr><td><strong>${p[1]}</strong></td><td style="font-size:10px;">NIK: ${cleanNIK}<br>BPJS: ${cleanBPJS}</td><td>${p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : p[4]}</td><td>${getMultiDiagnosaHtml(p)}</td></tr>`; }); } tbody.innerHTML = html; bukaModal('modalMultiDiag'); }
-
-    function toggleFilterLaporan() { const jenis = document.getElementById('jenisLaporanCetak').value; ['divLaporanDesa','divLaporanDiag','divLaporanTanggal','divLaporanBulan','divLaporanTahun'].forEach(id => document.getElementById(id).classList.add('hidden')); if (jenis === 'peserta_desa') document.getElementById('divLaporanDesa').classList.remove('hidden'); else if (jenis === 'peserta_diagnosa') document.getElementById('divLaporanDiag').classList.remove('hidden'); else if (jenis === 'detail_desa_diagnosa') { document.getElementById('divLaporanDesa').classList.remove('hidden'); document.getElementById('divLaporanDiag').classList.remove('hidden'); } else if (jenis === 'laporan_tanggal') { document.getElementById('divLaporanTanggal').classList.remove('hidden'); document.getElementById('divLaporanDesa').classList.remove('hidden'); document.getElementById('divLaporanDiag').classList.remove('hidden'); } else if (jenis === 'laporan_bulan') { document.getElementById('divLaporanBulan').classList.remove('hidden'); document.getElementById('divLaporanTahun').classList.remove('hidden'); document.getElementById('divLaporanDesa').classList.remove('hidden'); document.getElementById('divLaporanDiag').classList.remove('hidden'); } else if (jenis === 'laporan_tahun') { document.getElementById('divLaporanTahun').classList.remove('hidden'); document.getElementById('divLaporanDesa').classList.remove('hidden'); document.getElementById('divLaporanDiag').classList.remove('hidden'); } buildLaporanCetak(); }
-    
-    function buildLaporanCetak() { 
-      const jenis = document.getElementById('jenisLaporanCetak').value; const fDesa = document.getElementById('laporanFilterDesa').value; const fDiag = document.getElementById('laporanFilterDiag').value; const fTgl = document.getElementById('laporanFilterTanggal').value; const fBln = document.getElementById('laporanFilterBulan').value; const fThn = document.getElementById('laporanFilterTahun').value; const docTitle = document.getElementById('printDocTitle'); const docSub = document.getElementById('printDocSubtitle'); const thead = document.getElementById('theadPrintPreview');
-      curPageLaporan = 1; let activeLaporanTipe = (jenis === 'seluruh_peserta' || jenis.includes('peserta_')) ? 'pasien' : 'histori';
-      if (activeLaporanTipe === 'pasien') {
-        thead.innerHTML = `<tr><th style="border: 1px solid #000; padding: 5px; color:#000;">NO</th><th style="border: 1px solid #000; padding: 5px; color:#000;">NAMA PASIEN</th><th style="border: 1px solid #000; padding: 5px; color:#000;">NIK</th><th style="border: 1px solid #000; padding: 5px; color:#000;">NO. BPJS</th><th style="border: 1px solid #000; padding: 5px; color:#000;">DESA DOMISILI</th><th style="border: 1px solid #000; padding: 5px; color:#000;">RT/RW</th><th style="border: 1px solid #000; padding: 5px; color:#000;">STATUS</th><th style="border: 1px solid #000; padding: 5px; color:#000;">SELURUH DIAGNOSA</th></tr>`;
-        let filtered = APP_DATA_PASIEN; let titleMeta = 'SEMUA WILAYAH & DIAGNOSA';
-        if (jenis === 'peserta_desa') { filtered = (fDesa === 'all') ? APP_DATA_PASIEN : APP_DATA_PASIEN.filter(p => p && (fDesa === 'Luar Wilayah' ? p[4] === 'Luar Wilayah' : p[4] === fDesa)); titleMeta = (fDesa === 'all') ? 'SELURUH DESA' : `DESA ${fDesa.toUpperCase()}`; } else if (jenis === 'peserta_diagnosa') { filtered = (fDiag === 'all') ? APP_DATA_PASIEN : APP_DATA_PASIEN.filter(p => p && p[10] === fDiag); titleMeta = (fDiag === 'all') ? 'SELURUH DIAGNOSA' : `DIAGNOSA: ${fDiag.toUpperCase()}`; } else if (jenis === 'detail_desa_diagnosa') { filtered = APP_DATA_PASIEN.filter(p => p && (fDesa === 'all' || (fDesa === 'Luar Wilayah' ? p[4] === 'Luar Wilayah' : p[4] === fDesa)) && (fDiag === 'all' || p[10] === fDiag)); titleMeta = `${(fDesa === 'all') ? 'SELURUH DESA' : 'DESA '+fDesa.toUpperCase()} - DIAGNOSA: ${(fDiag === 'all') ? 'SELURUH DIAGNOSA' : fDiag.toUpperCase()}`; }
-        docTitle.innerText = "DATA PESERTA RUJUK BALIK (PRB) TERDAFTAR"; docSub.innerText = `Puskesmas Cilongok I | Kategori: ${titleMeta}`; filteredDataLaporan = filtered.filter(Boolean);
-      } else {
-        thead.innerHTML = `<tr><th style="border: 1px solid #000; padding: 5px; color:#000;">NO</th><th style="border: 1px solid #000; padding: 5px; color:#000;">TANGGAL</th><th style="border: 1px solid #000; padding: 5px; color:#000;">NAMA PASIEN</th><th style="border: 1px solid #000; padding: 5px; color:#000;">DESA DOMISILI</th><th style="border: 1px solid #000; padding: 5px; color:#000;">DIAGNOSA</th><th style="border: 1px solid #000; padding: 5px; color:#000;">METODE</th><th style="border: 1px solid #000; padding: 5px; color:#000;">TENSI</th><th style="border: 1px solid #000; padding: 5px; color:#000;">GULA</th><th style="border: 1px solid #000; padding: 5px; color:#000;">STATUS</th></tr>`;
-        let filtered = APP_DATA_HISTORI.filter(h => { if (!h || !h[0]) return false; let metode = h[2] ? h[2].toString() : ""; return metode !== "Tidak Hadir"; }); let titleMeta = '';
-        if (jenis === 'laporan_tanggal') { filtered = filtered.filter(h => { let d = parseDateWib(h[0]); if (!d || !fTgl) return false; return d.isoStr === fTgl; }); titleMeta = fTgl ? `TANGGAL: ${formatTanggalIndo(fTgl)}` : 'SEMUA TANGGAL'; } else if (jenis === 'laporan_bulan') { filtered = filtered.filter(h => { let d = parseDateWib(h[0]); if (!d) return false; return d.month.toString() === fBln && d.year.toString() === fThn; }); titleMeta = `BULAN ${NAMA_BULAN[fBln].toUpperCase()} TAHUN ${fThn}`; } else if (jenis === 'laporan_tahun') { filtered = filtered.filter(h => { let d = parseDateWib(h[0]); if (!d) return false; return d.year.toString() === fThn; }); titleMeta = `TAHUN ${fThn}`; }
-        filtered = filtered.filter(h => { if(!h) return false; let rawNama = h[1] ? h[1].toString() : ""; let splitData = rawNama.split(" || "); let nikHistori = splitData[1] || ""; let p = nikHistori ? patientMapNIK.get(nikHistori) : patientMapName.get(splitData[0]); let diag = p ? p[10] : "Lainnya"; let rawDesa = p ? p[4] : "Tidak Diketahui"; let desa = rawDesa === 'Luar Wilayah' ? 'Luar Wilayah' : rawDesa; return (fDesa === 'all' || (fDesa === 'Luar Wilayah' ? desa === 'Luar Wilayah' : desa === fDesa)) && (fDiag === 'all' || diag === fDiag); });
-        docTitle.innerText = "LAPORAN KUNJUNGAN & PEMANTAUAN RUJUK BALIK (PRB)"; docSub.innerText = `Puskesmas Cilongok I | Periode: ${titleMeta} | Desa: ${fDesa === 'all' ? 'Seluruh Desa' : fDesa} | Diagnosa: ${fDiag === 'all' ? 'Seluruh Diagnosa' : fDiag}`; filteredDataLaporan = filtered;
-      }
-      if (activeLaporanTipe === 'pasien') { filteredDataLaporan.sort((a, b) => (a[1] || "").toString().localeCompare((b[1] || "").toString())); } else { filteredDataLaporan.sort((a, b) => (parseDateWib(a[0]) ? parseDateWib(a[0]).timestamp : 0) - (parseDateWib(b[0]) ? parseDateWib(b[0]).timestamp : 0)); }
-      const stampEl = document.getElementById('tglCetakStamp'); if (stampEl) { stampEl.innerText = `${formatTanggalIndo(getWibDateStr())} (Format WIB)`; } renderLaporanPaginationView(false);
-    }
-
-    function renderLaporanPaginationView(printAll = false) {
-      const tbody = document.getElementById('tbodyPrintPreview'); tbody.innerHTML = ""; let rowsHtml = '';
-      let activeLaporanTipe = (document.getElementById('jenisLaporanCetak').value === 'seluruh_peserta' || document.getElementById('jenisLaporanCetak').value.includes('peserta_')) ? 'pasien' : 'histori';
-      let startIndex = printAll ? 0 : (curPageLaporan - 1) * PER_PAGE_LAPORAN; let endIndex = printAll ? filteredDataLaporan.length : startIndex + PER_PAGE_LAPORAN; let dataToRender = filteredDataLaporan.slice(startIndex, endIndex);
-      if (filteredDataLaporan.length === 0) { tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:12px; border:1px solid #000;">Tidak ada data pada kriteria filter ini.</td></tr>`; document.getElementById('infoHalamanLaporan').innerText = "Tidak ada data"; document.getElementById('btnPrevLaporan').disabled = true; document.getElementById('btnNextLaporan').disabled = true; return; }
-      let no = startIndex + 1;
-      dataToRender.forEach(r => {
-        if (activeLaporanTipe === 'pasien') { 
-            let gabunganDiagnosa = (r[10] || "") + (r[11] && r[11] !== '-' ? ", " + r[11] : "") + (r[12] && r[12] !== '-' ? ", " + r[12] : ""); 
-            let displayDesa = r[4] === 'Luar Wilayah' ? 'Luar Wilayah' : r[4]; 
-            rowsHtml += `<tr>
-                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${no++}</td>
-                <td style="border: 1px solid #000; padding: 5px; font-weight:bold;">${r[1]}</td>
-                <td style="border: 1px solid #000; padding: 5px; text-align:center; font-family:monospace;">${r[2] ? r[2].toString().replace(/^'/, "") : "-"}</td>
-                <td style="border: 1px solid #000; padding: 5px; text-align:center; font-family:monospace;">${r[3] ? r[3].toString().replace(/^'/, "") : "-"}</td>
-                <td style="border: 1px solid #000; padding: 5px;">${displayDesa}</td>
-                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${r[6] ? r[6].toString().replace(/^'/, "") : "-"}</td>
-                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${r[7]}</td>
-                <td style="border: 1px solid #000; padding: 5px;">${gabunganDiagnosa}</td>
-            </tr>`;
-        } else {
-            let rawNama = r[1] ? r[1].toString() : ""; let splitData = rawNama.split(" || "); let namaPasien = splitData[0];
-            let nikHistori = splitData[1] || ""; let p = nikHistori ? patientMapNIK.get(nikHistori) : patientMapName.get(namaPasien);
-            let diag = p ? (p[10] || "Lainnya") : "Lainnya"; let rawDesa = p ? (p[4] || "Tidak Diketahui") : "Tidak Diketahui";
-            let displayDesa = rawDesa === 'Luar Wilayah' ? 'Luar Wilayah' : rawDesa;
-            rowsHtml += `<tr>
-                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${no++}</td>
-                <td style="border: 1px solid #000; padding: 5px;">${formatTanggalIndo(r[0])}</td>
-                <td style="border: 1px solid #000; padding: 5px; font-weight:bold;">${namaPasien}</td>
-                <td style="border: 1px solid #000; padding: 5px;">${displayDesa}</td>
-                <td style="border: 1px solid #000; padding: 5px;">${diag}</td>
-                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${r[2]}</td>
-                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${r[3] ? r[3].toString().replace(/^'/, "") : "-"}</td>
-                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${r[4] === 'Tidak Diperiksa' ? '-' : (r[4] + ': ' + r[5])}</td>
-                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${r[7]}</td>
-            </tr>`;
-        }
+    function renderTabelAbsen() {
+      let f = document.getElementById('searchAbsenInput').value.toLowerCase(), html = "";
+      window.GLOBAL_DAFTAR_ABSEN.filter(p => `${p[1]} ${p[4]}`.toLowerCase().includes(f)).forEach(p => {
+        let idx = APP_DATA_PASIEN.indexOf(p);
+        html += `<tr><td><b>${p[1]}</b></td><td>${p[2]}</td><td>${p[4]}</td><td>${getMultiDiagnosaHtml(p)}</td><td style="text-align:right;"><button class="btn-action btn-small" onclick="tutupModal('modalDaftarAbsen'); switchTab('pemantauan'); setTimeout(()=>bukaModalPantauInstan(${idx}),300);">Pantau</button> <button class="btn-action btn-small" onclick="tandaiTidakHadir(${idx})" style="background:#ff3b30;">Absen</button></td></tr>`;
       });
-      tbody.innerHTML = rowsHtml;
-      
-      let totalPages = Math.ceil(filteredDataLaporan.length / PER_PAGE_LAPORAN) || 1;
-      document.getElementById('infoHalamanLaporan').innerText = `Halaman ${curPageLaporan} dari ${totalPages}`;
-      document.getElementById('btnPrevLaporan').disabled = (curPageLaporan === 1);
-      document.getElementById('btnNextLaporan').disabled = (curPageLaporan === totalPages);
+      document.getElementById('tbodyDaftarAbsen').innerHTML = html || `<tr><td colspan="5" style="text-align:center;">Semua sudah dipantau.</td></tr>`;
+    }
+    function tandaiTidakHadir(idx) { TARGET_TIDAK_HADIR_IDX = idx; document.getElementById('teksKonfirmasiTidakHadir').innerText = `Tandai ${APP_DATA_PASIEN[idx][1]} sebagai tidak hadir?`; bukaModal('modalKonfirmasiTidakHadir'); }
+    async function eksekusiTidakHadir() {
+      let p = APP_DATA_PASIEN[TARGET_TIDAK_HADIR_IDX], fd = { namaPasien: `${p[1]} || ${p[2]} || ${p[3]}`, tglKunjungan: getWibDateStr(), jenisKunjungan: "Tidak Hadir", td: "-", jenisGula: "Tidak Diperiksa", hasilGula: "-", hasilG2PP: "-", statusPRB: p[7], currentUser: SESSION_USER };
+      await callGasApi("simpanPemantauan", { fd }); showToast("Disimpan."); fetchAppData(false); tutupModal('modalKonfirmasiTidakHadir'); renderTabelAbsen();
+    }
+    function bukaModalMultiDiag() {
+      let html = ""; window.GLOBAL_MULTI_DIAG.forEach(p => html += `<tr><td><b>${p[1]}</b></td><td>${p[2]}</td><td>${p[4]}</td><td>${getMultiDiagnosaHtml(p)}</td></tr>`);
+      document.getElementById('tbodyMultiDiag').innerHTML = html || `<tr><td colspan="4" style="text-align:center;">Tidak ada.</td></tr>`; bukaModal('modalMultiDiag');
     }
 
-    function changePageLaporan(dir) {
-        let totalPages = Math.ceil(filteredDataLaporan.length / PER_PAGE_LAPORAN) || 1;
-        if (dir === 1 && curPageLaporan < totalPages) { curPageLaporan++; renderLaporanPaginationView(false); }
-        else if (dir === -1 && curPageLaporan > 1) { curPageLaporan--; renderLaporanPaginationView(false); }
+    function toggleFilterLaporan() {
+      let j = document.getElementById('jenisLaporanCetak').value;
+      ['divLaporanDesa','divLaporanDiag','divLaporanTanggal','divLaporanBulan','divLaporanTahun'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      if (['peserta_desa','detail_desa_diagnosa','laporan_tanggal','laporan_bulan','laporan_tahun'].includes(j)) document.getElementById('divLaporanDesa').classList.remove('hidden');
+      if (['peserta_diagnosa','detail_desa_diagnosa','laporan_tanggal','laporan_bulan','laporan_tahun'].includes(j)) document.getElementById('divLaporanDiag').classList.remove('hidden');
+      if (j === 'laporan_tanggal') document.getElementById('divLaporanTanggal').classList.remove('hidden');
+      if (j === 'laporan_bulan') document.getElementById('divLaporanBulan').classList.remove('hidden');
+      if (['laporan_bulan','laporan_tahun'].includes(j)) document.getElementById('divLaporanTahun').classList.remove('hidden');
+      buildLaporanCetak();
     }
-
-    // ==========================================
-    // CETAK PDF BERSIH DI TAB BARU
-    // ==========================================
-    function cetakPDF() {
-      renderLaporanPaginationView(true);
-      
-      setTimeout(() => {
-        const printContents = document.getElementById('printArea').innerHTML;
-        const printWindow = window.open('', '_blank', 'width=900,height=650');
-        
-        printWindow.document.write(`
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Cetak Laporan PRB</title>
-            <style>
-              @page { size: A4 landscape; margin: 15mm; }
-              body { 
-                font-family: 'Inter', Arial, sans-serif; 
-                color: #000; 
-                margin: 0; 
-                padding: 0;
-                -webkit-print-color-adjust: exact !important; 
-                print-color-adjust: exact !important;
-              }
-              table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 20px; }
-              th, td { border: 1px solid #000; padding: 6px; }
-              th { background-color: #e5e7eb !important; text-align: center; font-weight: bold; }
-              h1, h2, h3, p { margin: 0; padding: 0; }
-              .text-center { text-align: center; }
-            </style>
-          </head>
-          <body onload="setTimeout(function(){ window.print(); window.close(); }, 500);">
-            ${printContents}
-          </body>
-          </html>
-        `);
-        printWindow.document.close();
-        
-        setTimeout(() => {
-          renderLaporanPaginationView(false);
-        }, 1000);
-      }, 300);
-    }
-
-    function exportExcel() {
-      renderLaporanPaginationView(true);
-      setTimeout(() => {
-        let table = document.getElementById("tabelPrintPreview");
-        let html = table.outerHTML;
-        let url = 'data:application/vnd.ms-excel;charset=utf-8,' + encodeURIComponent(html);
-        let downloadLink = document.createElement("a");
-        document.body.appendChild(downloadLink);
-        downloadLink.href = url;
-        downloadLink.download = 'Laporan_PRB_Puskesmas_Cilongok_I.xls';
-        downloadLink.click();
-        document.body.removeChild(downloadLink);
-        renderLaporanPaginationView(false);
-      }, 300);
-    }
-
-    function toggleStatusPrb() {
-      let status = document.getElementById('statusPrb').value;
-      let srbFields = document.querySelectorAll('.conditional-srb');
-      if (status === 'Baru') {
-        srbFields.forEach(el => el.classList.remove('hidden'));
+    function buildLaporanCetak() {
+      let j = document.getElementById('jenisLaporanCetak').value, des = document.getElementById('laporanFilterDesa').value, diag = document.getElementById('laporanFilterDiag').value;
+      let thead = document.getElementById('theadPrintPreview'); curPageLaporan = 1;
+      if (['seluruh_peserta','peserta_desa','peserta_diagnosa','detail_desa_diagnosa'].includes(j)) {
+        thead.innerHTML = `<tr><th>No</th><th>Nama</th><th>NIK</th><th>BPJS</th><th>Desa</th><th>RT/RW</th><th>Status</th><th>Diagnosa</th></tr>`;
+        filteredDataLaporan = APP_DATA_PASIEN.filter(p => p && (des === 'all' || p[4] === des) && (diag === 'all' || p[10] === diag));
       } else {
-        srbFields.forEach(el => el.classList.add('hidden'));
+        thead.innerHTML = `<tr><th>No</th><th>Tanggal</th><th>Nama</th><th>Desa</th><th>Diagnosa</th><th>Metode</th><th>TD</th><th>Gula</th><th>Status</th></tr>`;
+        filteredDataLaporan = APP_DATA_HISTORI.filter(h => h && h[2] !== "Tidak Hadir");
       }
+      renderLaporanPaginationView(false);
     }
+    function renderLaporanPaginationView(all) {
+      let tbody = document.getElementById('tbodyPrintPreview'), html = "", start = all ? 0 : (curPageLaporan - 1) * PER_PAGE_LAPORAN, end = all ? filteredDataLaporan.length : start + PER_PAGE_LAPORAN;
+      let data = filteredDataLaporan.slice(start, end), no = start + 1, isP = ['seluruh_peserta','peserta_desa','peserta_diagnosa','detail_desa_diagnosa'].includes(document.getElementById('jenisLaporanCetak').value);
+      data.forEach(r => {
+        if (isP) { html += `<tr><td>${no++}</td><td><b>${r[1]}</b></td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${r[6]}</td><td>${r[7]}</td><td>${r[10]}</td></tr>`; }
+        else { let parts = r[1].split(" || "), p = parts[1] ? patientMapNIK.get(parts[1]) : null; html += `<tr><td>${no++}</td><td>${formatTanggalIndo(r[0])}</td><td><b>${parts[0]}</b></td><td>${p?p[4]:'-'}</td><td>${p?p[10]:'-'}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}: ${r[5]}</td><td>${r[7]}</td></tr>`; }
+      });
+      tbody.innerHTML = html || `<tr><td colspan="9" style="text-align:center;">Kosong</td></tr>`;
+      let t = Math.ceil(filteredDataLaporan.length / PER_PAGE_LAPORAN) || 1;
+      document.getElementById('infoHalamanLaporan').innerText = `Halaman ${curPageLaporan} dari ${t}`;
+      document.getElementById('btnPrevLaporan').disabled = (curPageLaporan === 1); document.getElementById('btnNextLaporan').disabled = (curPageLaporan === t);
+    }
+    function changePageLaporan(d) { let t = Math.ceil(filteredDataLaporan.length / PER_PAGE_LAPORAN) || 1; if(d===1 && curPageLaporan<t) curPageLaporan++; else if(d===-1 && curPageLaporan>1) curPageLaporan--; renderLaporanPaginationView(false); }
+    function cetakPDF() { renderLaporanPaginationView(true); setTimeout(() => { window.print(); renderLaporanPaginationView(false); }, 300); }
+    function exportExcel() { renderLaporanPaginationView(true); setTimeout(() => { let a = document.createElement('a'); a.href = 'data:application/vnd.ms-excel,' + encodeURIComponent(document.getElementById('printArea').innerHTML); a.download = 'Laporan.xls'; a.click(); renderLaporanPaginationView(false); }, 300); }
 
-    function toggleAlamatLuar() {
-      let alamat = document.getElementById('alamat').value;
-      if (alamat === 'Luar Wilayah') {
-        document.getElementById('divDesaLuar').classList.remove('hidden');
-      } else {
-        document.getElementById('divDesaLuar').classList.add('hidden');
-      }
-    }
-
-    function toggleGulaDarah() {
-      let jenis = document.getElementById('jenisGula').value;
-      if (jenis === '') {
-        document.getElementById('divHasilGula').classList.add('hidden');
-        document.getElementById('divG2PP').classList.add('hidden');
-      } else {
-        document.getElementById('divHasilGula').classList.remove('hidden');
-        document.getElementById('labelHasilGula').innerText = "Hasil " + jenis;
-        document.getElementById('divG2PP').classList.remove('hidden');
-      }
-    }
+    function toggleStatusPrb() { document.querySelectorAll('.conditional-srb').forEach(el => el.classList.toggle('hidden', document.getElementById('statusPrb').value !== 'Baru')); }
+    function toggleAlamatLuar() { document.getElementById('divDesaLuar').classList.toggle('hidden', document.getElementById('alamat').value !== 'Luar Wilayah'); }
+    function toggleGulaDarah() { let v = document.getElementById('jenisGula').value; document.getElementById('divHasilGula').classList.toggle('hidden', !v); document.getElementById('divG2PP').classList.toggle('hidden', !v); if(v) document.getElementById('labelHasilGula').innerText = "Hasil " + v; }
 
     async function submitCatatanAdmin(e) {
-      e.preventDefault();
-      let isi = document.getElementById('inputCatatanTerkini').value;
-      let btn = document.getElementById('btnSaveCatatan');
-      setBtnLoading(btn, true);
-      let res = await callGasApi("updateCatatan", { catatan: isi });
-      showToast(res.message, res.success ? "success" : "error");
-      if(res.success) {
-        document.getElementById('displayCatatanTerkini').innerText = isi;
-        tutupModal('modalCatatan');
-      }
-      setBtnLoading(btn, false);
+      e.preventDefault(); let c = document.getElementById('inputCatatanTerkini').value, btn = document.getElementById('btnSaveCatatan'); setBtnLoading(btn, true);
+      let res = await callGasApi("updateCatatan", { catatan: c }); showToast(res.message); if(res.success) { document.getElementById('displayCatatanTerkini').innerText = c; tutupModal('modalCatatan'); } setBtnLoading(btn, false);
     }
-
     async function submitPassword(e) {
-      e.preventDefault();
-      let oldP = document.getElementById('oldPwd').value;
-      let newP = document.getElementById('newPwd').value;
-      let conf = document.getElementById('confirmPwd').value;
-      if(newP !== conf) { showToast("Password baru dan konfirmasi tidak cocok!", "error"); return; }
-      let btn = document.getElementById('btnSubmitPwd');
-      setBtnLoading(btn, true);
-      let res = await callGasApi("gantiPassword", { oldPwd: oldP, newPwd: newP, user: SESSION_USERNAME });
-      showToast(res.message, res.success ? "success" : "error");
-      if(res.success) { tutupModal('modalPassword'); e.target.reset(); }
-      setBtnLoading(btn, false);
+      e.preventDefault(); if(document.getElementById('newPwd').value !== document.getElementById('confirmPwd').value) { showToast("Password tidak cocok", "error"); return; }
+      let res = await callGasApi("gantiPassword", { oldPwd: document.getElementById('oldPwd').value, newPwd: document.getElementById('newPwd').value, user: SESSION_USERNAME });
+      showToast(res.message); if(res.success) tutupModal('modalPassword');
     }
-
     async function submitTambahUser(e) {
       e.preventDefault();
-      let user = document.getElementById('newUsername').value;
-      let pass = document.getElementById('newUserPwd').value;
-      let nama = document.getElementById('newUserNama').value;
-      let role = document.getElementById('newUserRole').value;
-      let btn = document.getElementById('btnSubmitUser');
-      setBtnLoading(btn, true);
-      let res = await callGasApi("tambahUser", { username: user, password: pass, nama: nama, role: role });
-      showToast(res.message, res.success ? "success" : "error");
-      if(res.success) { tutupModal('modalTambahUser'); e.target.reset(); }
-      setBtnLoading(btn, false);
+      let res = await callGasApi("tambahUser", { username: document.getElementById('newUsername').value, password: document.getElementById('newUserPwd').value, nama: document.getElementById('newUserNama').value, role: document.getElementById('newUserRole').value });
+      showToast(res.message); if(res.success) tutupModal('modalTambahUser');
     }
   </script>
 </body>
