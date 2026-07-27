@@ -422,6 +422,21 @@
               </div>
             </div>
 
+            <!-- TAMBAHAN: MASTER DATA SEPANJANG TAHUN -->
+            <h4 style="margin: 24px 0 12px 0; font-size: 13.5px; font-weight: 800; color: var(--text); display: flex; align-items: center; gap: 8px;">
+              <i class="ph-fill ph-database" style="color: var(--blue);"></i> Master Data Peserta PRB (Sepanjang Tahun)
+            </h4>
+            <div class="dashboard-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 24px;">
+              <div class="stat-card" style="border-top: 3.5px solid #8e44ad; min-height: 160px;">
+                <h4><i class="ph-light ph-users"></i> Total Seluruh Peserta Program</h4>
+                <div id="dashMasterTotal">Memuat data...</div>
+              </div>
+              <div class="stat-card" style="border-top: 3.5px solid #2980b9; min-height: 160px;">
+                <h4><i class="ph-light ph-map-trifold"></i> Sebaran Peserta Aktif per Desa</h4>
+                <div id="dashMasterDesa" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; max-height:140px; overflow-y:auto; padding-right:4px;">Memuat data...</div>
+              </div>
+            </div>
+
             <div class="dashboard-grid">
               <div class="stat-card">
                 <h4><i class="ph-light ph-activity"></i> Tren Diagnosa Kunjungan</h4>
@@ -963,14 +978,18 @@ window.onload = function() {
 
       sessionStorage.removeItem('appSession'); SESSION_USER = ""; SESSION_USERNAME = ""; SESSION_ROLE = ""; document.getElementById('username').value = ""; document.getElementById('password').value = ""; document.getElementById('captchaInput').value = ""; document.getElementById('menuManajemenUser').classList.add('hidden'); document.getElementById('menuInfoAdmin').classList.add('hidden'); document.getElementById('btnEditNotice').classList.add('hidden'); document.getElementById('appContainer').style.display = 'none'; document.getElementById('loginSection').style.display = 'flex'; setTimeout(() => { document.getElementById('loginSection').style.opacity = '1'; }, 50); generateCaptcha(); if (isTimeout) { showToast('Sesi otomatis berakhir (30 menit).', 'error'); } else { showToast('Berhasil keluar akun.'); } 
     }
-    async function fetchAppData(isFirstLogin = false) {
+async function fetchAppData(isFirstLogin = false) {
       const res = await callGasApi("getInitData");
       if (res.success) {
         APP_DATA_PASIEN = res.pasien || []; APP_DATA_HISTORI = res.pemantauan || [];
         if(res.infoTerkini) { document.getElementById('displayCatatanTerkini').innerText = res.infoTerkini; document.getElementById('inputCatatanTerkini').value = res.infoTerkini; }
         patientMapNIK.clear(); patientMapName.clear(); APP_DATA_PASIEN.forEach(p => { if(!p) return; let n = p[2] ? p[2].toString().replace(/^'/, "") : ""; if (n) patientMapNIK.set(n, p); if (p[1]) patientMapName.set(p[1].toString(), p); });
         if(isFirstLogin) { let todayWib = getWibDateStr(); let curM = parseDateWib(todayWib).month; document.getElementById('laporanFilterBulan').value = curM.toString(); document.getElementById('laporanFilterTanggal').value = todayWib; document.getElementById('filterTanggalHistori').value = ""; toggleFilterLaporan(); }
-        renderDashboardFiltered(); renderMutuFiltered(); buildLaporanCetak(); filterTabelPasien(); filterTabelPantau(); filterTabelHistori(); 
+        
+        // PERBAIKAN: Masukkan isFirstLogin ke dalam sini
+        renderDashboardFiltered(isFirstLogin); 
+        
+        renderMutuFiltered(); buildLaporanCetak(); filterTabelPasien(); filterTabelPantau(); filterTabelHistori(); 
         if(isFirstLogin) switchTab('dashboard'); 
       } else { showToast("Gagal terhubung ke Database", "error"); }
     }
@@ -1158,6 +1177,58 @@ window.onload = function() {
       let dashDesa = document.getElementById('dashDistribusiDesa'); dashDesa.innerHTML = ''; let maxDesa = Math.max(...Object.values(desaCur), 1);
       MASTER_DESA.forEach(desa => { let val = desaCur[desa] || 0; let pct = (val / maxDesa) * 100; dashDesa.innerHTML += `<div class="chart-bar-row clickable-row" onclick="goToFilteredHistori('desa', '${desa}')"><div class="chart-label" style="font-size:10px; width:85px;">${desa}</div><div class="chart-progress-bg" style="height:6px;"><div class="chart-progress-fill" style="width: ${pct}%;"></div></div><div class="chart-val" style="font-size:10px; font-weight:700;">${val}</div></div>`; });
       document.getElementById('insightDistribusiDesa').innerHTML = `<div class="insight-box"><div class="insight-row"><span class="ins-label">Tindakan:</span><span class="ins-val">Evaluasi desa dengan kunjungan pemantauan rendah.</span></div></div>`;
+    // ... [Kode insightDistribusiDesa sebelumnya] ...
+
+      // =====================================
+      // TAMBAHAN: MASTER DATA KESELURUHAN (ALL-TIME)
+      // =====================================
+      let totalAktifAllTime = 0;
+      let totalKeluarAllTime = 0;
+      let masterDesaCur = {};
+      
+      APP_DATA_PASIEN.forEach(p => {
+          if(!p) return;
+          let stat = (p[7] || "").toLowerCase();
+          let isKeluar = stat.includes("berhenti") || stat.includes("meninggal") || stat.includes("pindah") || stat.includes("keluar");
+          
+          if (isKeluar) {
+              totalKeluarAllTime++;
+          } else {
+              totalAktifAllTime++;
+              let rawDesa = p[4] || "Tidak Diketahui";
+              let desa = rawDesa === 'Luar Wilayah' ? 'Luar Wilayah' : rawDesa;
+              masterDesaCur[desa] = (masterDesaCur[desa] || 0) + 1;
+          }
+      });
+      
+      let totalSemua = totalAktifAllTime + totalKeluarAllTime;
+      document.getElementById('dashMasterTotal').innerHTML = `
+        <div style="font-size: 32px; font-weight: 800; line-height:1; margin-bottom:6px; color: var(--text);">${totalAktifAllTime} <span style="font-size:11px; color:var(--secondary); font-weight:600;">Aktif Berjalan</span></div>
+        <div style="font-size:11.5px; color:var(--secondary); font-weight:600;">Total Terdaftar: <b style="color:var(--text);">${totalSemua}</b> (Keluar/Lulus: ${totalKeluarAllTime})</div>
+        <div class="insight-box" style="margin-top:auto;"><div class="insight-row"><span class="ins-label">Info:</span><span class="ins-val">Akumulasi riwayat seluruh pasien yang pernah dan sedang tercatat dalam sistem.</span></div></div>
+      `;
+      
+      let htmlMasterDesa = '';
+      MASTER_DESA.forEach(desa => {
+          let val = masterDesaCur[desa] || 0;
+          if (val > 0) {
+              htmlMasterDesa += `<div style="background:var(--bg); border:var(--border); padding:6px 10px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;"><span style="font-size:10.5px; font-weight:600; color:var(--secondary);">${desa}</span><span style="font-size:12px; font-weight:800; color:var(--blue);">${val}</span></div>`;
+          }
+      });
+      if(htmlMasterDesa === '') htmlMasterDesa = '<div style="font-size:11px; color:var(--secondary);">Belum ada data desa.</div>';
+      document.getElementById('dashMasterDesa').innerHTML = htmlMasterDesa;
+
+      // =====================================
+      // NOTIFIKASI POP-UP SELAMAT DATANG (ALERT TUGAS)
+      // =====================================
+      if (showWelcomeToast === true) {
+         let namaDepan = SESSION_USER.split(" ")[0];
+         let msg = `Halo, ${namaDepan}!<br><div style="font-size:11px; font-weight:normal; margin-top:5px; line-height:1.45;">Bulan ini:<br>✅ <b style="color:#34c759;">${totalHadir}</b> Hadir / Titip Obat<br>⚠️ <b style="color:#ff3b30;">${countBelumInput}</b> Belum Pemantauan</div>`;
+         
+         // Jika ada yang belum dipantau, notifikasi akan menggunakan warna merah bata (warning) 
+         // yang agresif menarik perhatian, jika beres semua, warnanya hijau.
+         showToast(msg, countBelumInput > 0 ? "error" : "success");
+      }
     }
 
     function renderMutuFiltered() {
@@ -1436,7 +1507,7 @@ function cetakKartuMassal() {
     function goToFilteredHistori(kategori, nilai) { switchTab('histori'); document.getElementById('searchHistoriInput').value = ''; document.getElementById('filterPrbHistori').value = ''; document.getElementById('filterStatusHistori').value = ''; document.getElementById('filterTanggalHistori').value = ''; if (kategori === 'diagnosa') { document.getElementById('filterPrbHistori').value = nilai; showToast(`Histori: ${nilai}`); } else if (kategori === 'desa') { document.getElementById('searchHistoriInput').value = nilai; showToast(`Histori desa: ${nilai}`); } filterTabelHistori(); }
     function formatTanggalIndo(dateStr) { if(!dateStr) return '-'; let d = parseDateWib(dateStr); if(!d) return dateStr; return `${d.day} ${NAMA_BULAN[d.month]} ${d.year}`; }
     setInterval(() => { const d = new Date(); document.getElementById('currentDate').innerText = d.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Jakarta' }); document.getElementById('currentTime').innerText = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Jakarta' }) + " WIB"; }, 1000);
-    function showToast(message, type = 'success') { const container = document.getElementById('toastContainer'); const toast = document.createElement('div'); toast.className = `toast ${type}`; const icon = type === 'success' ? 'ph-check-circle' : 'ph-warning-circle'; toast.innerHTML = `<i class="ph-light ${icon}"></i> <span>${message}</span>`; container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 3200); }
+    function showToast(message, type = 'success') { const container = document.getElementById('toastContainer'); const toast = document.createElement('div'); toast.className = `toast ${type}`; const icon = type === 'success' ? 'ph-check-circle' : 'ph-warning-circle'; toast.innerHTML = `<i class="ph-light ${icon}"></i> <span>${message}</span>`; container.appendChild(toast); setTimeout(() => toast.classList.add('show'), 10); setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 400); }, 5000); }
     function bukaModal(id) { const overlay = document.getElementById(id); overlay.style.display = 'flex'; void overlay.offsetWidth; overlay.classList.add('show'); }
     function tutupModal(id) { const overlay = document.getElementById(id); overlay.classList.remove('show'); setTimeout(() => { overlay.style.display = 'none'; }, 300); }
 
