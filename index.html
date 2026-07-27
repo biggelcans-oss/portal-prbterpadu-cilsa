@@ -1645,6 +1645,130 @@
         let url = 'data:application/vnd.ms-excel;base64,' + btoa(unescape(encodeURIComponent(html)));
         let a = document.createElement('a'); a.href = url; a.download = 'Laporan_PRB_Cilongok1.xls'; a.click();
     }
+
+    // ==========================================
+    // FUNGSI TOGGLE TAMPILAN FORM (YANG HILANG)
+    // ==========================================
+
+    function toggleStatusPrb() {
+      const status = document.getElementById('statusPrb').value;
+      const srbFields = document.querySelectorAll('.conditional-srb');
+      srbFields.forEach(el => {
+        if (status === 'Baru' || status === 'Pasien Baru (Dari RS)') {
+          el.classList.remove('hidden');
+        } else {
+          el.classList.add('hidden');
+        }
+      });
+    }
+
+    function toggleAlamatLuar() {
+      const alamat = document.getElementById('alamat').value;
+      const divDesaLuar = document.getElementById('divDesaLuar');
+      if (alamat === 'Luar Wilayah') {
+        divDesaLuar.classList.remove('hidden');
+        document.getElementById('desaLuar').required = true;
+      } else {
+        divDesaLuar.classList.add('hidden');
+        document.getElementById('desaLuar').required = false;
+        document.getElementById('desaLuar').value = "";
+      }
+    }
+
+    function toggleGulaDarah() {
+      const jenisGula = document.getElementById('jenisGula').value;
+      const divHasil = document.getElementById('divHasilGula');
+      const divG2PP = document.getElementById('divG2PP');
+      const label = document.getElementById('labelHasilGula');
+
+      if (jenisGula === '' || jenisGula === 'Tidak Diperiksa') {
+        divHasil.classList.add('hidden');
+        divG2PP.classList.add('hidden');
+        document.getElementById('hasilGula').required = false;
+      } else {
+        divHasil.classList.remove('hidden');
+        document.getElementById('hasilGula').required = true;
+        label.innerText = 'Hasil ' + jenisGula;
+        
+        // Menampilkan kolom G2PP khusus jika yang dipilih GDP (Gula Darah Puasa)
+        if (jenisGula === 'GDP') {
+           divG2PP.classList.remove('hidden');
+        } else {
+           divG2PP.classList.add('hidden');
+           document.getElementById('hasilG2PP').value = "";
+        }
+      }
+    }
+
+    // ==========================================
+    // FUNGSI MENU LAINNYA (CATATAN, PASSWORD, USER)
+    // ==========================================
+
+    function bukaModalCatatan() {
+      bukaModal('modalCatatan');
+    }
+
+    async function submitCatatanAdmin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSaveCatatan');
+      setBtnLoading(btn, true);
+      const teks = document.getElementById('inputCatatanTerkini').value;
+      
+      const res = await callGasApi('updateCatatan', { catatan: teks });
+      showToast(res.message, res.success ? 'success' : 'error');
+      
+      if (res.success) {
+        document.getElementById('displayCatatanTerkini').innerText = teks;
+        tutupModal('modalCatatan');
+      }
+      setBtnLoading(btn, false);
+    }
+
+    async function submitPassword(e) {
+      e.preventDefault();
+      const oldPwd = document.getElementById('oldPwd').value;
+      const newPwd = document.getElementById('newPwd').value;
+      const confirmPwd = document.getElementById('confirmPwd').value;
+
+      if(newPwd !== confirmPwd) {
+        showToast('Gagal: Konfirmasi password baru tidak cocok!', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmitPwd');
+      setBtnLoading(btn, true);
+      
+      const res = await callGasApi('gantiPassword', { username: SESSION_USERNAME, oldPwd: oldPwd, newPwd: newPwd });
+      showToast(res.message, res.success ? 'success' : 'error');
+      
+      if(res.success) {
+        tutupModal('modalPassword');
+        e.target.reset();
+      }
+      setBtnLoading(btn, false);
+    }
+
+    async function submitTambahUser(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmitUser');
+      setBtnLoading(btn, true);
+      
+      const fd = {
+        username: document.getElementById('newUsername').value,
+        pass: document.getElementById('newUserPwd').value,
+        nama: document.getElementById('newUserNama').value,
+        role: document.getElementById('newUserRole').value
+      };
+      
+      const res = await callGasApi('tambahUser', { fd });
+      showToast(res.message, res.success ? 'success' : 'error');
+      
+      if(res.success) {
+        tutupModal('modalTambahUser');
+        e.target.reset();
+      }
+      setBtnLoading(btn, false);
+    }
   </script>
 </body>
 </html>
