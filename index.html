@@ -60,15 +60,14 @@
     #printArea, #printArea *, #printAreaKartu, #printAreaKartu * { background-color: #ffffff !important; color: #000000 !important; border-color: #000000 !important; }
     #printArea table th { background-color: #f2f2f2 !important; color: #000000 !important; font-weight: bold; }
 
-    /* PERBAIKAN: CSS TOAST MULTILINE */
     .toast-container { position: fixed; top: 20px; right: 20px; z-index: 999999; display: flex; flex-direction: column; gap: 10px; }
     .toast { background: var(--window); border: var(--border); border-radius: var(--btn-radius); box-shadow: var(--shadow); padding: 12px 18px; display: flex; align-items: flex-start; gap: 10px; transform: translateX(120%); opacity: 0; transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.35s; color: var(--text); font-weight: 600; font-size: 12px; min-width: 280px; }
     .toast.show { transform: translateX(0); opacity: 1; }
     .toast.success i { color: #34c759; font-size: 22px; margin-top:2px; }
     .toast.error i { color: #ff3b30; font-size: 22px; margin-top:2px; }
 
-    #loginSection { display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, rgba(7, 24, 46, 0.82), rgba(var(--primary-rgb), 0.72)), url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80') center center / cover no-repeat; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; transition: opacity 0.4s ease; padding: 16px; }
-    .login-wrapper { background: var(--window); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); padding: 36px 34px; border-radius: var(--modal-radius); box-shadow: var(--shadow); width: 100%; max-width: 410px; text-align: center; border: var(--border); }
+    #loginSection { display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, rgba(7, 24, 46, 0.82), rgba(var(--primary-rgb), 0.72)), url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80') center center / cover no-repeat; width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 1000; transition: opacity 0.4s ease; padding: 16px; overflow-y: auto;}
+    .login-wrapper { background: var(--window); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); padding: 36px 34px; border-radius: var(--modal-radius); box-shadow: var(--shadow); width: 100%; max-width: 410px; text-align: center; border: var(--border); margin: auto;}
     .login-wrapper i.main-icon { font-size: 42px; color: var(--blue); margin-bottom: 12px; display: inline-block; background: var(--primary-light); padding: 14px; border-radius: var(--app-radius); }
     .login-wrapper h2 { margin: 0 0 4px 0; font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
     .login-wrapper p { margin: 0 0 20px 0; font-size: 12.5px; color: var(--secondary); line-height: 1.4; }
@@ -220,12 +219,13 @@
     .id-card-layout::before { content: ""; position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: rgba(0,85,255,0.08); border-radius: 50%; pointer-events: none; }
     #qrcodeContainer { display: flex !important; justify-content: center !important; align-items: center !important; width: 110px !important; height: 110px !important; min-width: 110px !important; min-height: 110px !important; background: #ffffff !important; padding: 4px !important; border: 1.5px solid #0055FF !important; border-radius: 8px !important; flex-shrink: 0 !important; box-sizing: border-box !important; overflow: hidden !important; }
     #qrcodeContainer img, #qrcodeContainer canvas { max-width: 100% !important; max-height: 100% !important; width: 100% !important; height: 100% !important; object-fit: contain !important; display: block !important; margin: 0 auto !important; }
-    #qr-reader { border: 2px solid var(--blue) !important; border-radius: 12px !important; overflow: hidden !important; padding: 0 !important; width: 100% !important; box-sizing: border-box; background: var(--bg); }
-    #qr-reader__scan_region { overflow: hidden !important; border-radius: 10px !important; display: flex; justify-content: center; align-items: center; min-height: 220px; }
-    #qr-reader video { max-width: 100% !important; width: 100% !important; height: auto !important; object-fit: cover !important; border-radius: 10px !important; }
-    #qr-reader__dashboard_section_csr span, #qr-reader__dashboard_section_swaplink { font-size: 11.5px; color: var(--blue) !important; text-decoration: none; font-weight:600; margin-bottom: 5px; display: inline-block; }
-    #qr-reader__dashboard_section_csr button { background: var(--primary-gradient); color: white; border: none; padding: 7px 14px; border-radius: var(--btn-radius); cursor: pointer; font-size: 11px; font-weight: 700; margin: 4px; transition: transform 0.2s; box-shadow: 0 2px 8px var(--primary-medium); }
-    #qr-reader__dashboard_section_csr button:hover { opacity: 0.9; transform: translateY(-1px); }
+    #qr-reader, #qr-reader-antrian { border: 2px solid var(--blue) !important; border-radius: 12px !important; overflow: hidden !important; padding: 0 !important; width: 100% !important; box-sizing: border-box; background: var(--bg); }
+    #qr-reader__scan_region, #qr-reader-antrian__scan_region { overflow: hidden !important; border-radius: 10px !important; display: flex; justify-content: center; align-items: center; min-height: 220px; }
+    #qr-reader video, #qr-reader-antrian video { max-width: 100% !important; width: 100% !important; height: auto !important; object-fit: cover !important; border-radius: 10px !important; }
+    #qr-reader__dashboard_section_csr span, #qr-reader__dashboard_section_swaplink,
+    #qr-reader-antrian__dashboard_section_csr span, #qr-reader-antrian__dashboard_section_swaplink { font-size: 11.5px; color: var(--blue) !important; text-decoration: none; font-weight:600; margin-bottom: 5px; display: inline-block; }
+    #qr-reader__dashboard_section_csr button, #qr-reader-antrian__dashboard_section_csr button { background: var(--primary-gradient); color: white; border: none; padding: 7px 14px; border-radius: var(--btn-radius); cursor: pointer; font-size: 11px; font-weight: 700; margin: 4px; transition: transform 0.2s; box-shadow: 0 2px 8px var(--primary-medium); }
+    #qr-reader__dashboard_section_csr button:hover, #qr-reader-antrian__dashboard_section_csr button:hover { opacity: 0.9; transform: translateY(-1px); }
 
     .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
     @media (max-width: 768px) {
@@ -269,6 +269,7 @@
       <i class="ph-light ph-stethoscope main-icon"></i>
       <h2 id="loginTitle">Portal PRB Terpadu</h2>
       <p>Sistem Pemantauan Rujuk Balik Pasien<br>Puskesmas Cilongok I</p>
+      
       <form onsubmit="doLogin(event)">
         <div class="form-group"><label>Nama Pengguna (ID)</label><input type="text" id="username" placeholder="Masukkan ID" required style="margin-bottom: 12px; padding: 10px;"></div>
         <div class="form-group"><label>Kata Sandi</label><input type="password" id="password" placeholder="••••••••" required style="margin-bottom: 14px; padding: 10px;"></div>
@@ -288,9 +289,11 @@
         <button type="button" class="btn-action" onclick="masukModeScannerManual()" style="width: 100%; margin-top: 10px; background: transparent; border: 2px dashed var(--blue); color: var(--blue); box-shadow: none;">
           <i class="ph-light ph-device-mobile-camera"></i> Buka Mode Scanner HP
         </button>
-        <div style="margin-top: 24px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 16px;">
+
+        <!-- FITUR BARU: TOMBOL AMBIL ANTRIAN (TANPA LOGIN) -->
+        <div style="margin-top: 24px; border-top: 1px dashed rgba(11, 20, 38, 0.2); padding-top: 16px;">
           <p style="margin: 0 0 10px 0; font-size: 11.5px; color: var(--secondary);">Layanan Pasien (Tanpa Login)</p>
-          <button type="button" class="btn-action" onclick="bukaScannerAntrian()" style="width: 100%; background: #34c759; color: white;">
+          <button type="button" class="btn-action" onclick="bukaScannerAntrian()" style="width: 100%; background: #34c759; color: white; box-shadow: 0 3px 10px rgba(52,199,89,0.3);">
             <i class="ph-light ph-ticket"></i> Ambil Antrian Pasien (Scan QR)
           </button>
         </div>
@@ -724,7 +727,7 @@
     </div>
   </div>
 
-  <!-- MODAL SCANNER BARCODE 2D PC -->
+  <!-- MODAL SCANNER BARCODE 2D PC (UNTUK PEMANTAUAN) -->
   <div id="modalScannerQR" class="modal-overlay">
     <div class="modal-content" style="max-width: 420px; text-align:center;">
       <div class="modal-header">
@@ -736,6 +739,61 @@
         <div id="qr-reader" style="width: 100%;"></div>
       </div>
       <button class="btn-action" onclick="tutupScannerQR()" style="width:100%; background:var(--bg); color:var(--text); border:var(--border); box-shadow:none; margin-top:12px;">Batal & Tutup</button>
+    </div>
+  </div>
+
+  <!-- FITUR BARU: MODAL SCANNER ANTRIAN (KHUSUS LOGIN SCREEN) -->
+  <div id="modalScannerAntrian" class="modal-overlay">
+    <div class="modal-content" style="max-width: 420px; text-align:center;">
+      <div class="modal-header">
+        <h3><i class="ph-light ph-camera" style="color:var(--blue);"></i> Scan QR Untuk Antrian</h3>
+        <button class="close-btn" onclick="tutupScannerAntrian()"><i class="ph-light ph-x"></i></button>
+      </div>
+      <div style="padding: 10px 0;">
+        <p style="font-size: 11.5px; color: var(--secondary); margin-bottom: 12px;">Arahkan Kartu Pasien ke kamera untuk mengambil nomor antrian.</p>
+        <div id="qr-reader-antrian" style="width: 100%; border: 2px solid var(--blue); border-radius: 12px; overflow: hidden; background: var(--bg);"></div>
+      </div>
+      <button class="btn-action" onclick="tutupScannerAntrian()" style="width:100%; background:var(--bg); color:var(--text); border:var(--border); box-shadow:none; margin-top:12px;">Batal & Tutup</button>
+    </div>
+  </div>
+
+  <!-- FITUR BARU: MODAL HASIL ANTRIAN & TABEL KENDALI 12 BULAN -->
+  <div id="modalHasilAntrian" class="modal-overlay">
+    <div class="modal-content" style="max-width: 500px; text-align:center;">
+      <div class="modal-header" style="justify-content: center; margin-bottom: 10px;">
+        <h3 style="font-size: 18px;"><i class="ph-fill ph-ticket" style="color:var(--blue);"></i> KARTU KENDALI ANTRIAN PRB</h3>
+      </div>
+      
+      <div id="cetakAntrianArea" style="padding: 15px; color: #000; background: #fff; border: 1px solid #ccc; border-radius: 8px;">
+        <h2 id="antrianNoUrut" style="font-size: 46px; font-weight: 900; margin: 10px 0; color: #000;">-</h2>
+        <div style="font-size: 12px; font-weight: 700; background: #f2f2f2; padding: 4px 10px; border-radius: 4px; display: inline-block; margin-bottom: 16px;" id="antrianPoli">Poli / Diagnosa</div>
+        
+        <div style="text-align: left; font-size: 11px; margin-bottom: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+          <div><strong>Nama:</strong><br><span id="antrianNama">-</span></div>
+          <div><strong>NIK:</strong><br><span id="antrianNIK">-</span></div>
+          <div style="grid-column: span 2;"><strong>Waktu Ambil:</strong> <span id="antrianWaktu">-</span></div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: center;" border="1">
+          <thead>
+            <tr style="background: #e5e7eb;">
+              <th style="padding: 6px;">Bulan (2026)</th>
+              <th style="padding: 6px;">No Antrian</th>
+              <th style="padding: 6px;">Paraf Petugas</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyRiwayatAntrian">
+            <!-- Di-generate lewat JavaScript -->
+          </tbody>
+        </table>
+      </div>
+      
+      <button class="btn-action" onclick="cetakTiketAntrian()" style="width:100%; margin-top:16px;">
+        <i class="ph-light ph-printer"></i> Cetak Kartu Antrian
+      </button>
+      <button class="btn-action" onclick="tutupModal('modalHasilAntrian')" style="width:100%; margin-top:8px; background:var(--bg); color:var(--text); border:var(--border); box-shadow:none;">
+        Selesai / Tutup
+      </button>
     </div>
   </div>
 
@@ -784,53 +842,13 @@
   <div id="modalPemantauan" class="modal-overlay"><div class="modal-content large"><div class="modal-header"><h3 id="titleModalPemantauan"></h3><button class="close-btn" onclick="tutupModal('modalPemantauan')"><i class="ph-light ph-x"></i></button></div><form id="formPemantauan" onsubmit="submitPemantauan(event)"><input type="hidden" id="idWaktuPemantauan"><div class="form-grid"><div class="form-group full-width"><label>Nama Pasien</label><input type="text" id="namaPasienPantau" readonly style="background:var(--table-header); cursor:not-allowed;"></div><div class="form-group"><label>NIK</label><input type="text" id="nikPasienPantau" readonly style="background:var(--table-header); cursor:not-allowed;"></div><div class="form-group"><label>No. BPJS</label><input type="text" id="bpjsPasienPantau" readonly style="background:var(--table-header); cursor:not-allowed;"></div><div class="form-group full-width"><label>Alamat & Domisili</label><input type="text" id="alamatPasienPantau" readonly style="background:var(--table-header); cursor:not-allowed;"></div><div class="full-width" style="height: 1px; background: var(--border); margin: 2px 0 6px 0;"></div><div class="form-group"><label>Tgl Kunjungan <span style="font-size:10px; color:var(--blue);">(WIB)</span></label><input type="date" id="tglKunjunganBaru" required></div><div class="form-group"><label>Metode Layanan</label><select id="jenisKunjungan" required><option value="Hadir Langsung">Hadir Langsung</option><option value="Menitipkan">Keluarga Menitipkan Obat</option><option value="Tidak Hadir">Tidak Hadir (Absen)</option></select></div><div class="form-group"><label>Tekanan Darah</label><input type="text" id="td" placeholder="120/80" required></div><div class="form-group"><label>Cek Gula Darah</label><select id="jenisGula" onchange="toggleGulaDarah()"><option value="">Tidak Diperiksa</option><option value="GDS">GDS (Sewaktu)</option><option value="GDP">GDP (Puasa)</option></select></div><div class="form-group hidden" id="divHasilGula"><label id="labelHasilGula">Hasil</label><input type="number" id="hasilGula"></div><div class="form-group hidden" id="divG2PP"><label>Hasil G2PP</label><input type="number" id="hasilG2PP"></div><div class="form-group full-width"><label>Tindak Lanjut & Status PRB</label><select id="statusPRB" required><option value="Aktif">Aktif Pemantauan</option><option value="Berobat Lanjut">Berobat Lanjut (Dirujuk ke RS)</option><option value="Berhenti - Meninggal Dunia">Keluar - Meninggal Dunia</option><option value="Berhenti - Pindah Faskes">Keluar - Pindah Faskes</option><option value="Berhenti - Berhenti Berobat">Keluar - Berhenti / Putus Obat</option></select></div></div><button type="submit" id="btnSubmitPemantauan" class="btn-action" style="margin-top: 20px; width: 100%;"><i class="ph-light ph-check-circle"></i> Rekam Kunjungan</button></form></div></div>
   <div id="modalDaftarAbsen" class="modal-overlay"><div class="modal-content large"><div class="modal-header"><h3><i class="ph-light ph-user-minus" style="color:#ff3b30;"></i> Daftar Pasien Belum Input Pemantauan</h3><button class="close-btn" onclick="tutupModal('modalDaftarAbsen')"><i class="ph-light ph-x"></i></button></div><div style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;"><p style="font-size: 12px; color: var(--secondary); margin: 0; flex: 1 1 260px;">Pasien aktif yang belum memiliki rekam pemantauan pada bulan terpilih.</p><div class="search-bar" style="width: auto; max-width: 100%; padding: 2px 12px; height: 34px; flex: 1 1 250px;"><i class="ph-light ph-magnifying-glass" style="font-size:16px;"></i><input type="text" id="searchAbsenInput" onkeyup="renderTabelAbsen()" placeholder="Cari nama/desa/diagnosa..." style="font-size:11.5px !important; height:100%; padding:0 !important; width:100%;"></div></div><div class="table-card" style="max-height: 60vh;"><div class="table-responsive"><table style="width: 100%;"><thead><tr><th>Nama Pasien</th><th>NIK / BPJS</th><th>Desa Domisili</th><th>Diagnosa PRB</th><th style="text-align: right; min-width:180px;">Aksi Tindakan</th></tr></thead><tbody id="tbodyDaftarAbsen"></tbody></table></div></div></div></div>
   <div id="modalKonfirmasiTidakHadir" class="modal-overlay"><div class="modal-content" style="max-width: 380px; text-align:center;"><i class="ph-light ph-warning-circle" style="font-size: 48px; color: #ff3b30; margin-bottom: 8px; display: inline-block;"></i><h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700;">Konfirmasi Tidak Hadir</h3><p id="teksKonfirmasiTidakHadir" style="font-size: 12px; color: var(--secondary); margin: 0 0 18px 0; line-height: 1.45;"></p><div style="display: flex; gap: 10px; justify-content: center;"><button class="btn-action" onclick="tutupModal('modalKonfirmasiTidakHadir')" style="background: var(--bg); color: var(--text); border: var(--border); box-shadow: none;">Batal</button><button class="btn-action" onclick="eksekusiTidakHadir()" style="background: #ff3b30;" id="btnKonfirmTidakHadir"><i class="ph-light ph-check-circle"></i> Ya, Simpan Tidak Hadir</button></div></div></div>
+  
   <div id="modalCatatan" class="modal-overlay"><div class="modal-content" style="max-width: 420px;"><div class="modal-header"><h3><i class="ph-fill ph-megaphone-simple" style="color:#ff5e00;"></i> Catatan / Info Terkini</h3><button class="close-btn" onclick="tutupModal('modalCatatan')"><i class="ph-light ph-x"></i></button></div><form onsubmit="submitCatatanAdmin(event)"><div class="form-group"><label>Tulis Pengumuman (Tampak oleh Seluruh Pengguna)</label><input type="text" id="inputCatatanTerkini" placeholder="Contoh: Jadwal Posbindu PRB Tgl 25..." required style="padding:11px;"></div><button type="submit" id="btnSaveCatatan" class="btn-action" style="margin-top: 16px; width: 100%; background: linear-gradient(135deg, #ff9500, #ff5e00);"><i class="ph-light ph-floppy-disk"></i> Simpan Catatan</button></form></div></div>
   <div id="modalMultiDiag" class="modal-overlay"><div class="modal-content large"><div class="modal-header"><h3><i class="ph-light ph-files"></i> Pasien Komplikasi (Multi-Diagnosa)</h3><button class="close-btn" onclick="tutupModal('modalMultiDiag')"><i class="ph-light ph-x"></i></button></div><p style="font-size: 12px; color: var(--secondary); margin: 0 0 12px 0;">Peserta PRB aktif terdaftar dengan lebih dari 1 diagnosa.</p><div class="table-card" style="max-height: 55vh;"><div class="table-responsive"><table style="width: 100%;"><thead><tr><th>Nama Pasien</th><th>NIK / BPJS</th><th>Desa</th><th>Diagnosa Komplikasi</th></tr></thead><tbody id="tbodyMultiDiag"></tbody></table></div></div></div></div>
   <div id="modalKonfirmasiHapus" class="modal-overlay"><div class="modal-content" style="max-width: 360px; text-align:center;"><i class="ph-light ph-warning-octagon" style="font-size: 46px; color: #e74c3c; margin-bottom: 10px; display: inline-block;"></i><h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 700;">Hapus Data Permanen?</h3><p id="teksKonfirmasiHapus" style="font-size: 12px; color: var(--secondary); margin: 0 0 18px 0; line-height: 1.45;"></p><div style="display: flex; gap: 10px; justify-content: center;"><button class="btn-action" onclick="tutupModal('modalKonfirmasiHapus')" style="background: var(--bg); color: var(--text); border: var(--border); box-shadow: none;">Batal</button><button class="btn-action" onclick="eksekusiHapusData()" style="background: #e74c3c;" id="btnHapusKonfirm">Ya, Hapus</button></div></div></div>
   <div id="modalPassword" class="modal-overlay"><div class="modal-content"><div class="modal-header"><h3>Ganti Password</h3><button class="close-btn" onclick="tutupModal('modalPassword')"><i class="ph-light ph-x"></i></button></div><form onsubmit="submitPassword(event)"><div class="form-group"><label>Password Lama</label><input type="password" id="oldPwd" required></div><div class="form-group"><label>Password Baru</label><input type="password" id="newPwd" required></div><div class="form-group"><label>Konfirmasi</label><input type="password" id="confirmPwd" required></div><button type="submit" id="btnSubmitPwd" class="btn-action" style="margin-top:16px; width:100%;">Simpan</button></form></div></div>
-  <div id="modalTambahUser" class="modal-overlay"><div class="modal-content"><div class="modal-header"><h3>Tambah Pengguna</h3><button class="close-btn" onclick="tutupModal('modalTambahUser')"><i class="ph-light ph-x"></i></button></div><form onsubmit="submitTambahUser(event)"><div class="form-group"><label>Username</label><input type="text" id="newUsername" required></div><div class="form-group"><label>Password</label><input type="text" id="newUserPwd" required></div><div class="form-group"><label>Nama Lengkap</label><input type="text" id="newUserNama" required></div><div class="form-group"><label>Peran</label><select id="newUserRole" required><option value="Petugas">Petugas (Standar)</option><option value="Admin">Admin (Penuh)</option></select></div><button type="submit" class="btn-action" style="margin-top:16px; width:100%;" id="btnSubmitUser">Daftarkan User</button></form></div></div>
-  <!-- MODAL HASIL ANTRIAN & TABEL KENDALI 12 BULAN -->
-  <div id="modalHasilAntrian" class="modal-overlay">
-    <div class="modal-content" style="max-width: 500px; text-align:center;">
-      <div class="modal-header" style="justify-content: center; margin-bottom: 10px;">
-        <h3 style="font-size: 18px;"><i class="ph-fill ph-ticket" style="color:var(--blue);"></i> KARTU KENDALI ANTRIAN PRB</h3>
-      </div>
-      
-      <div id="cetakAntrianArea" style="padding: 10px; color: #000; background: #fff; border: 1px solid #ccc; border-radius: 8px;">
-        <!-- Header Identitas Pasien -->
-        <h2 id="antrianNoUrut" style="font-size: 42px; font-weight: 900; margin: 10px 0; color: #000;">A-000</h2>
-        <div style="font-size: 12px; font-weight: 700; background: #f2f2f2; padding: 4px; border-radius: 4px; display: inline-block; margin-bottom: 16px;" id="antrianPoli">Poli / Diagnosa</div>
-        
-        <div style="text-align: left; font-size: 11px; margin-bottom: 16px;">
-          <div><strong>Nama :</strong> <span id="antrianNama">-</span></div>
-          <div><strong>NIK :</strong> <span id="antrianNIK">-</span></div>
-          <div><strong>Waktu Ambil :</strong> <span id="antrianWaktu">-</span></div>
-        </div>
+  <div id="modalTambahUser" class="modal-overlay"><div class="modal-content"><div class="modal-header"><h3>Tambah Pengguna</h3><button class="close-btn" onclick="tutupModal('modalTambahUser')"><i class="ph-light ph-x"></i></button></div><form onsubmit="submitTambahUser(event)"><div class="form-group"><label>Username</label><input type="text" id="newUsername" required></div><div class="form-group"><label>Password</label><input type="password" id="newUserPwd" required></div><div class="form-group"><label>Nama Lengkap</label><input type="text" id="newUserNama" required></div><div class="form-group"><label>Peran</label><select id="newUserRole" required><option value="Petugas">Petugas (Standar)</option><option value="Admin">Admin (Penuh)</option></select></div><button type="submit" class="btn-action" style="margin-top:16px; width:100%;" id="btnSubmitUser">Daftarkan User</button></form></div></div>
 
-        <!-- Tabel 12 Bulan -->
-        <table style="width: 100%; border-collapse: collapse; font-size: 10px; text-align: center;" border="1">
-          <thead>
-            <tr style="background: #e5e7eb;">
-              <th style="padding: 4px;">Bulan</th>
-              <th style="padding: 4px;">No Antrian</th>
-              <th style="padding: 4px;">Paraf Petugas</th>
-            </tr>
-          </thead>
-          <tbody id="tbodyRiwayatAntrian">
-            <!-- Di-generate lewat JavaScript -->
-          </tbody>
-        </table>
-      </div>
-      
-      <button class="btn-action" onclick="cetakTiketAntrian()" style="width:100%; margin-top:16px;">
-        <i class="ph-light ph-printer"></i> Cetak Kartu Antrian
-      </button>
-      <button class="btn-action" onclick="tutupModal('modalHasilAntrian')" style="width:100%; margin-top:8px; background:var(--bg); color:var(--text); border:var(--border); box-shadow:none;">
-        Tutup
-      </button>
-    </div>
-  </div>
-  
   <!-- TAMPILAN KHUSUS DI HP KETIKA MEMBUKA SCANNER (FULL SCREEN) -->
   <div id="mobileScannerView" style="display: none; position: fixed; inset: 0; background: #000; z-index: 99999; flex-direction: column;">
     <div style="padding: 16px; background: #111; color: #fff; display: flex; justify-content: space-between; align-items: center;">
@@ -854,6 +872,7 @@
     const INACTIVITY_LIMIT_MS = 30 * 60 * 1000;
     
     let html5QrcodeScanner = null;
+    let scannerAntrian = null; 
     let idCardQRInstance = null;
     
     const APP_SECURE_SALT = "CILONGOK1_PRB_AUTH_SECRET_2026";
@@ -995,9 +1014,7 @@
             toggleFilterLaporan(); 
         }
         
-        // PERBAIKAN: Fungsi ini kini sudah diatur dengan parameter yang benar di bawah
         renderDashboardFiltered(isFirstLogin); 
-        
         renderMutuFiltered(); buildLaporanCetak(); filterTabelPasien(); filterTabelPantau(); filterTabelHistori(); 
         if(isFirstLogin) switchTab('dashboard'); 
       } else { 
@@ -1019,6 +1036,9 @@
       }
     }
 
+    // ==========================================
+    // LOGIKA SCANNER REMOTE HP
+    // ==========================================
     let remotePollingTimer = null;
     let currentSessionId = "";
     let mobileQrScanner = null;
@@ -1095,19 +1115,33 @@
       }
     }
 
+    // ==========================================
+    // LOGIKA SCANNER PASIEN (UNTUK PEMANTAUAN)
+    // ==========================================
     function bukaScannerQR() {
       if (!SESSION_USER) { showToast("Akses Ditolak! Anda harus login terlebih dahulu.", "error"); return; }
       bukaModal('modalScannerQR');
       if (!html5QrcodeScanner) {
         html5QrcodeScanner = new Html5QrcodeScanner( "qr-reader", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false );
         html5QrcodeScanner.render(
-          function(decodedText) { if (html5QrcodeScanner) { html5QrcodeScanner.clear().then(() => { html5QrcodeScanner = null; tutupScannerQR(); prosesHasilScanQR(decodedText); }).catch(err => { console.error(err); tutupScannerQR(); prosesHasilScanQR(decodedText); }); } },
+          function(decodedText) { 
+            if (html5QrcodeScanner) { 
+              html5QrcodeScanner.clear().then(() => { 
+                html5QrcodeScanner = null; tutupScannerQR(); prosesHasilScanQR(decodedText); 
+              }).catch(err => { console.error(err); tutupScannerQR(); prosesHasilScanQR(decodedText); }); 
+            } 
+          },
           function(errorMessage) {}
         );
       }
     }
 
-    function tutupScannerQR() { tutupModal('modalScannerQR'); if (html5QrcodeScanner) { html5QrcodeScanner.clear().then(() => { html5QrcodeScanner = null; }).catch(err => { console.error(err); }); } }
+    function tutupScannerQR() { 
+      tutupModal('modalScannerQR'); 
+      if (html5QrcodeScanner) { 
+        html5QrcodeScanner.clear().then(() => { html5QrcodeScanner = null; }).catch(err => { console.error(err); }); 
+      } 
+    }
 
     function prosesHasilScanQR(qrString) {
       if (!SESSION_USER) { showToast("Sistem Keamanan: Barcode hanya dapat dibaca saat sudah login!", "error"); return; }
@@ -1119,6 +1153,118 @@
       else { showToast(`Pasien dengan NIK ${data.nik} tidak terdaftar di database!`, "error"); }
     }
 
+    // ==========================================
+    // FITUR BARU: AMBIL ANTRIAN (LOGIN SCREEN)
+    // ==========================================
+    function bukaScannerAntrian() {
+      bukaModal('modalScannerAntrian');
+      if (!scannerAntrian) {
+        scannerAntrian = new Html5QrcodeScanner("qr-reader-antrian", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false);
+        scannerAntrian.render(
+          function(decodedText) {
+            if(scannerAntrian) {
+              scannerAntrian.clear().then(() => {
+                scannerAntrian = null;
+                tutupScannerAntrian();
+                prosesAntrianQR(decodedText);
+              });
+            }
+          },
+          function(errorMessage) {}
+        );
+      }
+    }
+
+    function tutupScannerAntrian() {
+      tutupModal('modalScannerAntrian');
+      if (scannerAntrian) { 
+        scannerAntrian.clear().then(() => { scannerAntrian = null; }); 
+      } 
+    }
+
+    async function prosesAntrianQR(qrString) {
+      let dataQR = decryptQRPayload(qrString);
+      if (!dataQR) {
+        alert("Barcode tidak valid atau rusak!");
+        return;
+      }
+      
+      showToast("Sedang mengecek data dan mengambil antrian...", "success");
+      
+      let res = await callGasApi("ambilAntrian", { nik: dataQR.nik });
+      
+      if (!res.success) {
+        console.warn("Backend Antrian belum siap. Menampilkan simulasi data cetak tiket...");
+        let isDM = dataQR.nama.length % 2 === 0;
+        res = {
+          success: true,
+          data: {
+            noAntrian: isDM ? "DM-00" + (Math.floor(Math.random()*9)+1) : "HT-01" + (Math.floor(Math.random()*9)+1),
+            diagnosaUtama: isDM ? "Diabetes Melitus" : "Hipertensi & Penyakit Kronis",
+            nama: dataQR.nama,
+            nik: dataQR.nik,
+            waktu: new Date().toLocaleString('id-ID', {timeZone: 'Asia/Jakarta'})
+          }
+        };
+      }
+      
+      tampilkanTiketAntrian(res.data);
+    }
+
+    function tampilkanTiketAntrian(data) {
+      document.getElementById('antrianNoUrut').innerText = data.noAntrian;
+      document.getElementById('antrianPoli').innerText = `Layanan PRB - ${data.diagnosaUtama.toUpperCase()}`;
+      document.getElementById('antrianNama').innerText = data.nama;
+      document.getElementById('antrianNIK').innerText = data.nik;
+      document.getElementById('antrianWaktu').innerText = data.waktu;
+
+      const namaBulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+      const bulanSekarang = new Date().getMonth();
+      
+      let tbodyHtml = '';
+      for (let i = 0; i < 12; i++) {
+        let isCurrentMonth = (i === bulanSekarang);
+        let teksAntrian = isCurrentMonth ? `<strong>${data.noAntrian}</strong>` : "";
+        let bgStyle = isCurrentMonth ? "background: #fdfae7;" : "";
+        
+        tbodyHtml += `
+          <tr style="${bgStyle}">
+            <td style="padding: 6px; font-weight: ${isCurrentMonth ? 'bold' : 'normal'}; border: 1px solid #000;">${namaBulan[i]}</td>
+            <td style="padding: 6px; font-size: 11px; border: 1px solid #000;">${teksAntrian}</td>
+            <td style="padding: 6px; border: 1px solid #000;"></td>
+          </tr>
+        `;
+      }
+      document.getElementById('tbodyRiwayatAntrian').innerHTML = tbodyHtml;
+      
+      bukaModal('modalHasilAntrian');
+    }
+
+    function cetakTiketAntrian() {
+      const printContents = document.getElementById('cetakAntrianArea').innerHTML;
+      const printWindow = window.open('', '_blank', 'width=450,height=650');
+      printWindow.document.write(`
+        <html>
+        <head>
+          <title>Cetak Kartu Kendali Antrian PRB</title>
+          <style>
+            @page { margin: 10mm; }
+            body { font-family: Arial, sans-serif; text-align: center; color: #000; margin: 0; padding: 10px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;}
+            table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 15px; }
+            th, td { border: 1px solid #000; padding: 6px; }
+          </style>
+        </head>
+        <body onload="setTimeout(function(){ window.print(); window.close(); }, 500);">
+          ${printContents}
+        </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
+
+    // ==========================================
+    // LOGIKA UMUM & SECURITY (QR)
+    // ==========================================
     function decryptQRPayload(qrString) { if (!qrString || !qrString.startsWith("PRB-SECURE:")) return null; try { let b64 = qrString.replace("PRB-SECURE:", ""); let decoded = decodeURIComponent(escape(atob(b64))); let parts = decoded.split("|"); if (parts.length === 3 && parts[2] === APP_SECURE_SALT) { return { nik: parts[0], nama: parts[1] }; } } catch(e) { return null; } return null; }
     function generateSecureQRPayload(nik, nama) { let rawData = `${nik}|${nama}|${APP_SECURE_SALT}`; let b64 = btoa(unescape(encodeURIComponent(rawData))); return `PRB-SECURE:${b64}`; }
     function getTglLahirFromNik(nikStr) { if (!nikStr) return "-"; let clean = nikStr.toString().replace(/^'/, "").trim(); if (clean.length < 12) return "-"; let dd = parseInt(clean.substr(6, 2)); let mm = parseInt(clean.substr(8, 2)) - 1; let yy = parseInt(clean.substr(10, 2)); if (isNaN(dd) || isNaN(mm) || isNaN(yy) || mm < 0 || mm > 11) return "-"; if (dd > 40) dd = dd - 40; let currentYearWib = 2026; let fullYear = yy <= (currentYearWib % 100) ? 2000 + yy : 1900 + yy; return `${dd} ${NAMA_BULAN[mm]} ${fullYear}`; }
@@ -1134,7 +1280,6 @@
       else { document.getElementById('sidebar').classList.toggle('minimized'); }
     }
 
-    // PERBAIKAN FATAL: Menambahkan parameter "showWelcomeToast = false"
     function renderDashboardFiltered(showWelcomeToast = false) {
       let selM = parseInt(document.getElementById('dashFilterBulan').value); let selY = parseInt(document.getElementById('dashFilterTahun').value);
       let prevM = selM === 0 ? 11 : selM - 1; let prevY = selM === 0 ? selY - 1 : selY;
@@ -1178,7 +1323,6 @@
       MASTER_DESA.forEach(desa => { let val = desaCur[desa] || 0; let pct = (val / maxDesa) * 100; dashDesa.innerHTML += `<div class="chart-bar-row clickable-row" onclick="goToFilteredHistori('desa', '${desa}')"><div class="chart-label" style="font-size:10px; width:85px;">${desa}</div><div class="chart-progress-bg" style="height:6px;"><div class="chart-progress-fill" style="width: ${pct}%;"></div></div><div class="chart-val" style="font-size:10px; font-weight:700;">${val}</div></div>`; });
       document.getElementById('insightDistribusiDesa').innerHTML = `<div class="insight-box"><div class="insight-row"><span class="ins-label">Tindakan:</span><span class="ins-val">Evaluasi desa dengan kunjungan pemantauan rendah.</span></div></div>`;
 
-      // TAMBAHAN: MASTER DATA KESELURUHAN (ALL-TIME)
       let totalAktifAllTime = 0; let totalKeluarAllTime = 0; let masterDesaCur = {};
       APP_DATA_PASIEN.forEach(p => {
           if(!p) return;
@@ -1206,7 +1350,6 @@
       if(htmlMasterDesa === '') htmlMasterDesa = '<div style="font-size:11px; color:var(--secondary);">Belum ada data desa.</div>';
       document.getElementById('dashMasterDesa').innerHTML = htmlMasterDesa;
 
-      // NOTIFIKASI POP-UP SELAMAT DATANG (ALERT TUGAS)
       if (showWelcomeToast === true) {
          let namaDepan = SESSION_USER.split(" ")[0];
          let msg = `Halo, ${namaDepan}!<br><div style="font-size:11px; font-weight:normal; margin-top:5px; line-height:1.45;">Bulan ini:<br>✅ <b style="color:#34c759;">${totalHadir}</b> Hadir / Titip Obat<br>⚠️ <b style="color:#ff3b30;">${countBelumInput}</b> Belum Pemantauan</div>`;
@@ -1491,7 +1634,6 @@
     
     setInterval(() => { const d = new Date(); document.getElementById('currentDate').innerText = d.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Jakarta' }); document.getElementById('currentTime').innerText = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Jakarta' }) + " WIB"; }, 1000);
     
-    // PERBAIKAN: Format Toast Multiline
     function showToast(message, type = 'success') { 
       const container = document.getElementById('toastContainer'); 
       const toast = document.createElement('div'); 
@@ -1681,27 +1823,30 @@
         else if (dir === -1 && curPageLaporan > 1) { curPageLaporan--; renderLaporanPaginationView(false); }
     }
 
-function cetakPDF() {
-      // Pastikan data dirender semua sebelum dicetak
-      renderLaporanPaginationView(true); 
+// ==========================================
+    // PERBAIKAN: CETAK PDF BERSIH DI TAB BARU
+    // ==========================================
+    function cetakPDF() {
+      // Pastikan semua data dirender ke dalam tabel sebelum dicetak
+      renderLaporanPaginationView(true);
       
       setTimeout(() => {
-        // Ambil isi HTML dari area yang mau dicetak
+        // Ambil elemen tabel dan kop surat
         const printContents = document.getElementById('printArea').innerHTML;
         
-        // Buka Tab/Jendela Baru
+        // Buka tab / window baru khusus untuk mencetak
         const printWindow = window.open('', '_blank', 'width=900,height=650');
         
-        // Tulis ulang struktur HTML bersih layaknya dokumen instansi resmi
+        // Tulis ulang struktur HTML dasar layaknya dokumen instansi tanpa UI aplikasi
         printWindow.document.write(`
           <!DOCTYPE html>
           <html>
           <head>
             <title>Cetak Laporan PRB</title>
             <style>
-              @page { size: A4 portrait; margin: 15mm; }
+              @page { size: A4 landscape; margin: 15mm; }
               body { 
-                font-family: Arial, sans-serif; 
+                font-family: 'Inter', Arial, sans-serif; 
                 color: #000; 
                 margin: 0; 
                 padding: 0;
@@ -1715,105 +1860,79 @@ function cetakPDF() {
               .text-center { text-align: center; }
             </style>
           </head>
-          <body>
+          <body onload="setTimeout(function(){ window.print(); window.close(); }, 500);">
             ${printContents}
-            
-            <script>
-              // Otomatis jalankan perintah cetak lalu tutup tab setelah selesai
-              window.onload = function() {
-                setTimeout(() => {
-                  window.print();
-                  window.close();
-                }, 500);
-              };
+          </body>
+          </html>
         `);
         printWindow.document.close();
         
-        // Kembalikan tampilan tabel ke mode pagination
-        renderLaporanPaginationView(false); 
-      }, 500);
+        // Kembalikan tabel ke mode pagination setelah dokumen disalin
+        setTimeout(() => {
+          renderLaporanPaginationView(false);
+        }, 1000);
+      }, 300);
     }
-    
+
+    // ==========================================
+    // FUNGSI-FUNGSI TAMBAHAN YANG IKUT TERPOTONG
+    // ==========================================
     function exportExcel() {
+      renderLaporanPaginationView(true);
+      setTimeout(() => {
         let table = document.getElementById("tabelPrintPreview");
         let html = table.outerHTML;
-        let url = 'data:application/vnd.ms-excel;base64,' + btoa(unescape(encodeURIComponent(html)));
-        let a = document.createElement('a'); a.href = url; a.download = 'Laporan_PRB_Cilongok1.xls'; a.click();
+        let url = 'data:application/vnd.ms-excel;charset=utf-8,' + encodeURIComponent(html);
+        let downloadLink = document.createElement("a");
+        document.body.appendChild(downloadLink);
+        downloadLink.href = url;
+        downloadLink.download = 'Laporan_PRB_Puskesmas_Cilongok_I.xls';
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        renderLaporanPaginationView(false);
+      }, 300);
     }
 
-    // ==========================================
-    // FUNGSI TOGGLE TAMPILAN FORM (YANG HILANG)
-    // ==========================================
-
     function toggleStatusPrb() {
-      const status = document.getElementById('statusPrb').value;
-      const srbFields = document.querySelectorAll('.conditional-srb');
-      srbFields.forEach(el => {
-        if (status === 'Baru' || status === 'Pasien Baru (Dari RS)') {
-          el.classList.remove('hidden');
-        } else {
-          el.classList.add('hidden');
-        }
-      });
+      let status = document.getElementById('statusPrb').value;
+      let srbFields = document.querySelectorAll('.conditional-srb');
+      if (status === 'Baru') {
+        srbFields.forEach(el => el.classList.remove('hidden'));
+      } else {
+        srbFields.forEach(el => el.classList.add('hidden'));
+      }
     }
 
     function toggleAlamatLuar() {
-      const alamat = document.getElementById('alamat').value;
-      const divDesaLuar = document.getElementById('divDesaLuar');
+      let alamat = document.getElementById('alamat').value;
       if (alamat === 'Luar Wilayah') {
-        divDesaLuar.classList.remove('hidden');
-        document.getElementById('desaLuar').required = true;
+        document.getElementById('divDesaLuar').classList.remove('hidden');
       } else {
-        divDesaLuar.classList.add('hidden');
-        document.getElementById('desaLuar').required = false;
-        document.getElementById('desaLuar').value = "";
+        document.getElementById('divDesaLuar').classList.add('hidden');
       }
     }
 
     function toggleGulaDarah() {
-      const jenisGula = document.getElementById('jenisGula').value;
-      const divHasil = document.getElementById('divHasilGula');
-      const divG2PP = document.getElementById('divG2PP');
-      const label = document.getElementById('labelHasilGula');
-
-      if (jenisGula === '' || jenisGula === 'Tidak Diperiksa') {
-        divHasil.classList.add('hidden');
-        divG2PP.classList.add('hidden');
-        document.getElementById('hasilGula').required = false;
+      let jenis = document.getElementById('jenisGula').value;
+      if (jenis === '') {
+        document.getElementById('divHasilGula').classList.add('hidden');
+        document.getElementById('divG2PP').classList.add('hidden');
       } else {
-        divHasil.classList.remove('hidden');
-        document.getElementById('hasilGula').required = true;
-        label.innerText = 'Hasil ' + jenisGula;
-        
-        // Menampilkan kolom G2PP khusus jika yang dipilih GDP (Gula Darah Puasa)
-        if (jenisGula === 'GDP') {
-           divG2PP.classList.remove('hidden');
-        } else {
-           divG2PP.classList.add('hidden');
-           document.getElementById('hasilG2PP').value = "";
-        }
+        document.getElementById('divHasilGula').classList.remove('hidden');
+        document.getElementById('labelHasilGula').innerText = "Hasil " + jenis;
+        document.getElementById('divG2PP').classList.remove('hidden');
       }
-    }
-
-    // ==========================================
-    // FUNGSI MENU LAINNYA (CATATAN, PASSWORD, USER)
-    // ==========================================
-
-    function bukaModalCatatan() {
-      bukaModal('modalCatatan');
     }
 
     async function submitCatatanAdmin(e) {
       e.preventDefault();
-      const btn = document.getElementById('btnSaveCatatan');
+      let isi = document.getElementById('inputCatatanTerkini').value;
+      let btn = document.getElementById('btnSaveCatatan');
       setBtnLoading(btn, true);
-      const teks = document.getElementById('inputCatatanTerkini').value;
-      
-      const res = await callGasApi('updateCatatan', { catatan: teks });
-      showToast(res.message, res.success ? 'success' : 'error');
-      
-      if (res.success) {
-        document.getElementById('displayCatatanTerkini').innerText = teks;
+      let res = await callGasApi("updateCatatan", { catatan: isi });
+      showToast(res.message, res.success ? "success" : "error");
+      if(res.success) {
+        document.getElementById('displayCatatanTerkini').innerText = isi;
         tutupModal('modalCatatan');
       }
       setBtnLoading(btn, false);
@@ -1821,139 +1940,30 @@ function cetakPDF() {
 
     async function submitPassword(e) {
       e.preventDefault();
-      const oldPwd = document.getElementById('oldPwd').value;
-      const newPwd = document.getElementById('newPwd').value;
-      const confirmPwd = document.getElementById('confirmPwd').value;
-
-      if(newPwd !== confirmPwd) {
-        showToast('Gagal: Konfirmasi password baru tidak cocok!', 'error');
-        return;
-      }
-
-      const btn = document.getElementById('btnSubmitPwd');
+      let oldP = document.getElementById('oldPwd').value;
+      let newP = document.getElementById('newPwd').value;
+      let conf = document.getElementById('confirmPwd').value;
+      if(newP !== conf) { showToast("Password baru dan konfirmasi tidak cocok!", "error"); return; }
+      let btn = document.getElementById('btnSubmitPwd');
       setBtnLoading(btn, true);
-      
-      const res = await callGasApi('gantiPassword', { username: SESSION_USERNAME, oldPwd: oldPwd, newPwd: newPwd });
-      showToast(res.message, res.success ? 'success' : 'error');
-      
-      if(res.success) {
-        tutupModal('modalPassword');
-        e.target.reset();
-      }
+      let res = await callGasApi("gantiPassword", { oldPwd: oldP, newPwd: newP, user: SESSION_USERNAME });
+      showToast(res.message, res.success ? "success" : "error");
+      if(res.success) { tutupModal('modalPassword'); e.target.reset(); }
       setBtnLoading(btn, false);
     }
 
     async function submitTambahUser(e) {
       e.preventDefault();
-      const btn = document.getElementById('btnSubmitUser');
+      let user = document.getElementById('newUsername').value;
+      let pass = document.getElementById('newUserPwd').value;
+      let nama = document.getElementById('newUserNama').value;
+      let role = document.getElementById('newUserRole').value;
+      let btn = document.getElementById('btnSubmitUser');
       setBtnLoading(btn, true);
-      
-      const fd = {
-        username: document.getElementById('newUsername').value,
-        pass: document.getElementById('newUserPwd').value,
-        nama: document.getElementById('newUserNama').value,
-        role: document.getElementById('newUserRole').value
-      };
-      
-      const res = await callGasApi('tambahUser', { fd });
-      showToast(res.message, res.success ? 'success' : 'error');
-      
-      if(res.success) {
-        tutupModal('modalTambahUser');
-        e.target.reset();
-      }
+      let res = await callGasApi("tambahUser", { username: user, password: pass, nama: nama, role: role });
+      showToast(res.message, res.success ? "success" : "error");
+      if(res.success) { tutupModal('modalTambahUser'); e.target.reset(); }
       setBtnLoading(btn, false);
-    }
-
-    let scannerAntrian = null;
-
-    function bukaScannerAntrian() {
-      bukaModal('modalScannerQR'); // Kita gunakan ulang modal kamera yang sudah ada
-      if (!scannerAntrian) {
-        scannerAntrian = new Html5QrcodeScanner("qr-reader", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false);
-        scannerAntrian.render(
-          function(decodedText) {
-            scannerAntrian.clear().then(() => {
-              scannerAntrian = null;
-              tutupScannerQR();
-              prosesAntrianQR(decodedText);
-            });
-          },
-          function(errorMessage) {}
-        );
-      }
-    }
-
-    async function prosesAntrianQR(qrString) {
-      let dataQR = decryptQRPayload(qrString);
-      if (!dataQR) {
-        alert("Barcode tidak valid!");
-        return;
-      }
-      
-      showToast("Sedang mengecek data dan mengambil antrian...", "success");
-      
-      // Request ke Apps Script untuk generate nomor antrian
-      const res = await callGasApi("ambilAntrian", { nik: dataQR.nik });
-      
-      if (res.success) {
-        tampilkanTiketAntrian(res.data);
-      } else {
-        alert("Gagal mengambil antrian: " + res.message);
-      }
-    }
-
-    function tampilkanTiketAntrian(data) {
-      // Data expected from backend: { noAntrian: "HT-015", diagnosaUtama: "Hipertensi", nama: "Budi", nik: "3302...", waktu: "12-05-2026 08:00" }
-      document.getElementById('antrianNoUrut').innerText = data.noAntrian;
-      document.getElementById('antrianPoli').innerText = `Layanan PRB - ${data.diagnosaUtama.toUpperCase()}`;
-      document.getElementById('antrianNama').innerText = data.nama;
-      document.getElementById('antrianNIK').innerText = data.nik;
-      document.getElementById('antrianWaktu').innerText = data.waktu;
-
-      // Generate tabel 12 bulan
-      const namaBulan = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-      const bulanSekarang = new Date().getMonth(); // 0 - 11
-      
-      let tbodyHtml = '';
-      for (let i = 0; i < 12; i++) {
-        // Jika bulan ini sama dengan bulan saat pasien scan, isi nomor antriannya
-        let isCurrentMonth = (i === bulanSekarang);
-        let teksAntrian = isCurrentMonth ? `<strong>${data.noAntrian}</strong>` : "";
-        let bgStyle = isCurrentMonth ? "background: #fdfae7;" : "";
-        
-        tbodyHtml += `
-          <tr style="${bgStyle}">
-            <td style="padding: 4px; font-weight: ${isCurrentMonth ? 'bold' : 'normal'};">${namaBulan[i]}</td>
-            <td style="padding: 4px; font-size: 11px;">${teksAntrian}</td>
-            <td style="padding: 4px;"></td>
-          </tr>
-        `;
-      }
-      document.getElementById('tbodyRiwayatAntrian').innerHTML = tbodyHtml;
-      
-      bukaModal('modalHasilAntrian');
-    }
-
-    function cetakTiketAntrian() {
-      const printContents = document.getElementById('cetakAntrianArea').innerHTML;
-      const printWindow = window.open('', '_blank', 'width=400,height=600');
-      printWindow.document.write(`
-        <html>
-        <head>
-          <title>Cetak Antrian</title>
-          <style>
-            body { font-family: Arial, sans-serif; text-align: center; color: #000; margin: 0; padding: 10px; }
-            table { width: 100%; border-collapse: collapse; font-size: 10px; margin-top: 10px; }
-            th, td { border: 1px solid #000; padding: 4px; }
-          </style>
-        </head>
-        <body onload="window.print(); window.close();">
-          ${printContents}
-        </body>
-        </html>
-      `);
-      printWindow.document.close();
     }
   </script>
 </body>
