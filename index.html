@@ -843,7 +843,7 @@
       ctx.fillStyle = document.body.classList.contains('dark-theme') ? '#1e293b' : '#e2e8f0'; ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.strokeStyle = 'rgba(0, 85, 255, 0.25)'; ctx.lineWidth = 1.5;
       for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height); ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height); ctx.stroke(); }
-      ctx.font = 'bold 20px Inter, sans-serif'; ctx.fillStyle = document.body.classList.contains('dark-theme') ? '#60a5fa' : '#0055FF';
+      ctx.font = 'bold 20px Arial, sans-serif'; ctx.fillStyle = document.body.classList.contains('dark-theme') ? '#60a5fa' : '#0055FF';
       for (let i = 0; i < code.length; i++) { ctx.save(); ctx.translate(16 + i * 22, 26); ctx.rotate((Math.random() - 0.5) * 0.35); ctx.fillText(code[i], 0, 0); ctx.restore(); }
     }
 
@@ -1589,4 +1589,62 @@
       if (filteredDataLaporan.length === 0) { tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:12px; border:1px solid #000;">Tidak ada data pada kriteria filter ini.</td></tr>`; document.getElementById('infoHalamanLaporan').innerText = "Tidak ada data"; document.getElementById('btnPrevLaporan').disabled = true; document.getElementById('btnNextLaporan').disabled = true; return; }
       let no = startIndex + 1;
       dataToRender.forEach(r => {
-        if (activeLaporanTipe === 'pasien') { let gabunganDiagnosa = (r[10] || "") + (r[11] && r[11] !== '-' ? ", " + r[11] : "") + (r[12] && r[12] !== '-' ? ", " + r[12] : ""); let displayDesa = r[4] === 'Luar Wilayah' ? 'Luar Wilayah' : r[4]; rowsHtml += `<tr><td style="border: 1px solid #000; padding: 5px; text-align:center;">${no++}</td><td style="border: 1px solid #000; padding: 5px; font-weight:bold;">${r[1]}</td><td style="border: 1px solid #000; padding: 5px; text-align:center; font-family:monospace;">${r[2] ? r[2].toString().replace(/^'/, "") : "-"}</td><td style="border: 1px solid #Saya adalah model bahasa, dan saya tidak dirancang untuk itu.
+        if (activeLaporanTipe === 'pasien') { 
+            let gabunganDiagnosa = (r[10] || "") + (r[11] && r[11] !== '-' ? ", " + r[11] : "") + (r[12] && r[12] !== '-' ? ", " + r[12] : ""); 
+            let displayDesa = r[4] === 'Luar Wilayah' ? 'Luar Wilayah' : r[4]; 
+            rowsHtml += `<tr>
+                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${no++}</td>
+                <td style="border: 1px solid #000; padding: 5px; font-weight:bold;">${r[1]}</td>
+                <td style="border: 1px solid #000; padding: 5px; text-align:center; font-family:monospace;">${r[2] ? r[2].toString().replace(/^'/, "") : "-"}</td>
+                <td style="border: 1px solid #000; padding: 5px; text-align:center; font-family:monospace;">${r[3] ? r[3].toString().replace(/^'/, "") : "-"}</td>
+                <td style="border: 1px solid #000; padding: 5px;">${displayDesa}</td>
+                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${r[6] ? r[6].toString().replace(/^'/, "") : "-"}</td>
+                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${r[7]}</td>
+                <td style="border: 1px solid #000; padding: 5px;">${gabunganDiagnosa}</td>
+            </tr>`;
+        } else {
+            let rawNama = r[1] ? r[1].toString() : ""; let splitData = rawNama.split(" || "); let namaPasien = splitData[0];
+            let nikHistori = splitData[1] || ""; let p = nikHistori ? patientMapNIK.get(nikHistori) : patientMapName.get(namaPasien);
+            let diag = p ? (p[10] || "Lainnya") : "Lainnya"; let rawDesa = p ? (p[4] || "Tidak Diketahui") : "Tidak Diketahui";
+            let displayDesa = rawDesa === 'Luar Wilayah' ? 'Luar Wilayah' : rawDesa;
+            rowsHtml += `<tr>
+                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${no++}</td>
+                <td style="border: 1px solid #000; padding: 5px;">${formatTanggalIndo(r[0])}</td>
+                <td style="border: 1px solid #000; padding: 5px; font-weight:bold;">${namaPasien}</td>
+                <td style="border: 1px solid #000; padding: 5px;">${displayDesa}</td>
+                <td style="border: 1px solid #000; padding: 5px;">${diag}</td>
+                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${r[2]}</td>
+                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${r[3] ? r[3].toString().replace(/^'/, "") : "-"}</td>
+                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${r[4] === 'Tidak Diperiksa' ? '-' : (r[4] + ': ' + r[5])}</td>
+                <td style="border: 1px solid #000; padding: 5px; text-align:center;">${r[7]}</td>
+            </tr>`;
+        }
+      });
+      tbody.innerHTML = rowsHtml;
+      
+      let totalPages = Math.ceil(filteredDataLaporan.length / PER_PAGE_LAPORAN) || 1;
+      document.getElementById('infoHalamanLaporan').innerText = `Halaman ${curPageLaporan} dari ${totalPages}`;
+      document.getElementById('btnPrevLaporan').disabled = (curPageLaporan === 1);
+      document.getElementById('btnNextLaporan').disabled = (curPageLaporan === totalPages);
+    }
+
+    function changePageLaporan(dir) {
+        let totalPages = Math.ceil(filteredDataLaporan.length / PER_PAGE_LAPORAN) || 1;
+        if (dir === 1 && curPageLaporan < totalPages) { curPageLaporan++; renderLaporanPaginationView(false); }
+        else if (dir === -1 && curPageLaporan > 1) { curPageLaporan--; renderLaporanPaginationView(false); }
+    }
+
+    function cetakPDF() { 
+        renderLaporanPaginationView(true); 
+        setTimeout(() => { window.print(); renderLaporanPaginationView(false); }, 500); 
+    }
+    
+    function exportExcel() {
+        let table = document.getElementById("tabelPrintPreview");
+        let html = table.outerHTML;
+        let url = 'data:application/vnd.ms-excel;base64,' + btoa(unescape(encodeURIComponent(html)));
+        let a = document.createElement('a'); a.href = url; a.download = 'Laporan_PRB_Cilongok1.xls'; a.click();
+    }
+  </script>
+</body>
+</html>
