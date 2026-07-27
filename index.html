@@ -280,17 +280,13 @@
         <div class="form-group"><label>Nama Pengguna (ID)</label><input type="text" id="username" placeholder="Masukkan ID" required style="margin-bottom: 12px; padding: 10px;"></div>
         <div class="form-group"><label>Kata Sandi</label><input type="password" id="password" placeholder="••••••••" required style="margin-bottom: 14px; padding: 10px;"></div>
         
-        <div class="form-group">
-          <label>Kode Keamanan (CAPTCHA)</label>
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label><i class="ph-light ph-shield-check" style="color:var(--blue);"></i> Kode Keamanan (CAPTCHA)</label>
           <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
-            <!-- Pastikan id="captchaCanvas" ada di sini -->
-            <canvas id="captchaCanvas" width="130" height="38" style="border: 1px solid #ccc; border-radius: 8px; cursor: pointer;" title="Klik untuk acak kode" onclick="generateCaptcha()"></canvas>
-            
-            <button type="button" class="btn" onclick="generateCaptcha()" style="width:38px; height:38px; padding:0;" title="Acak Kode Baru">
-              <i class="ph-bold ph-arrows-clockwise"></i>
-            </button>
+            <canvas id="captchaCanvas" width="130" height="38" style="border: var(--border); border-radius: var(--btn-radius); cursor: pointer; display:block;" title="Klik untuk acak kode" onclick="generateCaptcha()"></canvas>
+            <button type="button" class="btn-icon" onclick="generateCaptcha()" title="Acak Kode CAPTCHA Baru" style="border: var(--border); border-radius: var(--btn-radius); width:38px; height:38px;"><i class="ph-light ph-arrows-clockwise" style="font-size:20px;"></i></button>
           </div>
-          <input type="text" id="captchaInput" class="form-control" placeholder="Ketik kode di atas" required style="text-transform: uppercase;">
+          <input type="text" id="captchaInput" placeholder="Ketik 5 kode di atas" required style="padding: 10px; text-transform: uppercase; font-weight:700; letter-spacing:1px;">
         </div>
         
         <button type="submit" class="btn-action" style="width: 100%; padding: 12px; font-size:13px;" id="btnLoginSubmit"><i class="ph-light ph-sign-in"></i> Masuk Sistem</button>
@@ -978,47 +974,19 @@
       }
     }
 
-let currentCaptchaText = "";
-
-function generateCaptcha() {
-  const canvas = document.getElementById('captchaCanvas');
-  if (!canvas) return; 
-  
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; 
-  let code = '';
-  for (let i = 0; i < 5; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  currentCaptchaText = code;
-  
-  // Background canvas
-  ctx.fillStyle = '#f1f5f9'; 
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  
-  // Garis coretan pengganggu (opsional untuk keamanan)
-  ctx.strokeStyle = 'rgba(5, 150, 105, 0.25)'; 
-  ctx.lineWidth = 1.5;
-  for (let i = 0; i < 4; i++) {
-    ctx.beginPath(); 
-    ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height); 
-    ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height); 
-    ctx.stroke();
-  }
-  
-  // Render teks CAPTCHA
-  ctx.font = 'bold 20px Arial, sans-serif'; 
-  ctx.fillStyle = '#059669'; // Warna teks hijau utama
-  for (let i = 0; i < code.length; i++) {
-    ctx.save(); 
-    ctx.translate(18 + i * 20, 26); 
-    ctx.rotate((Math.random() - 0.5) * 0.3); 
-    ctx.fillText(code[i], 0, 0); 
-    ctx.restore();
-  }
-}
+    function generateCaptcha() {
+      const canvas = document.getElementById('captchaCanvas');
+      if (!canvas) return; const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; let code = '';
+      for (let i = 0; i < 5; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+      currentCaptchaText = code;
+      ctx.fillStyle = document.body.classList.contains('dark-theme') ? '#1e293b' : '#e2e8f0'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(0, 85, 255, 0.25)'; ctx.lineWidth = 1.5;
+      for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height); ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height); ctx.stroke(); }
+      ctx.font = 'bold 20px Arial, sans-serif'; ctx.fillStyle = document.body.classList.contains('dark-theme') ? '#60a5fa' : '#0055FF';
+      for (let i = 0; i < code.length; i++) { ctx.save(); ctx.translate(16 + i * 22, 26); ctx.rotate((Math.random() - 0.5) * 0.35); ctx.fillText(code[i], 0, 0); ctx.restore(); }
+    }
 
     function resetInactivityTimer() { if (inactivityTimer) clearTimeout(inactivityTimer); if (sessionStorage.getItem('appSession')) { inactivityTimer = setTimeout(() => { doLogout(true); }, INACTIVITY_LIMIT_MS); } }
     function setupInactivityListeners() { ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => { window.addEventListener(evt, resetInactivityTimer, true); }); }
