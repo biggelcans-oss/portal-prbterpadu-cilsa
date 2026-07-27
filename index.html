@@ -1454,21 +1454,96 @@ function cetakKartuMassal() {
     function bukaFormEditPemantauan(idx) { const data = APP_DATA_HISTORI[idx]; let exactRowIndex = idx + 2; document.getElementById('idWaktuPemantauan').value = exactRowIndex; let rawNama = data[1] ? data[1].toString() : ""; let splitData = rawNama.split(" || "); let namaPasien = splitData[0]; let nikHistori = splitData[1] || ""; document.getElementById('namaPasienPantau').value = namaPasien; let p = nikHistori ? patientMapNIK.get(nikHistori) : patientMapName.get(namaPasien); if(p) { document.getElementById('nikPasienPantau').value = p[2] ? p[2].toString().replace(/^'/, "") : "-"; document.getElementById('bpjsPasienPantau').value = p[3] ? p[3].toString().replace(/^'/, "") : "-"; document.getElementById('alamatPasienPantau').value = `${p[4] === 'Luar Wilayah' ? "Luar Wilayah" : p[4]} (RT/RW: ${p[6] ? p[6].toString().replace(/^'/, "") : "-"})`; } else { document.getElementById('nikPasienPantau').value = "-"; document.getElementById('bpjsPasienPantau').value = "-"; document.getElementById('alamatPasienPantau').value = "-"; } let d = parseDateWib(data[0]); document.getElementById('tglKunjunganBaru').value = d ? d.isoStr : getWibDateStr(); document.getElementById('jenisKunjungan').value = data[2]; document.getElementById('td').value = data[3] ? data[3].toString().replace(/^'/, "") : ""; document.getElementById('jenisGula').value = data[4] === 'Tidak Diperiksa' ? '' : data[4]; document.getElementById('hasilGula').value = data[5] === '-' ? '' : data[5]; document.getElementById('hasilG2PP').value = data[6] === '-' ? '' : data[6]; document.getElementById('statusPRB').value = data[7]; document.getElementById('titleModalPemantauan').innerHTML = '<i class="ph-light ph-pencil-simple"></i> Edit Rekam Kunjungan'; toggleGulaDarah(); bukaModal('modalPemantauan'); }
     function aksiHapusData(tipe, idx) { let exactRowIndex = idx + 2; TARGET_HAPUS_TIPE = tipe; TARGET_HAPUS_ROW = exactRowIndex; document.getElementById("teksKonfirmasiHapus").innerText = `Hapus data ${tipe} ini? Tindakan permanen.`; bukaModal('modalKonfirmasiHapus'); }
     
-    async function eksekusiHapusData() { const btn = document.getElementById('btnHapusKonfirm'); setBtnLoading(btn, true); const res = await callGasApi("hapusData", { tipe: TARGET_HAPUS_TIPE, rowIndex: TARGET_HAPUS_ROW }); showToast(res); fetchAppData(false); tutupModal('modalKonfirmasiHapus'); setBtnLoading(btn, false); }
+    async function eksekusiHapusData() { 
+      const btn = document.getElementById('btnHapusKonfirm'); 
+      setBtnLoading(btn, true); 
+      const res = await callGasApi("hapusData", { tipe: TARGET_HAPUS_TIPE, rowIndex: TARGET_HAPUS_ROW }); 
+      
+      // PERBAIKAN: Tambahkan .message
+      showToast(res.message); 
+      
+      fetchAppData(false); 
+      tutupModal('modalKonfirmasiHapus'); 
+      setBtnLoading(btn, false); 
+    }
 
-    async function submitPasien(e) { 
-      e.preventDefault(); const rowIndex = document.getElementById('idWaktuPasien').value; let rawNik = document.getElementById('nik').value.replace(/^'/, ""); let rawBpjs = document.getElementById('bpjs').value.replace(/^'/, ""); 
+async function submitPasien(e) { 
+      e.preventDefault(); 
+      const rowIndex = document.getElementById('idWaktuPasien').value; 
+      let rawNik = document.getElementById('nik').value.replace(/^'/, ""); 
+      let rawBpjs = document.getElementById('bpjs').value.replace(/^'/, ""); 
+      
       const fd = { nama: document.getElementById('nama').value, nik: "'" + rawNik, bpjs: "'" + rawBpjs, statusPrb: document.getElementById('statusPrb').value, noSrb: document.getElementById('noSrb').value, tglSrb: document.getElementById('tglSrb').value, alamat: document.getElementById('alamat').value, desaLuar: document.getElementById('desaLuar').value, rtrw: "'" + document.getElementById('rtrw').value.replace(/^'/, ""), prb1: document.getElementById('prb1').value, prb2: document.getElementById('prb2').value, prb3: document.getElementById('prb3').value, currentUser: SESSION_USER }; 
-      const b = document.getElementById('btnSubmitPasien'); setBtnLoading(b, true);
-      if (rowIndex === "") { if (APP_DATA_PASIEN.some(p => { let n = p[2] ? p[2].toString().replace(/^'/, "") : ""; let bp = p[3] ? p[3].toString().replace(/^'/, "") : ""; return (n !== "" && n === rawNik) || (bp !== "" && bp === rawBpjs); })) { showToast("Gagal: NIK/BPJS sudah terdaftar!", "error"); setBtnLoading(b, false); return; } const res = await callGasApi("simpanPasien", { fd }); showToast(res); e.target.reset(); tutupModal('modalPasien'); fetchAppData(false); } else { const res = await callGasApi("updatePasien", { rowIndex: parseInt(rowIndex), fd }); showToast(res); e.target.reset(); tutupModal('modalPasien'); fetchAppData(false); }
+      const b = document.getElementById('btnSubmitPasien'); 
+      setBtnLoading(b, true);
+      
+      if (rowIndex === "") { 
+        if (APP_DATA_PASIEN.some(p => { let n = p[2] ? p[2].toString().replace(/^'/, "") : ""; let bp = p[3] ? p[3].toString().replace(/^'/, "") : ""; return (n !== "" && n === rawNik) || (bp !== "" && bp === rawBpjs); })) { 
+          showToast("Gagal: NIK/BPJS sudah terdaftar!", "error"); 
+          setBtnLoading(b, false); 
+          return; 
+        } 
+        const res = await callGasApi("simpanPasien", { fd }); 
+        
+        // PERBAIKAN: Tambahkan .message
+        showToast(res.message); 
+        
+        e.target.reset(); 
+        tutupModal('modalPasien'); 
+        fetchAppData(false); 
+      } else { 
+        const res = await callGasApi("updatePasien", { rowIndex: parseInt(rowIndex), fd }); 
+        
+        // PERBAIKAN: Tambahkan .message
+        showToast(res.message); 
+        
+        e.target.reset(); 
+        tutupModal('modalPasien'); 
+        fetchAppData(false); 
+      }
       setBtnLoading(b, false);
     }
 
-    async function submitPemantauan(e) { 
-      e.preventDefault(); const rowIndex = document.getElementById('idWaktuPemantauan').value; let namaAsli = document.getElementById('namaPasienPantau').value; let nikAsli = document.getElementById('nikPasienPantau').value; let bpjsAsli = document.getElementById('bpjsPasienPantau').value; 
+async function submitPemantauan(e) { 
+      e.preventDefault(); 
+      const rowIndex = document.getElementById('idWaktuPemantauan').value; 
+      let namaAsli = document.getElementById('namaPasienPantau').value; 
+      let nikAsli = document.getElementById('nikPasienPantau').value; 
+      let bpjsAsli = document.getElementById('bpjsPasienPantau').value; 
+      
       const fd = { namaPasien: `${namaAsli} || ${nikAsli} || ${bpjsAsli}`, tglKunjungan: document.getElementById('tglKunjunganBaru').value, jenisKunjungan: document.getElementById('jenisKunjungan').value, td: document.getElementById('td').value === "-" ? "-" : "'" + document.getElementById('td').value.replace(/^'/, ""), jenisGula: document.getElementById('jenisGula').value, hasilGula: document.getElementById('hasilGula').value, hasilG2PP: document.getElementById('hasilG2PP').value, statusPRB: document.getElementById('statusPRB').value, currentUser: SESSION_USER }; 
-      const b = document.getElementById('btnSubmitPemantauan'); setBtnLoading(b, true);
-      if (rowIndex === "") { let d = parseDateWib(fd.tglKunjungan); let curM = d ? d.month : 0; let curY = d ? d.year : 2026; if(APP_DATA_HISTORI.some(h => { if(!h[0]) return false; let dH = parseDateWib(h[0]); if (!dH) return false; let rawHistName = h[1] ? h[1].toString() : ""; let matchPasien = rawHistName.includes(" || ") ? (rawHistName.split(" || ")[1] === nikAsli) : (rawHistName === namaAsli); return matchPasien && dH.month === curM && dH.year === curY; })) { showToast(`Pasien sudah memiliki rekam pemantauan pada bulan tersebut.`, "error"); setBtnLoading(b, false); return; } const res = await callGasApi("simpanPemantauan", { fd }); showToast(res); e.target.reset(); tutupModal('modalPemantauan'); fetchAppData(false); document.getElementById('searchClientInput').value = ''; } else { const res = await callGasApi("updatePemantauan", { rowIndex: parseInt(rowIndex), fd }); showToast(res); e.target.reset(); tutupModal('modalPemantauan'); fetchAppData(false); }
+      const b = document.getElementById('btnSubmitPemantauan'); 
+      setBtnLoading(b, true);
+      
+      if (rowIndex === "") { 
+        let d = parseDateWib(fd.tglKunjungan); 
+        let curM = d ? d.month : 0; 
+        let curY = d ? d.year : 2026; 
+        
+        if(APP_DATA_HISTORI.some(h => { if(!h[0]) return false; let dH = parseDateWib(h[0]); if (!dH) return false; let rawHistName = h[1] ? h[1].toString() : ""; let matchPasien = rawHistName.includes(" || ") ? (rawHistName.split(" || ")[1] === nikAsli) : (rawHistName === namaAsli); return matchPasien && dH.month === curM && dH.year === curY; })) { 
+          showToast(`Pasien sudah memiliki rekam pemantauan pada bulan tersebut.`, "error"); 
+          setBtnLoading(b, false); 
+          return; 
+        } 
+        const res = await callGasApi("simpanPemantauan", { fd }); 
+        
+        // PERBAIKAN: Tambahkan .message
+        showToast(res.message); 
+        
+        e.target.reset(); 
+        tutupModal('modalPemantauan'); 
+        fetchAppData(false); 
+        document.getElementById('searchClientInput').value = ''; 
+      } else { 
+        const res = await callGasApi("updatePemantauan", { rowIndex: parseInt(rowIndex), fd }); 
+        
+        // PERBAIKAN: Tambahkan .message
+        showToast(res.message); 
+        
+        e.target.reset(); 
+        tutupModal('modalPemantauan'); 
+        fetchAppData(false); 
+      }
       setBtnLoading(b, false);
     }
 
