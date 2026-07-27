@@ -290,7 +290,7 @@
           <i class="ph-light ph-device-mobile-camera"></i> Buka Mode Scanner HP
         </button>
 
-        <!-- FITUR BARU: TOMBOL AMBIL ANTRIAN (TANPA LOGIN) -->
+        <!-- TOMBOL AMBIL ANTRIAN (TANPA LOGIN) -->
         <div style="margin-top: 24px; border-top: 1px dashed rgba(11, 20, 38, 0.2); padding-top: 16px;">
           <p style="margin: 0 0 10px 0; font-size: 11.5px; color: var(--secondary);">Layanan Pasien (Tanpa Login)</p>
           <button type="button" class="btn-action" onclick="bukaScannerAntrian()" style="width: 100%; background: #34c759; color: white; box-shadow: 0 3px 10px rgba(52,199,89,0.3);">
@@ -641,7 +641,7 @@
                    <p style="font-size: 11.5px; margin-bottom: 16px; color: var(--secondary); font-weight:600;"><i class="ph-light ph-eye"></i> Pratinjau Dokumen Cetak</p>
                    <div id="printArea" style="background:#fff; color:#000; padding:24px; border-radius:8px; border:1px dashed rgba(11, 20, 38, 0.18);">
                       
-                      <!-- DESAIN KOP SURAT PUSKESMAS CILONGOK I - MENGGUNAKAN TABLE UNTUK PRESISI CETAK -->
+                      <!-- DESAIN KOP SURAT PUSKESMAS CILONGOK I -->
                       <table style="width: 100%; border-collapse: collapse; margin-bottom: 2px;">
                         <tr>
                           <td style="width: 85px; text-align: left; vertical-align: middle; padding-bottom: 12px; border-bottom: 3.5px solid #000; border: none;">
@@ -727,7 +727,7 @@
     </div>
   </div>
 
-  <!-- MODAL SCANNER BARCODE 2D PC (UNTUK PEMANTAUAN) -->
+  <!-- MODAL SCANNER BARCODE 2D PC -->
   <div id="modalScannerQR" class="modal-overlay">
     <div class="modal-content" style="max-width: 420px; text-align:center;">
       <div class="modal-header">
@@ -742,7 +742,7 @@
     </div>
   </div>
 
-  <!-- FITUR BARU: MODAL SCANNER ANTRIAN (KHUSUS LOGIN SCREEN) -->
+  <!-- MODAL SCANNER ANTRIAN -->
   <div id="modalScannerAntrian" class="modal-overlay">
     <div class="modal-content" style="max-width: 420px; text-align:center;">
       <div class="modal-header">
@@ -757,7 +757,7 @@
     </div>
   </div>
 
-  <!-- FITUR BARU: MODAL HASIL ANTRIAN & TABEL KENDALI 12 BULAN -->
+  <!-- MODAL HASIL ANTRIAN -->
   <div id="modalHasilAntrian" class="modal-overlay">
     <div class="modal-content" style="max-width: 500px; text-align:center;">
       <div class="modal-header" style="justify-content: center; margin-bottom: 10px;">
@@ -782,9 +782,7 @@
               <th style="padding: 6px;">Paraf Petugas</th>
             </tr>
           </thead>
-          <tbody id="tbodyRiwayatAntrian">
-            <!-- Di-generate lewat JavaScript -->
-          </tbody>
+          <tbody id="tbodyRiwayatAntrian"></tbody>
         </table>
       </div>
       
@@ -806,9 +804,7 @@
       </div>
       <p style="font-size: 11.5px; color: var(--secondary); margin-bottom: 12px; line-height: 1.5;">Buka aplikasi ini di browser HP Anda, pilih <b>Buka Mode Scanner HP</b>, lalu masukkan kode berikut:</p>
       
-      <div id="remoteQrContainer" style="margin: 0 auto 16px auto; display: inline-block;">
-        <!-- KODE PIN AKAN MUNCUL DI SINI -->
-      </div>
+      <div id="remoteQrContainer" style="margin: 0 auto 16px auto; display: inline-block;"></div>
       
       <div style="background: rgba(52, 199, 89, 0.1); border: 1px solid rgba(52, 199, 89, 0.2); border-radius: 8px; padding: 10px; display: flex; align-items: center; justify-content: center; gap: 8px;">
         <span class="mac-spinner" style="border-top-color: #34c759; width: 12px; height: 12px;"></span>
@@ -849,7 +845,7 @@
   <div id="modalPassword" class="modal-overlay"><div class="modal-content"><div class="modal-header"><h3>Ganti Password</h3><button class="close-btn" onclick="tutupModal('modalPassword')"><i class="ph-light ph-x"></i></button></div><form onsubmit="submitPassword(event)"><div class="form-group"><label>Password Lama</label><input type="password" id="oldPwd" required></div><div class="form-group"><label>Password Baru</label><input type="password" id="newPwd" required></div><div class="form-group"><label>Konfirmasi</label><input type="password" id="confirmPwd" required></div><button type="submit" id="btnSubmitPwd" class="btn-action" style="margin-top:16px; width:100%;">Simpan</button></form></div></div>
   <div id="modalTambahUser" class="modal-overlay"><div class="modal-content"><div class="modal-header"><h3>Tambah Pengguna</h3><button class="close-btn" onclick="tutupModal('modalTambahUser')"><i class="ph-light ph-x"></i></button></div><form onsubmit="submitTambahUser(event)"><div class="form-group"><label>Username</label><input type="text" id="newUsername" required></div><div class="form-group"><label>Password</label><input type="password" id="newUserPwd" required></div><div class="form-group"><label>Nama Lengkap</label><input type="text" id="newUserNama" required></div><div class="form-group"><label>Peran</label><select id="newUserRole" required><option value="Petugas">Petugas (Standar)</option><option value="Admin">Admin (Penuh)</option></select></div><button type="submit" class="btn-action" style="margin-top:16px; width:100%;" id="btnSubmitUser">Daftarkan User</button></form></div></div>
 
-  <!-- TAMPILAN KHUSUS DI HP KETIKA MEMBUKA SCANNER (FULL SCREEN) -->
+  <!-- TAMPILAN KHUSUS DI HP KETIKA MEMBUKA SCANNER -->
   <div id="mobileScannerView" style="display: none; position: fixed; inset: 0; background: #000; z-index: 99999; flex-direction: column;">
     <div style="padding: 16px; background: #111; color: #fff; display: flex; justify-content: space-between; align-items: center;">
       <div style="font-weight: 700; font-size: 14px;"><i class="ph-fill ph-heartbeat" style="color:#0055FF;"></i> PRB Remote Scanner</div>
@@ -1116,7 +1112,7 @@
     }
 
     // ==========================================
-    // LOGIKA SCANNER PASIEN (UNTUK PEMANTAUAN)
+    // LOGIKA SCANNER PASIEN (PEMANTAUAN)
     // ==========================================
     function bukaScannerQR() {
       if (!SESSION_USER) { showToast("Akses Ditolak! Anda harus login terlebih dahulu.", "error"); return; }
@@ -1154,7 +1150,7 @@
     }
 
     // ==========================================
-    // FITUR BARU: AMBIL ANTRIAN (LOGIN SCREEN)
+    // AMBIL ANTRIAN (LOGIN SCREEN)
     // ==========================================
     function bukaScannerAntrian() {
       bukaModal('modalScannerAntrian');
@@ -1194,7 +1190,6 @@
       let res = await callGasApi("ambilAntrian", { nik: dataQR.nik });
       
       if (!res.success) {
-        console.warn("Backend Antrian belum siap. Menampilkan simulasi data cetak tiket...");
         let isDM = dataQR.nama.length % 2 === 0;
         res = {
           success: true,
@@ -1236,7 +1231,6 @@
         `;
       }
       document.getElementById('tbodyRiwayatAntrian').innerHTML = tbodyHtml;
-      
       bukaModal('modalHasilAntrian');
     }
 
@@ -1823,21 +1817,16 @@
         else if (dir === -1 && curPageLaporan > 1) { curPageLaporan--; renderLaporanPaginationView(false); }
     }
 
-// ==========================================
-    // PERBAIKAN: CETAK PDF BERSIH DI TAB BARU
+    // ==========================================
+    // CETAK PDF BERSIH DI TAB BARU
     // ==========================================
     function cetakPDF() {
-      // Pastikan semua data dirender ke dalam tabel sebelum dicetak
       renderLaporanPaginationView(true);
       
       setTimeout(() => {
-        // Ambil elemen tabel dan kop surat
         const printContents = document.getElementById('printArea').innerHTML;
-        
-        // Buka tab / window baru khusus untuk mencetak
         const printWindow = window.open('', '_blank', 'width=900,height=650');
         
-        // Tulis ulang struktur HTML dasar layaknya dokumen instansi tanpa UI aplikasi
         printWindow.document.write(`
           <!DOCTYPE html>
           <html>
@@ -1867,16 +1856,12 @@
         `);
         printWindow.document.close();
         
-        // Kembalikan tabel ke mode pagination setelah dokumen disalin
         setTimeout(() => {
           renderLaporanPaginationView(false);
         }, 1000);
       }, 300);
     }
 
-    // ==========================================
-    // FUNGSI-FUNGSI TAMBAHAN YANG IKUT TERPOTONG
-    // ==========================================
     function exportExcel() {
       renderLaporanPaginationView(true);
       setTimeout(() => {
