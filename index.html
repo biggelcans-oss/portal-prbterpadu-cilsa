@@ -1007,24 +1007,26 @@
     let patientMapNIK = new Map(); let patientMapName = new Map();
 
     // 1. API CALL DENGAN CORS BYPASS, REDIRECT FOLLOW, & ERROR HANDLING (PERBAIKAN FAILED TO FETCH)
-    async function callGasApi(action, payload = {}) {
-      if(GAS_API_URL === "https://script.google.com/macros/s/AKfycbyLYK73FjJ2Qg1QeGpy4DGAFjGPj1bllkRyn0dOWj23mbtRf9witDFhpEtqe_3p7pIR/exec" || GAS_API_URL.trim() === "") {
-         return { success: false, message: "URL Google Apps Script belum disetting di kode HTML!" };
-      }
-      try {
-        const response = await fetch(GAS_API_URL, {
-          method: "POST",
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          redirect: "follow", // <-- PENTING: Mencegah error Failed to Fetch dari redirect Google
-          body: JSON.stringify({ action: action, ...payload })
-        });
-        if (!response.ok) throw new Error(`HTTP Error Status: ${response.status}`);
-        return await response.json();
-      } catch (err) {
-        console.error("API Fetch Error:", err);
-        return { success: false, message: "Koneksi terputus: " + err.message + ". Pastikan URL API benar dan hak akses Web App diset ke 'Anyone'." };
-      }
-    }
+async function callGasApi(action, payload = {}) {
+  // KEMBALIKAN KE TEKS INI. Jangan masukkan URL asli Anda di sini.
+  if(GAS_API_URL === "MASUKKAN_URL_WEB_APP_GOOGLE_APPS_SCRIPT_DI_SINI" || GAS_API_URL.trim() === "") {
+     return { success: false, message: "URL Google Apps Script belum disetting di kode HTML!" };
+  }
+  
+  try {
+    const response = await fetch(GAS_API_URL, {
+      method: "POST",
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      redirect: "follow", 
+      body: JSON.stringify({ action: action, ...payload })
+    });
+    if (!response.ok) throw new Error(`HTTP Error Status: ${response.status}`);
+    return await response.json();
+  } catch (err) {
+    console.error("API Fetch Error:", err);
+    return { success: false, message: "Koneksi terputus: " + err.message };
+  }
+}
 
     // 2. CAPTCHA YANG DIPERBAIKI (ANTI-BOT & RESPONSIVE)
     function generateCaptcha() {
