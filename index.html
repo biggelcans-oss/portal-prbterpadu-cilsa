@@ -1201,13 +1201,20 @@ function parseDateWib(dateVal) {
     function bukaScannerAntrian() { bukaModal('modalScannerAntrian'); if (!scannerAntrian) { scannerAntrian = new Html5QrcodeScanner("qr-reader-antrian", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false); scannerAntrian.render( function(decodedText) { if(scannerAntrian) { scannerAntrian.clear().then(() => { scannerAntrian = null; tutupScannerAntrian(); prosesAntrianQR(decodedText); }); } }, function(err) {} ); } }
     function tutupScannerAntrian() { tutupModal('modalScannerAntrian'); if (scannerAntrian) { scannerAntrian.clear().then(() => { scannerAntrian = null; }); } }
     
+// 3. Update logika saat pasien melakukan SCAN QR
     async function prosesAntrianQR(qrString) { 
       let dataQR = decryptQRPayload(qrString); 
-      if (!dataQR) { alert("Barcode tidak valid!"); return; } 
+      if (!dataQR) { showToast("Barcode tidak valid!", "error"); return; } 
 
-      // PERBAIKAN: Cek Data Ganda sebelum mengambil antrian (di sisi Frontend)
+      // Pengecekan 1: Apakah sudah input pemantauan bulan ini?
       if (cekSudahPemantauanBulanIni(dataQR.nik, dataQR.nama)) {
         showToast(`Gagal: Pasien ${dataQR.nama} sudah rekam pemantauan bulan ini!`, "error");
+        return;
+      }
+      
+      // Pengecekan 2: Apakah sudah ambil antrian tapi belum dipanggil petugas?
+      if (cekSudahAdaAntrianHariIni(dataQR.nik)) {
+        showToast(`Gagal: Pasien ${dataQR.nama} sudah masuk di daftar antrian (Menunggu)!`, "error");
         return;
       }
 
@@ -1219,19 +1226,82 @@ function parseDateWib(dateVal) {
         showToast(res.message, "error"); 
       } 
     }
+
+// 1. Fungsi cek pemantauan yang sudah diperbaiki agar kebal terhadap tanda petik dan spasi
+    function cekSudahPemantauanBulanIni(nik, nama) {
+      let today = parseDateWib(getWibDateStr());
+      let curM = today ? today.month : new Date().getMonth();
+      let curY = today ? today.year : new Date().getFullYear();
+
+      // Membersihkan input dari spasi dan tanda petik tunggal (khas eksport Sheets/Excel)
+      let cleanInputNik = (nik || "").toString().replace(/^'/, "").trim();
+      let cleanInputNama = (nama || "").toString().trim().toLowerCase();
+
+      for (let i = 0; i < APP_DATA_HISTORI.length; i++) {
+        let h = APP_DATA_HISTORI[i];
+        if (!h || !h[0]) continue;
+        let dH = parseDateWib(h[0]);
+        if (!dH) continue;
+
+        if (dH.month === curM && dH.year === curY) {
+          let rawHistName = h[1] ? h[1].toString() : "";
+          let histParts = rawHistName.split(" || ");
+          let histNama = histParts[0].trim().toLowerCase();
+          let histNik = histParts.length > 1 ? histParts[1].replace(/^'/, "").trim() : "";
+
+          // Cek kecocokan berdasarkan NIK (paling akurat), gunakan Nama sebagai cadangan
+          let matchPasien = false;
+          if (cleanInputNik !== "" && histNik !== "") {
+              matchPasien = (cleanInputNik === histNik);
+          } else {
+              matchPasien = (cleanInputNama === histNama);
+          }
+
+          if (matchPasien) return true; // Ditolak karena sudah ada riwayat bulan ini
+        }
+      }
+      return false;
+    }
+
+    // 2. FUNGSI BARU: Cegah ambil antrian berkali-kali di hari yang sama
+    function cekSudahAdaAntrianHariIni(nik) {
+       let todayIso = parseDateWib(getWibDateStr()).isoStr;
+       let cleanInputNik = (nik || "").toString().replace(/^'/, "").trim();
+       
+       for (let i = 0; i < APP_DATA_ANTRIAN.length; i++) {
+           let a = APP_DATA_ANTRIAN[i];
+           if (!a || !a[0]) continue;
+           let dA = parseDateWib(a[0]);
+           if (!dA) continue;
+           
+           // Jika antrian terjadi hari ini dan statusnya masih "Menunggu"
+           if (dA.isoStr === todayIso && a[5] === "Menunggu") {
+               let antrianNik = (a[2] || "").toString().replace(/^'/, "").trim();
+               if (cleanInputNik !== "" && antrianNik === cleanInputNik) return true;
+           }
+       }
+       return false;
+    }
     
     function bukaAntrianLangsung() { document.getElementById('searchManualInput').value = ""; filterTabelManual(); bukaModal('modalAntrianLangsung'); }
     function filterTabelManual() { let input = document.getElementById("searchManualInput").value.toLowerCase(); dataManualFiltered = APP_DATA_PASIEN.filter(r => { if(!r) return false; let n = r[2] ? r[2].toString().replace(/^'/, "") : ""; let b = r[3] ? r[3].toString().replace(/^'/, "") : ""; return input === "" || `${r[1]} ${n} ${b} ${r[4]}`.toLowerCase().includes(input); }); let trHtml = ''; if(dataManualFiltered.length === 0) { trHtml = '<tr><td colspan="5" style="text-align: center;">Tidak ditemukan</td></tr>'; } else { dataManualFiltered.slice(0, 50).forEach(r => { let n = r[2] ? r[2].toString().replace(/^'/, "") : "-"; let b = r[3] ? r[3].toString().replace(/^'/, "") : "-"; trHtml += `<tr><td><strong>${r[1]}</strong></td><td>NIK: ${n}<br>BPJS: ${b}</td><td>${r[4] === 'Luar Wilayah' ? 'Luar Wilayah' : r[4]}</td><td>${getMultiDiagnosaHtml(r)}</td><td style="text-align:right;"><button class="btn-action btn-small" onclick="eksekusiAntrianLangsung('${n}')"><i class="ph-light ph-plus"></i> Ambil L</button></td></tr>`; }); } document.getElementById('tbodyAntrianLangsung').innerHTML = trHtml; }
     
+// 4. Update logika saat petugas menekan tombol AMBIL L (Pemantauan Langsung)
     async function eksekusiAntrianLangsung(nik) { 
       if(!nik || nik === "-") return; 
 
       let p = patientMapNIK.get(nik);
       let nama = p ? p[1] : "";
 
-      // PERBAIKAN: Cek Data Ganda sebelum mengambil antrian manual (Kode L)
+      // Pengecekan 1: Apakah sudah input pemantauan bulan ini?
       if (cekSudahPemantauanBulanIni(nik, nama)) {
         showToast(`Gagal: Pasien ${nama} sudah rekam pemantauan bulan ini!`, "error");
+        return;
+      }
+      
+      // Pengecekan 2: Apakah sudah ambil antrian tapi belum dipanggil petugas?
+      if (cekSudahAdaAntrianHariIni(nik)) {
+        showToast(`Gagal: Pasien ${nama} sudah mengambil antrian hari ini!`, "error");
         return;
       }
 
