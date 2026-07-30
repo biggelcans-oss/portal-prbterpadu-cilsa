@@ -1049,9 +1049,10 @@ async function callGasApi(action, payload = {}) {
     function setupInactivityListeners() { ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(evt => { window.addEventListener(evt, resetInactivityTimer, true); }); }
     function getWibDateStr(dInput) { let d = dInput ? new Date(dInput) : new Date(); if (isNaN(d.getTime())) return ''; return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Jakarta' }).format(d); }
     
-    function parseDateWib(dateVal) {
+function parseDateWib(dateVal) {
       if (!dateVal) return null;
       let d; let hh = 0, mm = 0, ss = 0;
+
       if (typeof dateVal === 'number' || (!isNaN(dateVal) && !dateVal.toString().includes('-') && !dateVal.toString().includes('/') && !dateVal.toString().includes(':'))) {
         let serial = parseFloat(dateVal);
         d = new Date((serial - (25567 + 2)) * 86400 * 1000);
@@ -1060,15 +1061,41 @@ async function callGasApi(action, payload = {}) {
         let matchDMY = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
         let matchYMD = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
         let timeMatch = str.match(/(\d{2}):(\d{2})(?::(\d{2}))?/);
+        
         if (timeMatch) { hh = parseInt(timeMatch[1]); mm = parseInt(timeMatch[2]); ss = timeMatch[3] ? parseInt(timeMatch[3]) : 0; }
-        if (matchDMY && !matchYMD) { d = new Date(parseInt(matchDMY[3]), parseInt(matchDMY[2]) - 1, parseInt(matchDMY[1]), hh, mm, ss);
-        } else if (matchYMD) { d = new Date(parseInt(matchYMD[1]), parseInt(matchYMD[2]) - 1, parseInt(matchYMD[3]), hh, mm, ss);
-        } else { d = new Date(str); }
+        
+        // Memaksa penangkapan jika server mengembalikan string UTC berakhiran 'Z'
+        if (str.includes('T') && str.endsWith('Z')) {
+            d = new Date(str);
+        } else if (matchDMY && !matchYMD) { 
+            d = new Date(parseInt(matchDMY[3]), parseInt(matchDMY[2]) - 1, parseInt(matchDMY[1]), hh, mm, ss);
+        } else if (matchYMD) { 
+            d = new Date(parseInt(matchYMD[1]), parseInt(matchYMD[2]) - 1, parseInt(matchYMD[3]), hh, mm, ss);
+        } else { 
+            d = new Date(str); 
+        }
       }
+
       if (isNaN(d.getTime())) return null;
-      let isoStr = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Jakarta' }).format(d);
-      let dParts = isoStr.split('-');
-      return { year: parseInt(dParts[0]), month: parseInt(dParts[1]) - 1, day: parseInt(dParts[2]), isoStr: isoStr, timestamp: d.getTime(), hh: hh, mm: mm, ss: ss };
+      
+      // PERBAIKAN ZONA WAKTU: Menarik format bagian-demi-bagian khusus WIB
+      let formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+      });
+      
+      let parts = {};
+      formatter.formatToParts(d).forEach(p => parts[p.type] = p.value);
+      
+      return { 
+        year: parseInt(parts.year), 
+        month: parseInt(parts.month) - 1, 
+        day: parseInt(parts.day), 
+        isoStr: `${parts.year}-${parts.month}-${parts.day}`, 
+        timestamp: d.getTime(), 
+        hh: parseInt(parts.hour) || 0, 
+        mm: parseInt(parts.minute) || 0, 
+        ss: parseInt(parts.second) || 0 
+      };
     }
 
     function setBtnLoading(btn, isLoading, originalHtml = '') { if(!btn) return; if(isLoading) { btn.dataset.originalHtml = btn.innerHTML; btn.innerHTML = '<div style="display:flex; align-items:center; justify-content:center;"><span class="mac-spinner"></span> <span>Memproses...</span></div>'; btn.classList.add('loading'); btn.disabled = true; } else { btn.innerHTML = originalHtml || btn.dataset.originalHtml; btn.classList.remove('loading'); btn.disabled = false; } }
