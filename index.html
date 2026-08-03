@@ -1805,7 +1805,7 @@ function cetakPDF() {
           return;
       }
       
-      showToast("Menyiapkan dokumen PDF seluruh data terfilter...");
+      showToast("Menyiapkan dokumen PDF...");
       
       let jenis = document.getElementById('jenisLaporanCetak').value; 
       let docTitle = document.getElementById('printDocTitle').innerText;
@@ -1813,13 +1813,14 @@ function cetakPDF() {
       
       let tbodyHtml = '';
       
+      // Mengumpulkan semua data tanpa batasan per halaman
       filteredDataLaporan.forEach((row, i) => { 
           let no = i + 1;
           if (jenis.startsWith('peserta') || jenis === 'seluruh_peserta' || jenis === 'detail_desa_diagnosa') {
               let cleanNIK = row[2] ? row[2].toString().replace(/^'/, "") : "-";
               let cleanBPJS = row[3] ? row[3].toString().replace(/^'/, "") : "-";
               let desa = row[4] === 'Luar Wilayah' ? 'Luar Wilayah' : row[4];
-              tbodyHtml += `<tr><td style="text-align:center;">${no}</td><td>${formatTanggalIndo(row[0])}</td><td><strong>${row[1]}</strong></td><td style="font-family:monospace; font-size:9.5px;">${cleanNIK}<br>${cleanBPJS}</td><td>${desa}</td><td>${row[10]}</td></tr>`;
+              tbodyHtml += `<tr><td style="text-align:center;">${no}</td><td>${formatTanggalIndo(row[0])}</td><td><strong>${row[1]}</strong></td><td style="font-family:monospace; font-size:10px;">NIK: ${cleanNIK}<br>BPJS: ${cleanBPJS}</td><td>${desa}</td><td>${row[10]}</td></tr>`;
           } else {
               let rawNama = row[1] ? row[1].toString() : ""; 
               let nama = rawNama.split(" || ")[0];
@@ -1829,46 +1830,66 @@ function cetakPDF() {
           }
       }); 
 
+      // Menyusun format tanggal tanda tangan (contoh: 03 Agustus 2026)
       let tglSekarang = parseDateWib(new Date());
-      let sigDate = tglSekarang ? `Cilongok, ${tglSekarang.day} ${NAMA_BULAN[tglSekarang.month]} ${tglSekarang.year}` : "";
+      let sigDate = tglSekarang ? `${tglSekarang.day.toString().padStart(2, '0')} ${NAMA_BULAN[tglSekarang.month]} ${tglSekarang.year}` : "";
 
       const printContents = `
-        <div style="text-align:center; margin-bottom: 20px;">
-            <h3 style="margin:0;">PUSKESMAS CILONGOK I</h3>
-            <h4 style="margin:5px 0;">${docTitle}</h4>
-            <div style="font-size: 11px; margin-top: 5px; color: #555;">Total Data Terekap: ${filteredDataLaporan.length} Data</div>
+        <!-- KOP SURAT RESMI -->
+        <div style="display:flex; align-items:center; padding-bottom: 10px; margin-bottom: 2px; border-bottom: 3px solid #000;">
+            <!-- Logo Banyumas -->
+            <img src="https://upload.wikimedia.org/wikipedia/commons/d/dc/Lambang_Kabupaten_Banyumas.png" style="width:75px; height:auto; margin-right: 15px;" alt="Logo Banyumas">
+            <div style="text-align:center; flex:1; line-height:1.2;">
+                <div style="font-size:16px; font-weight:bold;">PEMERINTAH KABUPATEN BANYUMAS</div>
+                <div style="font-size:16px; font-weight:bold;">DINAS KESEHATAN</div>
+                <div style="font-size:22px; font-weight:bold; margin-top:2px; letter-spacing: 1px;">PUSKESMAS CILONGOK I</div>
+                <div style="font-size:12px; margin-top:4px;">Jl. Raya Cilongok - Ajibarang Km. 1, Cilongok, Banyumas 53162</div>
+            </div>
+            <!-- Spacer agar teks tetap rata tengah -->
+            <div style="width:75px;"></div>
         </div>
+        <div style="border-bottom: 1px solid #000; margin-bottom: 20px;"></div>
+
+        <!-- JUDUL LAPORAN -->
+        <div style="text-align:center; margin-bottom: 20px;">
+            <h4 style="margin:0 0 5px 0; text-decoration: underline; font-size:14px;">${docTitle}</h4>
+            <div style="font-size: 11px; color: #333;">Total Data Terekap: ${filteredDataLaporan.length} Pasien</div>
+        </div>
+        
+        <!-- TABEL DATA -->
         <table>
             <thead>${theadHtml}</thead>
             <tbody>${tbodyHtml}</tbody>
         </table>
         
-        <!-- BLOK TANDA TANGAN INSTANSI -->
-        <table style="width: 100%; border: none; margin-top: 30px; page-break-inside: avoid;">
+        <!-- BLOK TANDA TANGAN -->
+        <table style="width: 100%; border: none; margin-top: 40px; page-break-inside: avoid;">
             <tr>
                 <td style="border: none; width: 60%;"></td>
                 <td style="border: none; width: 40%; text-align: left; font-size: 12px; line-height: 1.5;">
-                    <div>${sigDate}</div>
+                    <div>Cilongok, ${sigDate}</div>
                     <div>Mengetahui,</div>
                     <div>Kepala Puskesmas Cilongok I</div>
-                    <div style="margin-bottom: 70px;">Kabupaten Banyumas</div>
-                    <div><strong>dr. NURUL EKA SANTI</strong></div>
+                    <div>Kabupaten Banyumas</div>
+                    <br><br><br><br>
+                    <div style="font-weight:bold; text-decoration:underline;">dr. NURUL EKA SANTI</div>
                     <div>NIP. 197807142010012002</div>
                 </td>
             </tr>
         </table>
       `;
 
+      // Buka window khusus cetak
       const printWindow = window.open('', '_blank', 'width=900,height=700'); 
       printWindow.document.write(`
         <html>
         <head>
-          <title>Cetak Laporan PRB - Puskesmas Cilongok I</title>
+          <title>Cetak Laporan - Puskesmas Cilongok I</title>
           <style>
             @page { size: A4; margin: 15mm; } 
-            body { font-family: Arial, sans-serif; color: #000; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;} 
+            body { font-family: 'Times New Roman', Times, serif; color: #000; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;} 
             table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; margin-bottom: 10px;} 
-            th, td { border: 1px solid #000; padding: 6px; } 
+            th, td { border: 1px solid #000; padding: 6px; vertical-align: top;} 
             th { background-color: #f2f2f2 !important; text-align: center; }
           </style>
         </head>
@@ -1879,7 +1900,6 @@ function cetakPDF() {
       `); 
       printWindow.document.close();
     }
-
     function exportExcel() {
       if(filteredDataLaporan.length === 0) {
           showToast("Tidak ada data untuk diekspor!", "error");
