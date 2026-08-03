@@ -982,7 +982,7 @@
 <!-- JAVASCRIPT LOGIC ENGINE FINAL (PERBAIKAN ANTRIAN GANDA) -->
   <script>
     // MASUKKAN URL DEPLOYMENT GOOGLE APPS SCRIPT YANG BARU DI SINI
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyLYK73FjJ2Qg1QeGpy4DGAFjGPj1bllkRyn0dOWj23mbtRf9witDFhpEtqe_3p7pIR/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwi9BRy3lbmwbZjRD_d2vQC9kIgXgJassZ_z9TEYhKFGqiDNZaUqpQ1tcjyhbYuCg0B/exec";
 
     let SESSION_USER = "", SESSION_USERNAME = "", SESSION_ROLE = "";
     let APP_DATA_PASIEN = []; let APP_DATA_HISTORI = []; let APP_DATA_ANTRIAN = [];
@@ -1009,7 +1009,7 @@
 
     // 1. API CALL DENGAN CORS BYPASS, REDIRECT FOLLOW, & ERROR HANDLING
     async function callGasApi(action, payload = {}) {
-      if(GAS_API_URL === "MASUKKAN_URL_WEB_APP_GOOGLE_APPS_SCRIPT_DI_SINI" || GAS_API_URL.trim() === "") {
+      if(GAS_API_URL === "https://script.google.com/macros/s/AKfycbwi9BRy3lbmwbZjRD_d2vQC9kIgXgJassZ_z9TEYhKFGqiDNZaUqpQ1tcjyhbYuCg0B/exec" || GAS_API_URL.trim() === "") {
          return { success: false, message: "URL Google Apps Script belum disetting di kode HTML!" };
       }
       
@@ -1735,6 +1735,45 @@
       document.body.removeChild(link);
       showToast("File Excel/CSV berhasil diunduh!", "success");
     }
+    // TAMBAHKAN ATAU TIMPA FUNGSI INI DI GOOGLE APPS SCRIPT ANDA
+function generateNoUrutAntrian(sheetAntrian, tipePrefix) {
+  // tipePrefix akan berisi "D" (Datang Langsung), "H" (Remote/HP), atau "L" (Lansia/Manual)
+  var data = sheetAntrian.getDataRange().getValues();
+  
+  // Pastikan zona waktu mutlak ke WIB (Asia/Jakarta) agar tidak selisih hari dengan server Google
+  var today = Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd");
+  var maxAntrian = 0;
+
+  // Mulai loop dari baris kedua (index 1) untuk melewati header tabel
+  for (var i = 1; i < data.length; i++) {
+    var tglRow = data[i][0]; // Asumsi Kolom A adalah Waktu/Tanggal
+    if (!tglRow) continue;
+
+    // Format tanggal dari database untuk dicocokkan dengan hari ini
+    var tglFormat = Utilities.formatDate(new Date(tglRow), "Asia/Jakarta", "yyyy-MM-dd");
+    
+    // Jika tanggal baris tersebut sama dengan hari ini
+    if (tglFormat === today) {
+      var noAntrian = data[i][1] ? data[i][1].toString().trim() : ""; // Asumsi Kolom B adalah No Antrian
+      
+      // Filter hanya nomor yang awalannya sesuai (misal sama-sama "D-")
+      if (noAntrian.indexOf(tipePrefix + "-") === 0) {
+        var urut = parseInt(noAntrian.split("-")[1], 10);
+        if (!isNaN(urut) && urut > maxAntrian) {
+          maxAntrian = urut; // Temukan angka antrian terbesar hari ini
+        }
+      }
+    }
+  }
+
+  // Tambahkan 1 dari angka terbesar yang ditemukan
+  var nextUrut = maxAntrian + 1;
+  
+  // Format menjadi 2 digit (contoh: 01, 02, ..., 10, 11)
+  var nextUrutStr = nextUrut < 10 ? "0" + nextUrut : nextUrut.toString();
+  
+  return tipePrefix + "-" + nextUrutStr;
+}
   </script>
 </body>
 </html>
