@@ -982,10 +982,10 @@
 <!-- JAVASCRIPT LOGIC ENGINE FINAL (PERBAIKAN ANTRIAN GANDA) -->
   <script>
     // MASUKKAN URL DEPLOYMENT GOOGLE APPS SCRIPT YANG BARU DI SINI
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbx2eg-ejxPTjWxhNsdKIB4qBVVBth9gwvjtu4_rL2vl09u66sDE1VWvEIvnbFJDuPM/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwi9BRy3lbmwbZjRD_d2vQC9kIgXgJassZ_z9TEYhKFGqiDNZaUqpQ1tcjyhbYuCg0B/exec";
 
     let SESSION_USER = "", SESSION_USERNAME = "", SESSION_ROLE = "";
-    let APP_DATA_PASIEN = []; let APP_DATA_HISTORI = []; let APP_DATA_ANTRIAN = []; let JADWAL_DB = [];
+    let APP_DATA_PASIEN = []; let APP_DATA_HISTORI = []; let APP_DATA_ANTRIAN = [];
     let TARGET_HAPUS_TIPE = "", TARGET_HAPUS_ROW = "";
     let TARGET_TIDAK_HADIR_IDX = null;
     let currentCaptchaText = ""; let inactivityTimer = null;
@@ -1000,33 +1000,12 @@
     let JADWAL_BUKA = localStorage.getItem('prb_jadwal_buka') || "07:30";
     let JADWAL_TUTUP = localStorage.getItem('prb_jadwal_tutup') || "12:00";
 
-// ENGINE JADWAL SERVER-SIDE (MEMERIKSA TANGGAL DAN JAM)
-    function cekStatusJadwal() {
-       let d = new Date();
-       let y = d.getFullYear();
-       let m = (d.getMonth() + 1).toString().padStart(2, '0');
-       let day = d.getDate().toString().padStart(2, '0');
-       let todayStr = `${y}-${m}-${day}`; // Format YYYY-MM-DD
-
-       // Cari apakah tanggal hari ini terdaftar di database jadwal
-       let jadwalHariIni = JADWAL_DB.find(j => j[0] === todayStr);
-
-       if (!jadwalHariIni) {
-           return { buka: false, pesan: `Layanan DITUTUP. Tanggal ${todayStr} tidak terdaftar sebagai hari kegiatan PRB.` };
-       }
-
-       let jamBuka = jadwalHariIni[1] || "07:30";
-       let jamTutup = jadwalHariIni[2] || "16:00";
-
-       let h = d.getHours().toString().padStart(2, '0');
-       let min = d.getMinutes().toString().padStart(2, '0');
-       let curTime = `${h}:${min}`;
-
-       if (curTime >= jamBuka && curTime <= jamTutup) {
-           return { buka: true, pesan: "" };
-       } else {
-           return { buka: false, pesan: `Layanan hari ini HANYA DIBUKA pukul ${jamBuka} - ${jamTutup} WIB.` };
-       }
+    function isJadwalBuka() {
+      let now = new Date();
+      let h = now.getHours().toString().padStart(2, '0');
+      let m = now.getMinutes().toString().padStart(2, '0');
+      let curTime = `${h}:${m}`;
+      return (curTime >= JADWAL_BUKA && curTime <= JADWAL_TUTUP);
     }
     
     const APP_SECURE_SALT = "CILONGOK1_PRB_AUTH_SECRET_2026";
@@ -1242,7 +1221,7 @@
       try {
         const res = await callGasApi("getInitData");
         if (res.success) {
-          APP_DATA_PASIEN = res.pasien || []; APP_DATA_HISTORI = res.pemantauan || []; APP_DATA_ANTRIAN = res.antrian || []; JADWAL_DB = res.jadwal || [];
+          APP_DATA_PASIEN = res.pasien || []; APP_DATA_HISTORI = res.pemantauan || []; APP_DATA_ANTRIAN = res.antrian || [];
           if(res.infoTerkini) { document.getElementById('displayCatatanTerkini').innerText = res.infoTerkini; document.getElementById('inputCatatanTerkini').value = res.infoTerkini; }
           patientMapNIK.clear(); patientMapName.clear(); APP_DATA_PASIEN.forEach(p => { if(!p) return; let n = p[2] ? p[2].toString().replace(/^'/, "") : ""; if (n) patientMapNIK.set(n, p); if (p[1]) patientMapName.set(p[1].toString(), p); });
           if(isFirstLogin) { let todayWib = getWibDateStr(); let curM = parseDateWib(todayWib).month; document.getElementById('laporanFilterBulan').value = curM.toString(); document.getElementById('laporanFilterTanggal').value = todayWib; document.getElementById('filterTanggalHistori').value = ""; toggleFilterLaporan(); }
@@ -1260,15 +1239,21 @@
     }
 
     // 5. SCANNER & ANTRIAN LOGIC (DIPERBAIKI)
-    function bukaRemoteScanner() { 
+      function bukaRemoteScanner() { 
       if (!SESSION_USER) { showToast("Silakan login.", "error"); return; } 
-      let status = cekStatusJadwal();
-      if (!status.buka) { showToast(status.pesan, "error"); return; }
-      // ... (lanjutan kode bukaModalRemote) ...
-      if (!currentSessionId) { currentSessionId = Math.floor(10000 + Math.random() * 90000).toString(); if(remotePollingTimer) clearInterval(remotePollingTimer); remotePollingTimer = setInterval(cekHasilDariHP, 2500); } 
+      if (!isJadwalBuka()) {
+        showToast(`Remote Scanner DITUTUP. Jam Buka: ${JADWAL_BUKA} - ${JADWAL_TUTUP} WIB.`, "error");
+        return;
+      }
+      if (!currentSessionId) { 
+        currentSessionId = Math.floor(10000 + Math.random() * 90000).toString(); 
+        if(remotePollingTimer) clearInterval(remotePollingTimer); 
+        remotePollingTimer = setInterval(cekHasilDariHP, 2500); 
+      } 
       bukaModal('modalRemoteScan'); 
-      let qrContainer = document.getElementById('remoteQrContainer'); qrContainer.innerHTML = `<div style="font-size:11.5px; color:#555; margin-bottom:8px;">KODE SESI SCANNER:</div><div style="font-size:46px; font-weight:800; color:var(--blue); letter-spacing:10px; background:var(--primary-light); padding:10px 20px; border-radius:12px;">${currentSessionId}</div>`; 
-    }  
+      let qrContainer = document.getElementById('remoteQrContainer'); 
+      qrContainer.innerHTML = `<div style="font-size:11.5px; color:#555; margin-bottom:8px;">KODE SESI SCANNER:</div><div style="font-size:46px; font-weight:800; color:var(--blue); letter-spacing:10px; background:var(--primary-light); padding:10px 20px; border-radius:12px;">${currentSessionId}</div>`; 
+    }    
     function tutupRemoteScanner() { tutupModal('modalRemoteScan'); }
 // 5. PENJAGAAN EKSTRA DI POLLING DATA HP (ANTRIAN H)
     async function cekHasilDariHP() { 
@@ -1286,29 +1271,34 @@
       } 
     }
     // 3. BLOKIR SAAT PASIEN/PETUGAS MEMBUKA TAMPILAN SCANNER DARI HP MEREKA
-function masukModeScannerManual() { 
-      let status = cekStatusJadwal();
-      if (!status.buka) { alert(status.pesan); return; }
-      // ... (lanjutan logika prompt PIN HP) ...
-      let savedPin = localStorage.getItem('prb_scanner_pin') || ""; let pin = prompt("Masukkan 5-Digit KODE SESI PC:", savedPin); if (pin && pin.trim().length === 5) { let sessionId = pin.trim(); localStorage.setItem('prb_scanner_pin', sessionId); document.getElementById('loginSection').style.display = 'none'; document.getElementById('appContainer').style.display = 'none'; const mobileView = document.getElementById('mobileScannerView'); mobileView.style.display = 'flex'; mobileQrScanner = new Html5QrcodeScanner("mobile-qr-reader", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false); mobileQrScanner.render( async function(decodedText) { if(mobileQrScanner) { mobileQrScanner.pause(true); document.getElementById('mobileScanStatus').innerHTML = `Mengirim ke PC...`; const res = await callGasApi("kirimRemoteScan", { sessionId: sessionId, qrData: decodedText }); if (res.success) { document.getElementById('mobileScanStatus').innerHTML = `Terkirim!`; setTimeout(() => { document.getElementById('mobileScanStatus').innerHTML = `Arahkan kamera ke Kartu Pasien berikutnya.`; mobileQrScanner.resume(); }, 1500); } else { document.getElementById('mobileScanStatus').innerHTML = `Koneksi Gagal.`; setTimeout(() => { mobileQrScanner.resume(); }, 3000); } } }, function(err) {} ); } 
-    }
-
-    async function prosesAntrianQR(qrString) { 
-      let status = cekStatusJadwal();
-      if (!status.buka) { showToast(status.pesan, "error"); return; }
-      // ... (lanjutan logika pengecekan antrian ganda dan callGasApi) ...
-      let dataQR = decryptQRPayload(qrString); if (!dataQR) { showToast("Barcode tidak valid!", "error"); return; } if (cekSudahPemantauanBulanIni(dataQR.nik, dataQR.nama)) { showToast(`Gagal: Pasien ${dataQR.nama} sudah rekam pemantauan bulan ini!`, "error"); return; } if (cekSudahAdaAntrianHariIni(dataQR.nik, dataQR.nama)) { showToast(`Gagal: Pasien ${dataQR.nama} sudah masuk di daftar antrian hari ini!`, "error"); return; } showToast("Mengecek antrian...", "success"); APP_DATA_ANTRIAN.push([getWibDateStr(), "PROSES", dataQR.nik, dataQR.nama, "-", "Menunggu"]); let res = await callGasApi("ambilAntrian", { query: dataQR.nik, isLangsung: false }); if (res.success) { APP_DATA_ANTRIAN[APP_DATA_ANTRIAN.length - 1] = [getWibDateStr(), res.data.noAntrian, dataQR.nik, dataQR.nama, res.data.diagnosaUtama, "Menunggu"]; tampilkanKartuKendali(res.data); filterTabelAntrian(); } else { APP_DATA_ANTRIAN.pop(); showToast(res.message, "error"); }
-    }
-
-    async function cekHasilDariHP() { 
-      if (!currentSessionId) return; 
-      const res = await callGasApi("cekRemoteScan", { sessionId: currentSessionId }); 
-      if (res.success && res.data) { 
-        let status = cekStatusJadwal();
-        if (!status.buka) { showToast(status.pesan, "error"); tutupModal('modalRemoteScan'); return; }
-        tutupModal('modalRemoteScan'); showToast("Sukses! Data diterima dari HP.", "success"); prosesHasilScanQR(res.data); 
-      } 
-    }
+    function masukModeScannerManual() { 
+      if (!isJadwalBuka()) {
+        alert(`Mohon maaf, Scanner HP DITUTUP. Jam operasional: ${JADWAL_BUKA} - ${JADWAL_TUTUP} WIB.`);
+        return;
+      }
+      let savedPin = localStorage.getItem('prb_scanner_pin') || ""; 
+      let pin = prompt("Masukkan 5-Digit KODE SESI PC:", savedPin); 
+      if (pin && pin.trim().length === 5) { 
+        let sessionId = pin.trim(); 
+        localStorage.setItem('prb_scanner_pin', sessionId); 
+        document.getElementById('loginSection').style.display = 'none'; 
+        document.getElementById('appContainer').style.display = 'none'; 
+        const mobileView = document.getElementById('mobileScannerView'); 
+        mobileView.style.display = 'flex'; 
+        mobileQrScanner = new Html5QrcodeScanner("mobile-qr-reader", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false); 
+        mobileQrScanner.render( async function(decodedText) { 
+          if(mobileQrScanner) { 
+            mobileQrScanner.pause(true); 
+            document.getElementById('mobileScanStatus').innerHTML = `Mengirim ke PC...`; 
+            const res = await callGasApi("kirimRemoteScan", { sessionId: sessionId, qrData: decodedText }); 
+            if (res.success) { 
+              document.getElementById('mobileScanStatus').innerHTML = `Terkirim!`; 
+              setTimeout(() => { document.getElementById('mobileScanStatus').innerHTML = `Arahkan kamera ke Kartu Pasien berikutnya.`; mobileQrScanner.resume(); }, 1500); 
+            } else { 
+              document.getElementById('mobileScanStatus').innerHTML = `Koneksi Gagal.`; 
+              setTimeout(() => { mobileQrScanner.resume(); }, 3000); 
+            } 
+          } 
         }, function(err) {} ); 
       } 
     }    
@@ -1331,16 +1321,25 @@ function masukModeScannerManual() {
     }
 
     // 1. BLOKIR SAAT KLIK TOMBOL "AMBIL ANTRIAN PASIEN (SCAN QR)" DARI PC
-function bukaScannerAntrian() { 
-      let status = cekStatusJadwal();
-      if (!status.buka) { showToast(status.pesan, "error"); return; }
-      // ... (lanjutan kode bukaModal dan new Html5QrcodeScanner) ...
+    function bukaScannerAntrian() { 
+      if (!isJadwalBuka()) {
+        showToast(`Mohon maaf, layanan antrian DITUTUP. Jam Buka: ${JADWAL_BUKA} - ${JADWAL_TUTUP} WIB.`, "error");
+        return;
+      }
       bukaModal('modalScannerAntrian'); 
       if (!scannerAntrian) { 
         scannerAntrian = new Html5QrcodeScanner("qr-reader-antrian", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false); 
-        scannerAntrian.render( function(decodedText) { if(scannerAntrian) { scannerAntrian.clear().then(() => { scannerAntrian = null; tutupScannerAntrian(); prosesAntrianQR(decodedText); }); } }, function(err) {} ); 
+        scannerAntrian.render( function(decodedText) { 
+          if(scannerAntrian) { 
+            scannerAntrian.clear().then(() => { 
+              scannerAntrian = null; 
+              tutupScannerAntrian(); 
+              prosesAntrianQR(decodedText); 
+            }); 
+          } 
+        }, function(err) {} ); 
       } 
-    }
+    }    function tutupScannerAntrian() { tutupModal('modalScannerAntrian'); if (scannerAntrian) { scannerAntrian.clear().then(() => { scannerAntrian = null; }); } }
     
     // Perbaikan proses SCAN Antrian dari depan (Tanpa Login)
 async function prosesAntrianQR(qrString) { 
@@ -1636,63 +1635,20 @@ async function prosesAntrianQR(qrString) {
     async function submitTambahUser(e) { e.preventDefault(); const newUsername = document.getElementById('newUsername').value; const newUserPwd = document.getElementById('newUserPwd').value; const newUserNama = document.getElementById('newUserNama').value; const newUserRole = document.getElementById('newUserRole').value; const btn = document.getElementById('btnSubmitUser'); setBtnLoading(btn, true); const res = await callGasApi("tambahUser", { username: newUsername, password: newUserPwd, nama: newUserNama, role: newUserRole }); if(res.success) { showToast("Pengguna baru berhasil ditambahkan!"); tutupModal('modalTambahUser'); e.target.reset(); } else { showToast(res.message, "error"); } setBtnLoading(btn, false); }
 function bukaModalJadwal() { 
       bukaModal('modalJadwal'); 
-      let statusJadwal = cekStatusJadwal();
-      let statusHtml = statusJadwal.buka ? '<span style="color:#34c759; font-weight:800;">SEDANG AKTIF</span>' : `<span style="color:#ff3b30; font-weight:800;">DITUTUP</span>`;
+      let statusHtml = isJadwalBuka() ? '<span style="color:#34c759; font-weight:800;">SEDANG BUKA</span>' : '<span style="color:#ff3b30; font-weight:800;">DITUTUP</span>';
       
-      let htmlTabel = "";
-      // Tampilkan 5 jadwal terbaru dari database
-      let dataUrut = [...JADWAL_DB].sort((a,b) => b[0].localeCompare(a[0])).slice(0,5);
-      if (dataUrut.length === 0) {
-         htmlTabel = `<tr><td colspan="3" style="text-align:center;">Belum ada jadwal kegiatan terdaftar.</td></tr>`;
-      } else {
-         dataUrut.forEach(j => {
-             htmlTabel += `<tr><td style="text-align:center; font-weight:700;">${j[0]}</td><td style="text-align:center; color:var(--blue); font-weight:800;">${j[1]} - ${j[2]} WIB</td><td style="text-align:center;">-</td></tr>`;
-         });
-      }
-
-      document.getElementById('tbodyDaftarJadwal').innerHTML = htmlTabel;
-      
-      // Tambahkan Form Input Jadwal
-      let tglHariIni = new Date().toISOString().split('T')[0];
-      let formHtml = `
-        <div style="background:var(--primary-light); padding:10px; border-radius:8px; margin-top:15px;">
-            <div style="font-size:11px; font-weight:bold; margin-bottom:8px;">Tambah / Ubah Jadwal Kegiatan (Server)</div>
-            <div style="display:flex; gap:10px; align-items:center;">
-                <input type="date" id="inputTglKegiatan" value="${tglHariIni}" style="padding:6px; border-radius:4px; border:1px solid #ccc; flex:2;">
-                <input type="time" id="inputJamBuka" value="07:30" style="padding:6px; border-radius:4px; border:1px solid #ccc; flex:1;">
-                <input type="time" id="inputJamTutup" value="16:00" style="padding:6px; border-radius:4px; border:1px solid #ccc; flex:1;">
-                <button onclick="eksekusiSimpanJadwalDB()" class="btn-action" style="flex:1;">Simpan</button>
-            </div>
-            <div style="font-size:10px; color:#555; margin-top:6px;">Status Sistem Saat Ini: ${statusHtml}<br><i>(${statusJadwal.pesan})</i></div>
-        </div>
-      `;
-      // Sisipkan form di bawah tabel (pastikan Anda punya div container kosong atau timpa saja jika tabel ada di dalam container khusus)
-      let divForm = document.getElementById('formJadwalContainer');
-      if(!divForm) {
-          divForm = document.createElement('div');
-          divForm.id = 'formJadwalContainer';
-          document.getElementById('tbodyDaftarJadwal').parentElement.after(divForm);
-      }
-      divForm.innerHTML = formHtml;
-    }
-
-    async function eksekusiSimpanJadwalDB() {
-      let tgl = document.getElementById('inputTglKegiatan').value;
-      let buka = document.getElementById('inputJamBuka').value;
-      let tutup = document.getElementById('inputJamTutup').value;
-      
-      if (!tgl || !buka || !tutup) { showToast("Lengkapi semua isian jadwal!", "error"); return; }
-      
-      showToast("Menyimpan ke database server...");
-      const res = await callGasApi("simpanJadwal", { tanggal: tgl, jamBuka: buka, jamTutup: tutup });
-      
-      if (res.success) {
-         showToast(res.message, "success");
-         fetchAppData(false); // Refresh data dari server
-         setTimeout(() => bukaModalJadwal(), 1000); // Reload modal
-      } else {
-         showToast("Gagal menyimpan jadwal", "error");
-      }
+      document.getElementById('tbodyDaftarJadwal').innerHTML = `
+        <tr>
+            <td style="text-align:center; font-weight:700;">Setiap Hari</td>
+            <td style="text-align:center; color:var(--blue); font-weight:800;">${JADWAL_BUKA} - ${JADWAL_TUTUP} WIB</td>
+            <td style="text-align:center;">${statusHtml}</td>
+        </tr>
+        <tr>
+            <td colspan="3" style="text-align:center; padding-top:15px;">
+                <button class="btn-action" onclick="aturJadwalBaru()" style="margin:0 auto;"><i class="ph-light ph-clock"></i> Ubah Jam Operasional</button>
+            </td>
+        </tr>
+      `; 
     }
 
     function aturJadwalBaru() {
@@ -2006,7 +1962,6 @@ function generateNoUrutAntrian(sheetAntrian, tipePrefix) {
   
   return tipePrefix + "-" + nextUrutStr;
 }
-    }
   </script>
 </body>
 </html>
