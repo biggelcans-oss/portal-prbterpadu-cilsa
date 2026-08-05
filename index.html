@@ -1868,7 +1868,7 @@ function cetakPDF() {
         <table style="width: 100%; border: none; margin-top: 40px; page-break-inside: avoid;">
             <tr>
                 <td style="border: none; width: 60%;"></td>
-                <td style="border: none; width: 40%; text-align: left; font-size: 12px; line-height: 1.5;">
+                <td style="border: none; width: 40%; text-align: center; font-size: 12px; line-height: 1.5;">
                     <div>Cilongok, ${sigDate}</div>
                     <div>Mengetahui,</div>
                     <div>Kepala Puskesmas Cilongok I</div>
@@ -1879,6 +1879,12 @@ function cetakPDF() {
                 </td>
             </tr>
         </table>
+        <!-- FOOTER -->
+                        <div id="printFooter" style="margin-top: 24px; border-top: 1px dashed #aaa; padding-top: 12px; font-size: 10px; font-family:sans-serif; display:flex; justify-content:space-between;">
+                          <div><strong>Portal PRB Terpadu</strong><br>Puskesmas Cilongok I<br><span style="color:#555; font-size:9px;"></span></div>
+                          <div style="text-align:right;"><em>Dicetak tanggal (WIB):</em><br><strong id="tglCetakStamp" style="font-size:11px; display:inline-block;"></strong></div>
+                      </div>
+                   </div>
       `;
 
       // Buka window khusus cetak
