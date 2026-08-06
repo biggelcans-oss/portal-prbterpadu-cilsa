@@ -945,7 +945,6 @@
     </div>
   </div>
   
-  <!-- MODAL KELOLA JADWAL & POSBINDU PRB (KHUSUS ADMIN) -->
 <!-- MODAL KELOLA JADWAL & POSBINDU PRB (KHUSUS ADMIN) -->
   <div id="modalJadwal" class="modal-overlay">
     <div class="modal-content" style="max-width: 500px;">
@@ -985,14 +984,14 @@
     </div>
   </div>
 
-<!-- JAVASCRIPT LOGIC ENGINE FINAL (CORS & FETCH FIXED) -->
-<!-- JAVASCRIPT LOGIC ENGINE FINAL (PERBAIKAN ANTRIAN GANDA) -->
+<!-- JAVASCRIPT LOGIC ENGINE FINAL -->
   <script>
     // MASUKKAN URL DEPLOYMENT GOOGLE APPS SCRIPT YANG BARU DI SINI
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwi9BRy3lbmwbZjRD_d2vQC9kIgXgJassZ_z9TEYhKFGqiDNZaUqpQ1tcjyhbYuCg0B/exec";
 
     let SESSION_USER = "", SESSION_USERNAME = "", SESSION_ROLE = "";
     let APP_DATA_PASIEN = []; let APP_DATA_HISTORI = []; let APP_DATA_ANTRIAN = [];
+    let JADWAL_DB = []; // Variabel untuk menampung data jadwal server
     let TARGET_HAPUS_TIPE = "", TARGET_HAPUS_ROW = "";
     let TARGET_TIDAK_HADIR_IDX = null;
     let currentCaptchaText = ""; let inactivityTimer = null;
@@ -1003,9 +1002,6 @@
     let remotePollingTimer = null;
     let currentSessionId = "";
     let mobileQrScanner = null;
-// GANTI BAGIAN VARIABEL DAN ENGINE JADWAL LAMA DENGAN INI
-    let APP_DATA_PASIEN = []; let APP_DATA_HISTORI = []; let APP_DATA_ANTRIAN = [];
-    let JADWAL_DB = []; // Variabel untuk menampung data jadwal server
 
     // ENGINE JADWAL SERVER-SIDE
     function cekStatusJadwal() {
@@ -1267,7 +1263,7 @@
     }
 
     // 5. SCANNER & ANTRIAN LOGIC (DIPERBAIKI)
-function bukaRemoteScanner() { 
+    function bukaRemoteScanner() { 
       if (!SESSION_USER) { showToast("Silakan login.", "error"); return; } 
       let status = cekStatusJadwal();
       if (!status.buka) { showToast(status.pesan, "error"); return; }
@@ -1275,8 +1271,9 @@ function bukaRemoteScanner() {
       bukaModal('modalRemoteScan'); let qrContainer = document.getElementById('remoteQrContainer'); qrContainer.innerHTML = `<div style="font-size:11.5px; color:#555; margin-bottom:8px;">KODE SESI SCANNER:</div><div style="font-size:46px; font-weight:800; color:var(--blue); letter-spacing:10px; background:var(--primary-light); padding:10px 20px; border-radius:12px;">${currentSessionId}</div>`; 
     }    
     function tutupRemoteScanner() { tutupModal('modalRemoteScan'); }
-// 5. PENJAGAAN EKSTRA DI POLLING DATA HP (ANTRIAN H)
-async function cekHasilDariHP() { 
+
+    // 5. PENJAGAAN EKSTRA DI POLLING DATA HP (ANTRIAN H)
+    async function cekHasilDariHP() { 
       if (!currentSessionId) return; 
       const res = await callGasApi("cekRemoteScan", { sessionId: currentSessionId }); 
       if (res.success && res.data) { 
@@ -1285,14 +1282,43 @@ async function cekHasilDariHP() {
         tutupModal('modalRemoteScan'); showToast("Sukses! Data diterima dari HP.", "success"); prosesHasilScanQR(res.data); 
       } 
     }
+
     // 3. BLOKIR SAAT PASIEN/PETUGAS MEMBUKA TAMPILAN SCANNER DARI HP MEREKA
-function masukModeScannerManual() { 
+    function masukModeScannerManual() { 
       let status = cekStatusJadwal();
       if (!status.buka) { alert(status.pesan); return; }
-      let savedPin = localStorage.getItem('prb_scanner_pin') || ""; let pin = prompt("Masukkan 5-Digit KODE SESI PC:", savedPin); if (pin && pin.trim().length === 5) { let sessionId = pin.trim(); localStorage.setItem('prb_scanner_pin', sessionId); document.getElementById('loginSection').style.display = 'none'; document.getElementById('appContainer').style.display = 'none'; const mobileView = document.getElementById('mobileScannerView'); mobileView.style.display = 'flex'; mobileQrScanner = new Html5QrcodeScanner("mobile-qr-reader", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false); mobileQrScanner.render( async function(decodedText) { if(mobileQrScanner) { mobileQrScanner.pause(true); document.getElementById('mobileScanStatus').innerHTML = `Mengirim ke PC...`; const res = await callGasApi("kirimRemoteScan", { sessionId: sessionId, qrData: decodedText }); if (res.success) { document.getElementById('mobileScanStatus').innerHTML = `Terkirim!`; setTimeout(() => { document.getElementById('mobileScanStatus').innerHTML = `Arahkan kamera ke Kartu Pasien berikutnya.`; mobileQrScanner.resume(); }, 1500); } else { document.getElementById('mobileScanStatus').innerHTML = `Koneksi Gagal.`; setTimeout(() => { mobileQrScanner.resume(); }, 3000); } } }, function(err) {} ); } 
-    }
+      let savedPin = localStorage.getItem('prb_scanner_pin') || ""; 
+      let pin = prompt("Masukkan 5-Digit KODE SESI PC:", savedPin); 
+      
+      if (pin && pin.trim().length === 5) { 
+        let sessionId = pin.trim(); 
+        localStorage.setItem('prb_scanner_pin', sessionId); 
+        document.getElementById('loginSection').style.display = 'none'; 
+        document.getElementById('appContainer').style.display = 'none'; 
+        const mobileView = document.getElementById('mobileScannerView'); 
+        mobileView.style.display = 'flex'; 
+        
+        mobileQrScanner = new Html5QrcodeScanner("mobile-qr-reader", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false); 
+        mobileQrScanner.render( async function(decodedText) { 
+          if(mobileQrScanner) { 
+            mobileQrScanner.pause(true); 
+            document.getElementById('mobileScanStatus').innerHTML = `Mengirim ke PC...`; 
+            const res = await callGasApi("kirimRemoteScan", { sessionId: sessionId, qrData: decodedText }); 
+            if (res.success) { 
+              document.getElementById('mobileScanStatus').innerHTML = `Terkirim!`; 
+              setTimeout(() => { 
+                document.getElementById('mobileScanStatus').innerHTML = `Arahkan kamera ke Kartu Pasien berikutnya.`; 
+                mobileQrScanner.resume(); 
+              }, 1500); 
+            } else { 
+              document.getElementById('mobileScanStatus').innerHTML = `Koneksi Gagal.`; 
+              setTimeout(() => { mobileQrScanner.resume(); }, 3000); 
+            } 
+          } 
+        }, function(err) {} ); 
       } 
     }    
+
     function bukaScannerQR() { if (!SESSION_USER) { showToast("Anda harus login!", "error"); return; } bukaModal('modalScannerQR'); if (!html5QrcodeScanner) { html5QrcodeScanner = new Html5QrcodeScanner( "qr-reader", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false ); html5QrcodeScanner.render( function(decodedText) { if (html5QrcodeScanner) { html5QrcodeScanner.clear().then(() => { html5QrcodeScanner = null; tutupScannerQR(); prosesHasilScanQR(decodedText); }); } }, function(err) {} ); } }
     function tutupScannerQR() { tutupModal('modalScannerQR'); if (html5QrcodeScanner) { html5QrcodeScanner.clear().then(() => { html5QrcodeScanner = null; }); } }
     
@@ -1312,7 +1338,7 @@ function masukModeScannerManual() {
     }
 
     // 1. BLOKIR SAAT KLIK TOMBOL "AMBIL ANTRIAN PASIEN (SCAN QR)" DARI PC
-function bukaScannerAntrian() { 
+    function bukaScannerAntrian() { 
       let status = cekStatusJadwal();
       if (!status.buka) { showToast(status.pesan, "error"); return; }
       bukaModal('modalScannerAntrian'); 
@@ -1322,7 +1348,9 @@ function bukaScannerAntrian() {
       } 
     }
     
-async function prosesAntrianQR(qrString) { 
+    function tutupScannerAntrian() { tutupModal('modalScannerAntrian'); if (scannerAntrian) { scannerAntrian.clear().then(() => { scannerAntrian = null; }); } }
+
+    async function prosesAntrianQR(qrString) { 
       let status = cekStatusJadwal();
       if (!status.buka) { showToast(status.pesan, "error"); return; }
       let dataQR = decryptQRPayload(qrString); if (!dataQR) { showToast("Barcode tidak valid!", "error"); return; } 
@@ -1572,458 +1600,428 @@ async function prosesAntrianQR(qrString) {
         // Validasi ekstra ketat bulan dan tahun kunjungan yang diinputkan
         if (cekSudahPemantauanBulanIni(nikAsli, namaAsli, fd.tglKunjungan)) {
             showToast(`Pasien sudah memiliki rekam pemantauan di bulan tersebut.`, "error");
-            setBtnLoading(b, false);
-            return;
-        }
-
-        const res = await callGasApi("simpanPemantauan", { fd, noAntrian: noAntrian }); 
-        if (res.success) {
-            showToast(res.message); 
-            // Injeksi data historikal ke array lokal agar user tidak bisa "curi celah" mengambil antrian sebelum data baru ditarik dari server
-            APP_DATA_HISTORI.push([fd.tglKunjungan, fd.namaPasien, fd.jenisKunjungan, fd.td, fd.jenisGula, fd.hasilGula, fd.hasilG2PP, fd.statusPRB]);
-        } else {
-            showToast(res.message, "error");
-        }
-        e.target.reset(); 
-        tutupModal('modalPemantauan'); 
-        fetchAppData(false); 
-        document.getElementById('searchAntrianInput').value = ''; 
-      } else { 
-        const res = await callGasApi("updatePemantauan", { rowIndex: parseInt(rowIndex), fd }); 
-        showToast(res.message); 
-        e.target.reset(); 
-        tutupModal('modalPemantauan'); 
-        fetchAppData(false); 
-      } 
-      setBtnLoading(b, false); 
-    }
-
-    // 13. FITUR TAMBAHAN (ABSEN, TIDAK HADIR, MULTI DIAG)
-    function bukaModalAbsen() { document.getElementById('searchAbsenInput').value = ""; renderTabelAbsen(); bukaModal('modalDaftarAbsen'); }
-    function renderTabelAbsen() { let filter = document.getElementById('searchAbsenInput').value.toLowerCase(); let tbody = document.getElementById('tbodyDaftarAbsen'); let html = ""; let filteredAbsen = window.GLOBAL_DAFTAR_ABSEN.filter(p => { let n = p[2] ? p[2].toString().replace(/^'/, "") : ""; let text = `${p[1]} ${n} ${p[4]} ${p[10]}`.toLowerCase(); return text.includes(filter); }); if (filteredAbsen.length === 0) { html = `<tr><td colspan="5" style="text-align: center; padding: 20px;"><i class="ph-light ph-check-circle" style="font-size:28px; color:#34c759; margin-bottom:4px; display:block;"></i>Semua pasien terdaftar telah memiliki rekam pemantauan!</td></tr>`; } else { filteredAbsen.forEach(p => { let trueIdx = APP_DATA_PASIEN.indexOf(p); let cleanNIK = p[2] ? p[2].toString().replace(/^'/, "") : "-"; let cleanBPJS = p[3] ? p[3].toString().replace(/^'/, "") : "-"; html += `<tr><td><strong>${p[1]}</strong></td><td style="font-size:10px;">NIK: ${cleanNIK}<br>BPJS: ${cleanBPJS}</td><td>${p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : p[4]}</td><td>${getMultiDiagnosaHtml(p)}</td><td style="text-align: right;"><div style="display:flex; gap:6px; justify-content:flex-end;"><button class="btn-action btn-small" onclick="tutupModal('modalDaftarAbsen'); switchTab('pemantauan'); setTimeout(()=>bukaModalPantauInstan(APP_DATA_PASIEN[${trueIdx}]), 300);"><i class="ph-light ph-stethoscope"></i> Cek & Input</button><button class="btn-action btn-small" onclick="tandaiTidakHadir(${trueIdx})" style="background:transparent; color:#ff3b30; border:1px solid #ff3b30; box-shadow:none;"><i class="ph-light ph-x-circle"></i> Tidak Hadir</button></div></td></tr>`; }); } tbody.innerHTML = html; }
-    function bukaModalMultiDiag() { let tbody = document.getElementById('tbodyMultiDiag'); let html = ""; if (window.GLOBAL_MULTI_DIAG.length === 0) { html = `<tr><td colspan="4" style="text-align:center; padding:20px;">Tidak ada pasien komplikasi saat ini.</td></tr>`; } else { window.GLOBAL_MULTI_DIAG.forEach(p => { let cleanNIK = p[2] ? p[2].toString().replace(/^'/, "") : "-"; let cleanBPJS = p[3] ? p[3].toString().replace(/^'/, "") : "-"; html += `<tr><td><strong>${p[1]}</strong></td><td style="font-size:10px;">NIK: ${cleanNIK}<br>BPJS: ${cleanBPJS}</td><td>${p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : p[4]}</td><td>${getMultiDiagnosaHtml(p)}</td></tr>`; }); } tbody.innerHTML = html; bukaModal('modalMultiDiag'); }
-    function tandaiTidakHadir(idx) { let p = APP_DATA_PASIEN[idx]; if(!p) return; TARGET_TIDAK_HADIR_IDX = idx; document.getElementById('teksKonfirmasiTidakHadir').innerHTML = `Tandai pasien <strong>${p[1]}</strong> sebagai <strong>Tidak Hadir</strong> pada tanggal hari ini?`; bukaModal('modalKonfirmasiTidakHadir'); }
-    
-    // Perbaikan logikal ketidakhadiran dengan fungsi baru
-    async function eksekusiTidakHadir() { 
-      if(TARGET_TIDAK_HADIR_IDX === null) return; 
-      const btnEl = document.getElementById('btnKonfirmTidakHadir'); 
-      setBtnLoading(btnEl, true); 
-      let p = APP_DATA_PASIEN[TARGET_TIDAK_HADIR_IDX]; 
-      let rawNik = p[2] ? p[2].toString().replace(/^'/, "") : "-"; 
-      let rawBpjs = p[3] ? p[3].toString().replace(/^'/, "") : "-"; 
-      let tglRealTime = getWibDateStr(); 
-
-      if(cekSudahPemantauanBulanIni(rawNik, p[1], tglRealTime)) { 
-        showToast(`Pasien sudah memiliki rekam pemantauan bulan ini.`, "error"); 
-        setBtnLoading(btnEl, false); 
-        tutupModal('modalKonfirmasiTidakHadir');
+setBtnLoading(b, false); 
         return; 
       } 
       
-      const fd = { namaPasien: `${p[1]} || ${rawNik} || ${rawBpjs}`, tglKunjungan: tglRealTime, jenisKunjungan: "Tidak Hadir", td: "-", jenisGula: "", hasilGula: "", hasilG2PP: "", statusPRB: p[7] || "Aktif", currentUser: SESSION_USER }; 
-      const res = await callGasApi("simpanPemantauan", { fd, noAntrian: "" }); 
+      // Injeksi memori lokal sementara
+      APP_DATA_HISTORI.push([fd.tglKunjungan, fd.namaPasien, fd.jenisKunjungan, fd.td, fd.jenisGula || "Tidak Diperiksa", fd.hasilGula || "-", fd.hasilG2PP || "-", fd.statusPRB]);
       
+      const res = await callGasApi("simpanPemantauan", { fd: fd, noAntrian: noAntrian }); 
       if (res.success) {
-        APP_DATA_HISTORI.push([fd.tglKunjungan, fd.namaPasien, fd.jenisKunjungan, fd.td, fd.jenisGula, fd.hasilGula, fd.hasilG2PP, fd.statusPRB]);
         showToast(res.message); 
+        e.target.reset(); 
+        tutupModal('modalPemantauan'); 
+        fetchAppData(false); 
+      } else {
+        APP_DATA_HISTORI.pop(); // Revert jika gagal
+        showToast(res.message, "error");
+      }
+    } else { 
+      const res = await callGasApi("updatePemantauan", { rowIndex: parseInt(rowIndex), fd: fd }); 
+      if(res.success) {
+        showToast(res.message); 
+        e.target.reset(); 
+        tutupModal('modalPemantauan'); 
+        fetchAppData(false); 
       } else {
         showToast(res.message, "error");
       }
-      
-      tutupModal('modalKonfirmasiTidakHadir'); 
-      tutupModal('modalDaftarAbsen'); 
-      fetchAppData(false); 
-      setBtnLoading(btnEl, false); 
-      TARGET_TIDAK_HADIR_IDX = null; 
-    }
+    } 
+    setBtnLoading(b, false); 
+  }
 
-    // 14. FITUR CEK GANDA
-    function cekDataGandaPasien() { let mapCek = new Map(); let ganda = []; APP_DATA_PASIEN.forEach(p => { if(!p) return; let nik = p[2] ? p[2].toString().replace(/^'/, "") : ""; if(nik && nik !== "-" && nik !== "") { if(mapCek.has(nik)) ganda.push(p); else mapCek.set(nik, p); } }); document.getElementById('titleModalCekGanda').innerHTML = '<i class="ph-light ph-copy-simple"></i> Cek Pasien Ganda (Berdasarkan NIK)'; let tbody = document.getElementById('tbodyCekGanda'); let thead = document.getElementById('theadCekGanda'); thead.innerHTML = '<tr><th>Nama Pasien</th><th>NIK / BPJS</th><th>Desa</th><th>Status PRB</th></tr>'; if(ganda.length === 0) { document.getElementById('descModalCekGanda').innerText = "Hebat! Tidak ditemukan data NIK ganda di database pasien."; tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tidak ada duplikasi data.</td></tr>'; } else { document.getElementById('descModalCekGanda').innerHTML = `<span style="color:#ff3b30;">Ditemukan ${ganda.length} potensi data pasien ganda. Harap periksa dan hapus salah satunya di menu Data Pasien.</span>`; let html = ""; ganda.forEach(p => { html += `<tr><td><strong>${p[1]}</strong></td><td>NIK: ${p[2] ? p[2].toString().replace(/^'/, "") : "-"}<br>BPJS: ${p[3] ? p[3].toString().replace(/^'/, "") : "-"}</td><td>${p[4]}</td><td>${p[7]}</td></tr>`; }); tbody.innerHTML = html; } bukaModal('modalCekGanda'); }
-    function cekDataGandaHistori() { let curM = parseInt(document.getElementById('dashFilterBulan').value); let curY = parseInt(document.getElementById('dashFilterTahun').value); let mapCek = new Map(); let ganda = []; APP_DATA_HISTORI.forEach(h => { if(!h || !h[0]) return; let d = parseDateWib(h[0]); if(d && d.month === curM && d.year === curY) { let rawNama = h[1] ? h[1].toString() : ""; let nik = rawNama.includes(" || ") ? rawNama.split(" || ")[1] : rawNama; if(mapCek.has(nik)) ganda.push(h); else mapCek.set(nik, h); } }); document.getElementById('titleModalCekGanda').innerHTML = '<i class="ph-light ph-copy-simple"></i> Cek Kunjungan Ganda (Bulan Ini)'; let tbody = document.getElementById('tbodyCekGanda'); let thead = document.getElementById('theadCekGanda'); thead.innerHTML = '<tr><th>Tgl Input</th><th>Nama & NIK</th><th>Metode</th><th>Tindak Lanjut</th></tr>'; if(ganda.length === 0) { document.getElementById('descModalCekGanda').innerText = "Aman! Tidak ditemukan input histori ganda."; tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Tidak ada duplikasi kunjungan bulan ini.</td></tr>'; } else { document.getElementById('descModalCekGanda').innerHTML = `<span style="color:#ff3b30;">Ditemukan ${ganda.length} potensi kunjungan ganda bulan ini.</span>`; let html = ""; ganda.forEach(h => { let rawNama = h[1] ? h[1].toString() : ""; let split = rawNama.split(" || "); html += `<tr><td>${formatTanggalIndo(h[0])}</td><td><strong>${split[0]}</strong><br><span style="font-size:10px; color:var(--secondary);">NIK: ${split[1]||"-"}</span></td><td>${h[2]}</td><td>${h[7]}</td></tr>`; }); tbody.innerHTML = html; } bukaModal('modalCekGanda'); }
-
-    // 15. FITUR ADMIN (Catatan, User, Jadwal)
-    function bukaModalCatatan() { bukaModal('modalCatatan'); }
-    async function submitCatatanAdmin(e) { e.preventDefault(); const isi = document.getElementById('inputCatatanTerkini').value; const btn = document.getElementById('btnSaveCatatan'); setBtnLoading(btn, true); const res = await callGasApi("updateInfoTerkini", { info: isi }); if(res.success) { document.getElementById('displayCatatanTerkini').innerText = isi; showToast("Catatan sistem berhasil diperbarui!"); tutupModal('modalCatatan'); } else { showToast("Gagal memperbarui catatan.", "error"); } setBtnLoading(btn, false); }
-    async function submitPassword(e) { e.preventDefault(); const oldPwd = document.getElementById('oldPwd').value; const newPwd = document.getElementById('newPwd').value; const confirmPwd = document.getElementById('confirmPwd').value; if (newPwd !== confirmPwd) { showToast("Konfirmasi password tidak cocok!", "error"); return; } const btn = document.getElementById('btnSubmitPwd'); setBtnLoading(btn, true); const res = await callGasApi("gantiPassword", { username: SESSION_USERNAME, oldPwd, newPwd }); if(res.success) { showToast("Password berhasil diubah!"); tutupModal('modalPassword'); e.target.reset(); } else { showToast(res.message, "error"); } setBtnLoading(btn, false); }
-    async function submitTambahUser(e) { e.preventDefault(); const newUsername = document.getElementById('newUsername').value; const newUserPwd = document.getElementById('newUserPwd').value; const newUserNama = document.getElementById('newUserNama').value; const newUserRole = document.getElementById('newUserRole').value; const btn = document.getElementById('btnSubmitUser'); setBtnLoading(btn, true); const res = await callGasApi("tambahUser", { username: newUsername, password: newUserPwd, nama: newUserNama, role: newUserRole }); if(res.success) { showToast("Pengguna baru berhasil ditambahkan!"); tutupModal('modalTambahUser'); e.target.reset(); } else { showToast(res.message, "error"); } setBtnLoading(btn, false); }
-// FUNGSI ADMIN UPDATE JADWAL DB
-    function bukaModalJadwal() { 
-      bukaModal('modalJadwal'); 
-      let statusJadwal = cekStatusJadwal();
-      let htmlTabel = "";
-      let dataUrut = [...JADWAL_DB].sort((a,b) => b[0].localeCompare(a[0])).slice(0, 5); 
-      if (dataUrut.length === 0) {
-         htmlTabel = `<tr><td colspan="3" style="text-align:center;">Belum ada jadwal server terdaftar.</td></tr>`;
-      } else {
-         dataUrut.forEach(j => {
-             let statusHtml = (j[0] === new Date().toISOString().split('T')[0]) && statusJadwal.buka ? '<span style="color:#34c759; font-weight:800;">BUKA</span>' : '<span style="color:var(--secondary); font-weight:600;">TUTUP</span>';
-             htmlTabel += `<tr><td style="text-align:center; font-weight:700;">${j[0]}</td><td style="text-align:center; color:var(--blue); font-weight:800;">${j[1]} - ${j[2]} WIB</td><td style="text-align:right;">${statusHtml}</td></tr>`;
-         });
-      }
-      document.getElementById('tbodyDaftarJadwal').innerHTML = htmlTabel;
-    }
-        <tr>
-            <td style="text-align:center; font-weight:700;">Setiap Hari</td>
-            <td style="text-align:center; color:var(--blue); font-weight:800;">${JADWAL_BUKA} - ${JADWAL_TUTUP} WIB</td>
-            <td style="text-align:center;">${statusHtml}</td>
-        </tr>
-        <tr>
-            <td colspan="3" style="text-align:center; padding-top:15px;">
-                <button class="btn-action" onclick="aturJadwalBaru()" style="margin:0 auto;"><i class="ph-light ph-clock"></i> Ubah Jam Operasional</button>
-            </td>
-        </tr>
-    }
-
-    function aturJadwalBaru() {
-      let inputBuka = prompt("Masukkan Jam BUKA (format HH:MM, contoh: 07:30):", JADWAL_BUKA);
-      if (inputBuka === null) return; 
-      let inputTutup = prompt("Masukkan Jam TUTUP (format HH:MM, contoh: 12:00):", JADWAL_TUTUP);
-      if (inputTutup === null) return;
-      
-      if (inputBuka.includes(":") && inputTutup.includes(":")) {
-         JADWAL_BUKA = inputBuka;
-         JADWAL_TUTUP = inputTutup;
-         localStorage.setItem('prb_jadwal_buka', JADWAL_BUKA);
-         localStorage.setItem('prb_jadwal_tutup', JADWAL_TUTUP);
-         showToast(`Jadwal diperbarui menjadi: ${JADWAL_BUKA} - ${JADWAL_TUTUP}`, "success");
-         bukaModalJadwal(); // refresh tabel antarmuka
-      } else {
-         showToast("Format jam salah! Gunakan format seperti 07:30", "error");
-      }
-    }
-
-    function simpanJadwalAdmin(e) { 
-      e.preventDefault(); 
-      aturJadwalBaru();
-      e.target.reset(); 
-    }
-    function segarkanData() { showToast("Menyegarkan data dari server..."); fetchAppData(false); }
-
-    // 16. CETAK LAPORAN & EXPORT
-    function toggleFilterLaporan() { 
-      let jenis = document.getElementById('jenisLaporanCetak').value; 
-      document.getElementById('divLaporanDesa').classList.add('hidden'); 
-      document.getElementById('divLaporanDiag').classList.add('hidden'); 
-      document.getElementById('divLaporanTanggal').classList.add('hidden'); 
-      document.getElementById('divLaporanBulan').classList.add('hidden'); 
-      document.getElementById('divLaporanTahun').classList.add('hidden'); 
-      
-      if (jenis === 'peserta_desa') { document.getElementById('divLaporanDesa').classList.remove('hidden'); } 
-      else if (jenis === 'peserta_diagnosa') { document.getElementById('divLaporanDiag').classList.remove('hidden'); } 
-      else if (jenis === 'detail_desa_diagnosa') { document.getElementById('divLaporanDesa').classList.remove('hidden'); document.getElementById('divLaporanDiag').classList.remove('hidden'); } 
-      else if (jenis === 'laporan_tanggal') { document.getElementById('divLaporanTanggal').classList.remove('hidden'); } 
-      else if (jenis === 'laporan_bulan') { document.getElementById('divLaporanBulan').classList.remove('hidden'); document.getElementById('divLaporanTahun').classList.remove('hidden'); } 
-      else if (jenis === 'laporan_tahun') { document.getElementById('divLaporanTahun').classList.remove('hidden'); } 
-      
-      buildLaporanCetak(); 
-    }
-
-function buildLaporanCetak() { 
-      let jenis = document.getElementById('jenisLaporanCetak').value; 
-      let filterDesa = document.getElementById('laporanFilterDesa').value;
-      let filterDiag = document.getElementById('laporanFilterDiag').value;
-      let filterTanggal = document.getElementById('laporanFilterTanggal').value;
-      let filterBulan = document.getElementById('laporanFilterBulan').value;
-      let filterTahun = document.getElementById('laporanFilterTahun').value;
-      
-      filteredDataLaporan = [];
-      let docTitle = "";
-      let theadHtml = "";
-
-      if (jenis.startsWith('peserta') || jenis === 'seluruh_peserta' || jenis === 'detail_desa_diagnosa') {
-          docTitle = "DATA MASTER PESERTA RUJUK BALIK (PRB)";
-          theadHtml = '<tr><th style="width:5%;">No</th><th style="width:15%;">Tgl Daftar</th><th style="width:25%;">Nama Pasien</th><th style="width:20%;">NIK / BPJS</th><th style="width:15%;">Desa</th><th style="width:20%;">Diagnosa</th></tr>';
-          filteredDataLaporan = APP_DATA_PASIEN.filter(p => {
-              if(!p) return false;
-              let desa = p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : p[4];
-              let diagUtama = p[10] || "Lainnya";
-              let matchDesa = (filterDesa === 'all' || desa === filterDesa);
-              let matchDiag = (filterDiag === 'all' || diagUtama.includes(filterDiag));
-              
-              if (jenis === 'peserta_desa') return matchDesa;
-              if (jenis === 'peserta_diagnosa') return matchDiag;
-              if (jenis === 'detail_desa_diagnosa') return matchDesa && matchDiag;
-              return true; 
-          });
-      } else {
-          docTitle = "LAPORAN KUNJUNGAN PEMANTAUAN PRB";
-          theadHtml = '<tr><th style="width:5%;">No</th><th style="width:15%;">Tgl Kunjungan</th><th style="width:25%;">Nama Pasien</th><th style="width:20%;">Metode Layanan</th><th style="width:15%;">Tensi/Gula</th><th style="width:20%;">Tindak Lanjut</th></tr>';
-          filteredDataLaporan = APP_DATA_HISTORI.filter(h => {
-              if(!h || !h[0]) return false;
-              let d = parseDateWib(h[0]);
-              if(!d) return false;
-              
-              // FILTER BARU: Buang data jika pasien berstatus "Tidak Hadir" atau "Absen"
-              let metodeLayanan = h[2] ? h[2].toString().toLowerCase() : "";
-              if (metodeLayanan === "tidak hadir" || metodeLayanan === "absen") {
-                  return false; 
-              }
-              
-              if (jenis === 'laporan_tanggal') return d.isoStr === filterTanggal;
-              if (jenis === 'laporan_bulan') return d.month === parseInt(filterBulan) && d.year === parseInt(filterTahun);
-              if (jenis === 'laporan_tahun') return d.year === parseInt(filterTahun);
-              return true;
-          });
-      }
-      
-      document.getElementById('printDocTitle').innerText = docTitle;
-      document.getElementById('theadPrintPreview').innerHTML = theadHtml;
-      document.getElementById('tglCetakStamp').innerText = getWibDateStr();
-      
-      let tglSekarang = parseDateWib(new Date());
-      if(tglSekarang) {
-          document.getElementById('sigDate').innerText = `Cilongok, ${tglSekarang.day} ${NAMA_BULAN[tglSekarang.month]} ${tglSekarang.year}`;
-      }
-      
-      curPageLaporan = 1;
-      renderTabelLaporan();
-    }
-
-    function renderTabelLaporan() {
-      let start = (curPageLaporan - 1) * PER_PAGE_LAPORAN; 
-      let pagedData = filteredDataLaporan.slice(start, start + PER_PAGE_LAPORAN); 
-      let tbody = document.getElementById('tbodyPrintPreview');
-      let jenis = document.getElementById('jenisLaporanCetak').value; 
-      let trHtml = ''; 
-      
-      if(pagedData.length === 0) { 
-          trHtml = `<tr><td colspan="6" style="text-align: center; padding: 15px;">Tidak ada data untuk periode/filter tersebut.</td></tr>`; 
-      } else { 
-          pagedData.forEach((row, i) => { 
-              let no = start + i + 1;
-              if (jenis.startsWith('peserta') || jenis === 'seluruh_peserta' || jenis === 'detail_desa_diagnosa') {
-                  let cleanNIK = row[2] ? row[2].toString().replace(/^'/, "") : "-";
-                  let cleanBPJS = row[3] ? row[3].toString().replace(/^'/, "") : "-";
-                  let desa = row[4] === 'Luar Wilayah' ? 'Luar Wilayah' : row[4];
-                  trHtml += `<tr><td style="text-align:center;">${no}</td><td>${formatTanggalIndo(row[0])}</td><td><strong>${row[1]}</strong></td><td style="font-family:monospace; font-size:9.5px;">${cleanNIK}<br>${cleanBPJS}</td><td>${desa}</td><td>${row[10]}</td></tr>`;
-              } else {
-                  let rawNama = row[1] ? row[1].toString() : ""; 
-                  let nama = rawNama.split(" || ")[0];
-                  let klinis = `TD: ${row[3] ? row[3].toString().replace(/^'/, "") : "-"}`;
-                  if (row[4] && row[4] !== 'Tidak Diperiksa') klinis += `<br>${row[4]}: ${row[5]}`;
-                  trHtml += `<tr><td style="text-align:center;">${no}</td><td>${formatTanggalIndo(row[0])}</td><td><strong>${nama}</strong></td><td>${row[2]}</td><td>${klinis}</td><td>${row[7]}</td></tr>`;
-              }
-          }); 
-      } 
-      tbody.innerHTML = trHtml; 
-      
-      let tP = Math.ceil(filteredDataLaporan.length / PER_PAGE_LAPORAN) || 1; 
-      document.getElementById('infoHalamanLaporan').innerText = `Halaman ${curPageLaporan} dari ${tP} (Total: ${filteredDataLaporan.length} Data)`; 
-      document.getElementById('btnPrevLaporan').disabled = (curPageLaporan === 1); 
-      document.getElementById('btnNextLaporan').disabled = (curPageLaporan === tP);
-    }
-
-    function changePageLaporan(dir) { 
-      let tP = Math.ceil(filteredDataLaporan.length / PER_PAGE_LAPORAN) || 1; 
-      if(dir === 1 && curPageLaporan < tP) { 
-          curPageLaporan++; renderTabelLaporan(); 
-      } else if(dir === -1 && curPageLaporan > 1) { 
-          curPageLaporan--; renderTabelLaporan(); 
-      } 
-    }
-
-function cetakPDF() {
-      if(filteredDataLaporan.length === 0) {
-          showToast("Tidak ada data untuk dicetak!", "error");
-          return;
-      }
-      
-      showToast("Menyiapkan dokumen PDF...");
-      
-      let jenis = document.getElementById('jenisLaporanCetak').value; 
-      let docTitle = document.getElementById('printDocTitle').innerText;
-      let theadHtml = document.getElementById('theadPrintPreview').innerHTML;
-      
-      let tbodyHtml = '';
-      
-      // Mengumpulkan semua data tanpa batasan per halaman
-      filteredDataLaporan.forEach((row, i) => { 
-          let no = i + 1;
-          if (jenis.startsWith('peserta') || jenis === 'seluruh_peserta' || jenis === 'detail_desa_diagnosa') {
-              let cleanNIK = row[2] ? row[2].toString().replace(/^'/, "") : "-";
-              let cleanBPJS = row[3] ? row[3].toString().replace(/^'/, "") : "-";
-              let desa = row[4] === 'Luar Wilayah' ? 'Luar Wilayah' : row[4];
-              tbodyHtml += `<tr><td style="text-align:center;">${no}</td><td>${formatTanggalIndo(row[0])}</td><td><strong>${row[1]}</strong></td><td style="font-family:monospace; font-size:10px;">NIK: ${cleanNIK}<br>BPJS: ${cleanBPJS}</td><td>${desa}</td><td>${row[10]}</td></tr>`;
-          } else {
-              let rawNama = row[1] ? row[1].toString() : ""; 
-              let nama = rawNama.split(" || ")[0];
-              let klinis = `TD: ${row[3] ? row[3].toString().replace(/^'/, "") : "-"}`;
-              if (row[4] && row[4] !== 'Tidak Diperiksa') klinis += `<br>${row[4]}: ${row[5]}`;
-              tbodyHtml += `<tr><td style="text-align:center;">${no}</td><td>${formatTanggalIndo(row[0])}</td><td><strong>${nama}</strong></td><td>${row[2]}</td><td>${klinis}</td><td>${row[7]}</td></tr>`;
-          }
-      }); 
-
-      let tglSekarang = parseDateWib(new Date());
-      let sigDate = tglSekarang ? `${tglSekarang.day.toString().padStart(2, '0')} ${NAMA_BULAN[tglSekarang.month]} ${tglSekarang.year}` : "";
-
-      const printContents = `
-        <!-- KOP SURAT RESMI -->
-        <div style="display:flex; align-items:center; padding-bottom: 10px; margin-bottom: 2px; border-bottom: 3px solid #000;">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/d/dc/Lambang_Kabupaten_Banyumas.png" style="width:75px; height:auto; margin-right: 15px;" alt="Logo Banyumas">
-            <div style="text-align:center; flex:1; line-height:1.2;">
-                <div style="font-size:16px; font-weight:bold;">PEMERINTAH KABUPATEN BANYUMAS</div>
-                <div style="font-size:16px; font-weight:bold;">DINAS KESEHATAN DAN KELUARGA BERENCANA</div>
-                <div style="font-size:22px; font-weight:bold; margin-top:2px; letter-spacing: 1px;">PUSKESMAS CILONGOK I</div>
-                <div style="font-size:12px; margin-top:4px;">Jl. Raya Cilongok - Ajibarang Km. 1, Cilongok, Banyumas 53162</div>
-            </div>
-            <div style="width:75px;"></div>
-        </div>
-        <div style="border-bottom: 1px solid #000; margin-bottom: 20px;"></div>
-
-        <!-- JUDUL LAPORAN -->
-        <div style="text-align:center; margin-bottom: 20px;">
-            <h4 style="margin:0 0 5px 0; text-decoration: underline; font-size:14px;">${docTitle}</h4>
-            <div style="font-size: 11px; color: #333;">Total Data Terekap: ${filteredDataLaporan.length} Pasien</div>
-        </div>
-        
-        <!-- TABEL DATA -->
-        <table>
-            <thead>${theadHtml}</thead>
-            <tbody>${tbodyHtml}</tbody>
-        </table>
-        
-        <!-- BLOK TANDA TANGAN -->
-        <table style="width: 100%; border: none; margin-top: 40px; page-break-inside: avoid;">
-            <tr>
-                <td style="border: none; width: 60%;"></td>
-                <td style="border: none; width: 40%; text-align: left; font-size: 12px; line-height: 1.5;">
-                    <div>Cilongok, ${sigDate}</div>
-                    <div>Mengetahui,</div>
-                    <div>Kepala Puskesmas Cilongok I</div>
-                    <div>Kabupaten Banyumas</div>
-                    <br><br><br><br>
-                    <div style="font-weight:bold; text-decoration:underline;">dr. NURUL EKA SANTI</div>
-                    <div>NIP. 197807142010012002</div>
-                </td>
-            </tr>
-        </table>
-      `;
-
-      const printWindow = window.open('', '_blank', 'width=900,height=700'); 
-      printWindow.document.write(`
-        <html>
-        <head>
-          <title>Cetak Laporan - Puskesmas Cilongok I</title>
-          <style>
-            @page { size: A4; margin: 15mm; } 
-            body { font-family: 'Times New Roman', Times, serif; color: #000; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;} 
-            table { width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px; margin-bottom: 10px;} 
-            th, td { border: 1px solid #000; padding: 6px; vertical-align: top;} 
-            th { background-color: #f2f2f2 !important; text-align: center; }
-          </style>
-        </head>
-        <body onload="setTimeout(function(){ window.print(); window.close(); }, 800);">
-          ${printContents}
-        </body>
-        </html>
-      `); 
-      printWindow.document.close();
-    }
-    function exportExcel() {
-      if(filteredDataLaporan.length === 0) {
-          showToast("Tidak ada data untuk diekspor!", "error");
-          return;
-      }
-      
-      showToast("Mengekspor data ke Excel...");
-      let jenis = document.getElementById('jenisLaporanCetak').value; 
-      let csvContent = "data:text/csv;charset=utf-8,";
-      
-      if (jenis.startsWith('peserta') || jenis === 'seluruh_peserta' || jenis === 'detail_desa_diagnosa') {
-          csvContent += "Tgl Daftar,Nama Lengkap,NIK,No BPJS,Desa,RT/RW,Diagnosa Utama,Diagnosa Tambahan\n";
-          filteredDataLaporan.forEach(row => {
-              let nik = row[2] ? row[2].toString().replace(/^'/, "") : "";
-              let bpjs = row[3] ? row[3].toString().replace(/^'/, "") : "";
-              let rtrw = row[6] ? row[6].toString().replace(/^'/, "") : "";
-              let d1 = row[10] || ""; let d2 = row[11] || "";
-              
-              let r = [formatTanggalIndo(row[0]), `"${row[1]}"`, `="${nik}"`, `="${bpjs}"`, `"${row[4]}"`, `"${rtrw}"`, `"${d1}"`, `"${d2}"`];
-              csvContent += r.join(",") + "\n";
-          });
-      } else {
-          csvContent += "Tgl Kunjungan,Nama Pasien,Metode Layanan,Tekanan Darah,Cek Gula,Hasil Gula,Tindak Lanjut\n";
-          filteredDataLaporan.forEach(row => {
-              let rawNama = row[1] ? row[1].toString() : ""; 
-              let nama = rawNama.split(" || ")[0];
-              let tensi = row[3] ? row[3].toString().replace(/^'/, "") : "";
-              let jGula = row[4] || ""; let hGula = row[5] === '-' ? '' : row[5];
-              
-              let r = [formatTanggalIndo(row[0]), `"${nama}"`, `"${row[2]}"`, `"${tensi}"`, `"${jGula}"`, `"${hGula}"`, `"${row[7]}"`];
-              csvContent += r.join(",") + "\n";
-          });
-      }
-      
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `Laporan_PRB_Cilongok_${new Date().getTime()}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      showToast("File Excel/CSV berhasil diunduh!", "success");
-    }
-    // TAMBAHKAN ATAU TIMPA FUNGSI INI DI GOOGLE APPS SCRIPT ANDA
-function generateNoUrutAntrian(sheetAntrian, tipePrefix) {
-  // tipePrefix akan berisi "D" (Datang Langsung), "H" (Remote/HP), atau "L" (Lansia/Manual)
-  var data = sheetAntrian.getDataRange().getValues();
+  // 13. LAPORAN & CETAK EXCEL/PDF
+  function toggleFilterLaporan() { 
+    let j = document.getElementById('jenisLaporanCetak').value; 
+    document.getElementById('divLaporanDesa').classList.add('hidden'); 
+    document.getElementById('divLaporanDiag').classList.add('hidden'); 
+    document.getElementById('divLaporanTanggal').classList.add('hidden'); 
+    document.getElementById('divLaporanBulan').classList.add('hidden'); 
+    document.getElementById('divLaporanTahun').classList.add('hidden'); 
+    if (j === 'peserta_desa' || j === 'detail_desa_diagnosa') { document.getElementById('divLaporanDesa').classList.remove('hidden'); }
+    if (j === 'peserta_diagnosa' || j === 'detail_desa_diagnosa') { document.getElementById('divLaporanDiag').classList.remove('hidden'); }
+    if (j === 'laporan_tanggal') { document.getElementById('divLaporanTanggal').classList.remove('hidden'); }
+    if (j === 'laporan_bulan') { document.getElementById('divLaporanBulan').classList.remove('hidden'); document.getElementById('divLaporanTahun').classList.remove('hidden'); }
+    if (j === 'laporan_tahun') { document.getElementById('divLaporanTahun').classList.remove('hidden'); }
+    buildLaporanCetak(); 
+  }
   
-  // Pastikan zona waktu mutlak ke WIB (Asia/Jakarta) agar tidak selisih hari dengan server Google
-  var today = Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd");
-  var maxAntrian = 0;
-
-  // Mulai loop dari baris kedua (index 1) untuk melewati header tabel
-  for (var i = 1; i < data.length; i++) {
-    var tglRow = data[i][0]; // Asumsi Kolom A adalah Waktu/Tanggal
-    if (!tglRow) continue;
-
-    // Format tanggal dari database untuk dicocokkan dengan hari ini
-    var tglFormat = Utilities.formatDate(new Date(tglRow), "Asia/Jakarta", "yyyy-MM-dd");
+  function buildLaporanCetak() { 
+    let j = document.getElementById('jenisLaporanCetak').value; 
+    let fDesa = document.getElementById('laporanFilterDesa').value; 
+    let fDiag = document.getElementById('laporanFilterDiag').value; 
+    let fTgl = document.getElementById('laporanFilterTanggal').value; 
+    let fBln = parseInt(document.getElementById('laporanFilterBulan').value); 
+    let fThn = parseInt(document.getElementById('laporanFilterTahun').value); 
     
-    // Jika tanggal baris tersebut sama dengan hari ini
-    if (tglFormat === today) {
-      var noAntrian = data[i][1] ? data[i][1].toString().trim() : ""; // Asumsi Kolom B adalah No Antrian
-      
-      // Filter hanya nomor yang awalannya sesuai (misal sama-sama "D-")
-      if (noAntrian.indexOf(tipePrefix + "-") === 0) {
-        var urut = parseInt(noAntrian.split("-")[1], 10);
-        if (!isNaN(urut) && urut > maxAntrian) {
-          maxAntrian = urut; // Temukan angka antrian terbesar hari ini
-        }
+    let thHtml = ''; filteredDataLaporan = []; 
+    let title = 'DATA PESERTA RUJUK BALIK (PRB)'; 
+    let subtitle = 'Puskesmas Cilongok I'; 
+    
+    if (j.includes('peserta') || j === 'detail_desa_diagnosa') { 
+      thHtml = '<tr style="background:#f2f2f2; border-bottom:2px solid #000;"><th style="padding:6px; border:1px solid #000; text-align:center;">No</th><th style="padding:6px; border:1px solid #000; text-align:left;">Nama Pasien</th><th style="padding:6px; border:1px solid #000; text-align:left;">NIK / BPJS</th><th style="padding:6px; border:1px solid #000; text-align:left;">Desa (RT/RW)</th><th style="padding:6px; border:1px solid #000; text-align:left;">Diagnosa PRB</th><th style="padding:6px; border:1px solid #000; text-align:center;">Status</th></tr>'; 
+      filteredDataLaporan = APP_DATA_PASIEN.filter(p => { 
+        if(!p) return false; 
+        let pass = true; 
+        let pDesa = p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : p[4]; 
+        let dUtama = p[10] || "";
+        if((j === 'peserta_desa' || j === 'detail_desa_diagnosa') && fDesa !== 'all' && pDesa !== fDesa) pass = false; 
+        if((j === 'peserta_diagnosa' || j === 'detail_desa_diagnosa') && fDiag !== 'all' && !dUtama.includes(fDiag)) pass = false; 
+        return pass; 
+      }); 
+      if(j === 'peserta_desa') subtitle = fDesa === 'all' ? 'Seluruh Desa' : `Desa: ${fDesa}`; 
+      if(j === 'peserta_diagnosa') subtitle = fDiag === 'all' ? 'Seluruh Diagnosa' : `Diagnosa: ${fDiag}`; 
+      if(j === 'detail_desa_diagnosa') subtitle = `Desa: ${fDesa === 'all' ? 'Semua' : fDesa} | Diagnosa: ${fDiag === 'all' ? 'Semua' : fDiag}`; 
+    } else { 
+      title = 'LAPORAN KUNJUNGAN PEMANTAUAN PRB'; 
+      thHtml = '<tr style="background:#f2f2f2; border-bottom:2px solid #000;"><th style="padding:6px; border:1px solid #000; text-align:center;">No</th><th style="padding:6px; border:1px solid #000; text-align:left;">Tgl Layanan</th><th style="padding:6px; border:1px solid #000; text-align:left;">Nama Pasien</th><th style="padding:6px; border:1px solid #000; text-align:left;">Metode</th><th style="padding:6px; border:1px solid #000; text-align:left;">Diagnosa Utama</th><th style="padding:6px; border:1px solid #000; text-align:left;">Tensi / Gula</th></tr>'; 
+      filteredDataLaporan = APP_DATA_HISTORI.filter(h => { 
+        if(!h || !h[0]) return false; 
+        let d = parseDateWib(h[0]); 
+        if(!d) return false; 
+        if(j === 'laporan_tanggal' && fTgl && d.isoStr !== fTgl) return false; 
+        if(j === 'laporan_bulan' && (d.month !== fBln || d.year !== fThn)) return false; 
+        if(j === 'laporan_tahun' && d.year !== fThn) return false; 
+        return true; 
+      }); 
+      filteredDataLaporan.sort((a,b) => (parseDateWib(a[0]) ? parseDateWib(a[0]).timestamp : 0) - (parseDateWib(b[0]) ? parseDateWib(b[0]).timestamp : 0)); 
+      if(j === 'laporan_tanggal') subtitle = `Tanggal: ${formatTanggalIndo(fTgl)}`; 
+      if(j === 'laporan_bulan') subtitle = `Bulan: ${NAMA_BULAN[fBln]} ${fThn}`; 
+      if(j === 'laporan_tahun') subtitle = `Tahun: ${fThn}`; 
+    }
+    
+    document.getElementById('printDocTitle').innerText = title; 
+    document.getElementById('printDocSubtitle').innerText = subtitle; 
+    document.getElementById('theadPrintPreview').innerHTML = thHtml; 
+    
+    let nowWib = parseDateWib(new Date()); 
+    document.getElementById('sigDate').innerText = `Cilongok, ${nowWib.day} ${NAMA_BULAN[nowWib.month]} ${nowWib.year}`;
+    document.getElementById('tglCetakStamp').innerText = getWibDateStr(new Date());
+    
+    curPageLaporan = 1; 
+    renderTbodyLaporan(); 
+  }
+  
+  function renderTbodyLaporan() { 
+    let j = document.getElementById('jenisLaporanCetak').value; 
+    let start = (curPageLaporan - 1) * PER_PAGE_LAPORAN; 
+    let pagedData = filteredDataLaporan.slice(start, start + PER_PAGE_LAPORAN); 
+    let tbHtml = ''; 
+    if (pagedData.length === 0) { 
+      tbHtml = `<tr><td colspan="6" style="padding:10px; border:1px solid #000; text-align:center;">Data Kosong.</td></tr>`; 
+    } else { 
+      pagedData.forEach((row, idx) => { 
+        let num = start + idx + 1; 
+        if (j.includes('peserta') || j === 'detail_desa_diagnosa') { 
+          let rt = row[6] ? row[6].toString().replace(/^'/, "") : "-"; 
+          let ds = row[4] === 'Luar Wilayah' ? 'Luar Wilayah' : row[4]; 
+          let diags = getMultiDiagnosaText(row); 
+          let nik = row[2] ? row[2].toString().replace(/^'/, "") : "-"; 
+          let bpjs = row[3] ? row[3].toString().replace(/^'/, "") : "-"; 
+          tbHtml += `<tr><td style="padding:6px; border:1px solid #000; text-align:center;">${num}</td><td style="padding:6px; border:1px solid #000; font-weight:bold;">${row[1]}</td><td style="padding:6px; border:1px solid #000; font-size:9px;">NIK: ${nik}<br>BPJS: ${bpjs}</td><td style="padding:6px; border:1px solid #000;">${ds}<br>RT/RW: ${rt}</td><td style="padding:6px; border:1px solid #000; font-weight:bold; color:#0055FF;">${diags}</td><td style="padding:6px; border:1px solid #000; text-align:center;">${row[7]}</td></tr>`; 
+        } else { 
+          let splitData = (row[1] || "").toString().split(" || "); 
+          let pName = splitData[0]; let pNik = splitData[1] || ""; 
+          let p = pNik ? patientMapNIK.get(pNik) : patientMapName.get(pName); 
+          let dUtama = p ? (p[10] || "-") : "-"; 
+          let tgl = formatTanggalIndo(row[0]); 
+          let mtd = row[2] || "-"; 
+          let tg = `TD: ${row[3] ? row[3].toString().replace(/^'/, "") : "-"}<br>Gula: ${row[4] === 'Tidak Diperiksa' ? '-' : row[5]}`; 
+          tbHtml += `<tr><td style="padding:6px; border:1px solid #000; text-align:center;">${num}</td><td style="padding:6px; border:1px solid #000;">${tgl}</td><td style="padding:6px; border:1px solid #000; font-weight:bold;">${pName}</td><td style="padding:6px; border:1px solid #000;">${mtd}</td><td style="padding:6px; border:1px solid #000; font-weight:bold; color:#0055FF;">${dUtama}</td><td style="padding:6px; border:1px solid #000; font-size:9px;">${tg}</td></tr>`; 
+        } 
+      }); 
+    } 
+    document.getElementById('tbodyPrintPreview').innerHTML = tbHtml; 
+    let tP = Math.ceil(filteredDataLaporan.length / PER_PAGE_LAPORAN) || 1; 
+    document.getElementById('infoHalamanLaporan').innerText = `Halaman ${curPageLaporan} dari ${tP} (Total: ${filteredDataLaporan.length} Data)`; 
+    document.getElementById('btnPrevLaporan').disabled = (curPageLaporan === 1); 
+    document.getElementById('btnNextLaporan').disabled = (curPageLaporan === tP); 
+  }
+  
+  function getMultiDiagnosaText(p) { if (!p) return "-"; let diags = []; if (p[10] && p[10] !== '-') diags.push(p[10]); if (p[11] && p[11] !== '-' && p[11] !== '') diags.push(p[11]); if (p[12] && p[12] !== '-' && p[12] !== '') diags.push(p[12]); return diags.length > 0 ? diags.join(", ") : "-"; }
+  function changePageLaporan(dir) { let tP = Math.ceil(filteredDataLaporan.length / PER_PAGE_LAPORAN) || 1; if(dir === 1 && curPageLaporan < tP) { curPageLaporan++; renderTbodyLaporan(); } else if(dir === -1 && curPageLaporan > 1) { curPageLaporan--; renderTbodyLaporan(); } }
+  
+  function cetakPDF() { 
+    if(filteredDataLaporan.length === 0) { showToast("Data kosong!", "error"); return; } 
+    // Render semua data ke tabel bayangan untuk cetak full
+    let oldPage = curPageLaporan; let oldLimit = PER_PAGE_LAPORAN; 
+    curPageLaporan = 1; window.PER_PAGE_LAPORAN = 99999; renderTbodyLaporan(); 
+    
+    let printHtml = document.getElementById('printArea').innerHTML; 
+    let printWindow = window.open('', '_blank', 'width=900,height=700'); 
+    printWindow.document.write(`<html><head><title>Cetak Laporan PRB</title><style>@page { size: A4; margin: 15mm; } body { font-family: Arial, sans-serif; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color: #000; margin:0;} table { width: 100%; border-collapse: collapse; font-size: 11px; } th, td { border: 1px solid #000; padding: 6px; } h1, h2, h3 { color: #000; }</style></head><body onload="setTimeout(function(){ window.print(); window.close(); }, 500);">${printHtml}</body></html>`); 
+    printWindow.document.close(); 
+    
+    // Kembalikan ke state awal
+    window.PER_PAGE_LAPORAN = oldLimit; curPageLaporan = oldPage; renderTbodyLaporan(); 
+  }
+  
+  function exportExcel() { 
+    if(filteredDataLaporan.length === 0) { showToast("Data kosong!", "error"); return; } 
+    let csv = []; let rows = document.querySelectorAll("#printArea table tr"); 
+    for(let i=0; i<rows.length; i++){ 
+      if(i === 0) continue; // Skip header logo
+      let row = [], cols = rows[i].querySelectorAll("td, th"); 
+      for(let j=0; j<cols.length; j++){ 
+        let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, " ").replace(/"/g, '""'); 
+        row.push(`"${data}"`); 
+      } 
+      if(row.length > 0) csv.push(row.join(",")); 
+    } 
+    let csvFile = new Blob(["\ufeff" + csv.join("\n")], {type: "text/csv;charset=utf-8;"}); 
+    let dLink = document.createElement("a"); dLink.download = "Laporan_PRB_Cilongok.csv"; dLink.href = window.URL.createObjectURL(csvFile); dLink.style.display = "none"; document.body.appendChild(dLink); dLink.click(); document.body.removeChild(dLink); 
+  }
+
+  // 14. FITUR ABSEN, MULTI-DIAG, & DETEKSI GANDA
+  function bukaModalAbsen() { 
+    document.getElementById('searchAbsenInput').value = ''; 
+    renderTabelAbsen(); 
+    bukaModal('modalDaftarAbsen'); 
+  }
+  function renderTabelAbsen() { 
+    let fText = document.getElementById('searchAbsenInput').value.toLowerCase(); 
+    let arr = window.GLOBAL_DAFTAR_ABSEN || []; 
+    let filtered = arr.filter(p => { 
+      let nik = p[2] ? p[2].toString().replace(/^'/, "") : ""; 
+      return fText === "" || `${p[1]} ${nik} ${p[4]} ${p[10]}`.toLowerCase().includes(fText); 
+    }); 
+    
+    let html = ''; 
+    if(filtered.length === 0) { 
+      html = `<tr><td colspan="5" style="text-align:center;">Tidak ada data/semua sudah hadir.</td></tr>`; 
+    } else { 
+      filtered.forEach(p => { 
+        let trueIdx = APP_DATA_PASIEN.indexOf(p); 
+        let nik = p[2] ? p[2].toString().replace(/^'/, "") : ""; 
+        let bpjs = p[3] ? p[3].toString().replace(/^'/, "") : ""; 
+        html += `<tr><td><strong>${p[1]}</strong></td><td><span style="font-size:10px; color:var(--secondary);">NIK: ${nik}<br>BPJS: ${bpjs}</span></td><td>${p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : p[4]}</td><td>${getMultiDiagnosaHtml(p)}</td><td style="text-align:right;"><button class="btn-action btn-small" onclick="konfirmasiTidakHadir(${trueIdx})" style="background:#ff3b30;"><i class="ph-light ph-x-circle"></i> Tandai Tidak Hadir (Absen)</button></td></tr>`; 
+      }); 
+    } 
+    document.getElementById('tbodyDaftarAbsen').innerHTML = html; 
+  }
+  
+  function konfirmasiTidakHadir(idxPasien) { 
+    const p = APP_DATA_PASIEN[idxPasien]; if(!p) return; 
+    TARGET_TIDAK_HADIR_IDX = idxPasien; 
+    let nama = p[1]; let bln = NAMA_BULAN[parseInt(document.getElementById('dashFilterBulan').value)]; let thn = document.getElementById('dashFilterTahun').value; 
+    document.getElementById('teksKonfirmasiTidakHadir').innerHTML = `Tandai <strong>${nama}</strong> sebagai <b>Tidak Hadir</b> pada bulan <b>${bln} ${thn}</b>?`; 
+    bukaModal('modalKonfirmasiTidakHadir'); 
+  }
+  
+  async function eksekusiTidakHadir() { 
+    if(TARGET_TIDAK_HADIR_IDX === null) return; 
+    let b = document.getElementById('btnKonfirmTidakHadir'); setBtnLoading(b, true); 
+    let p = APP_DATA_PASIEN[TARGET_TIDAK_HADIR_IDX]; 
+    let namaAsli = p[1]; let nikAsli = p[2] ? p[2].toString().replace(/^'/, "") : "-"; let bpjsAsli = p[3] ? p[3].toString().replace(/^'/, "") : "-"; 
+    
+    // Setel tanggal input sebagai akhir bulan yang dipilih (asumsi bulan dan tahun dari dashboard filter)
+    let selM = parseInt(document.getElementById('dashFilterBulan').value); 
+    let selY = parseInt(document.getElementById('dashFilterTahun').value); 
+    // Ambil tanggal terakhir dari bulan yang dipilih
+    let tglAbsen = new Date(selY, selM + 1, 0); 
+    let strTgl = tglAbsen.toISOString().split('T')[0]; // Format YYYY-MM-DD
+    
+    let fd = { 
+      namaPasien: `${namaAsli} || ${nikAsli} || ${bpjsAsli}`, 
+      tglKunjungan: strTgl, 
+      jenisKunjungan: "Tidak Hadir", 
+      td: "-", jenisGula: "", hasilGula: "", hasilG2PP: "", 
+      statusPRB: p[7] || "Aktif", 
+      currentUser: SESSION_USER 
+    }; 
+    
+    const res = await callGasApi("simpanPemantauan", { fd: fd, noAntrian: "" }); 
+    setBtnLoading(b, false); 
+    tutupModal('modalKonfirmasiTidakHadir'); 
+    
+    if(res.success) { 
+      showToast(`${namaAsli} ditandai Tidak Hadir.`); 
+      fetchAppData(false); 
+      // Refresh list absen
+      if (document.getElementById('modalDaftarAbsen').classList.contains('show')) {
+        setTimeout(renderTabelAbsen, 500); 
       }
+    } else { 
+      showToast(res.message, "error"); 
+    } 
+  }
+  
+  function bukaModalMultiDiag() { 
+    let arr = window.GLOBAL_MULTI_DIAG || []; 
+    let html = ''; 
+    if(arr.length === 0) { html = `<tr><td colspan="4" style="text-align:center;">Tidak ada pasien multidiagnosa (komplikasi).</td></tr>`; } 
+    else { 
+      arr.forEach(p => { 
+        let nik = p[2] ? p[2].toString().replace(/^'/, "") : ""; 
+        let bpjs = p[3] ? p[3].toString().replace(/^'/, "") : ""; 
+        html += `<tr><td><strong>${p[1]}</strong></td><td><span style="font-size:10px; color:var(--secondary);">NIK: ${nik}<br>BPJS: ${bpjs}</span></td><td>${p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : p[4]}</td><td>${getMultiDiagnosaHtml(p)}</td></tr>`; 
+      }); 
+    } 
+    document.getElementById('tbodyMultiDiag').innerHTML = html; 
+    bukaModal('modalMultiDiag'); 
+  }
+  
+  function cekDataGandaPasien() { 
+    let map = new Map(); let ganda = []; 
+    APP_DATA_PASIEN.forEach((p, idx) => { 
+      if(!p) return; 
+      let nik = p[2] ? p[2].toString().replace(/^'/, "") : ""; 
+      if(nik && nik !== "-") { 
+        if(!map.has(nik)) map.set(nik, []); 
+        map.get(nik).push({ data: p, rowIndex: idx + 2 }); 
+      } 
+    }); 
+    map.forEach((arr, nik) => { if(arr.length > 1) ganda.push(...arr); }); 
+    
+    document.getElementById('titleModalCekGanda').innerHTML = '<i class="ph-light ph-copy-simple" style="color:#f59e0b;"></i> Deteksi Data Pasien Ganda'; 
+    document.getElementById('descModalCekGanda').innerText = `Ditemukan ${ganda.length} record data pasien dengan NIK yang sama. Disarankan hapus salah satu untuk mencegah duplikasi.`; 
+    document.getElementById('theadCekGanda').innerHTML = '<tr><th>Nama</th><th>NIK (Ganda)</th><th>Desa</th><th style="text-align:right;">Aksi</th></tr>'; 
+    
+    let html = ''; 
+    if(ganda.length === 0) { html = `<tr><td colspan="4" style="text-align:center; color:#34c759; font-weight:bold;">Bersih! Tidak ada data ganda.</td></tr>`; } 
+    else { 
+      ganda.forEach(item => { 
+        let p = item.data; 
+        html += `<tr><td><strong>${p[1]}</strong></td><td style="color:#ff3b30; font-weight:700;">${p[2].toString().replace(/^'/, "")}</td><td>${p[4]}</td><td style="text-align:right;"><button class="btn-action btn-small" onclick="aksiHapusData('Pasien', ${item.rowIndex - 2})" style="background:#ff3b30;"><i class="ph-light ph-trash"></i> Hapus Baris</button></td></tr>`; 
+      }); 
+    } 
+    document.getElementById('tbodyCekGanda').innerHTML = html; 
+    bukaModal('modalCekGanda'); 
+  }
+  
+  function cekDataGandaHistori() { 
+    let map = new Map(); let ganda = []; 
+    APP_DATA_HISTORI.forEach((h, idx) => { 
+      if(!h || !h[0]) return; 
+      let d = parseDateWib(h[0]); if(!d) return; 
+      let mKey = `${d.year}-${d.month}`; 
+      let rawNama = h[1] ? h[1].toString() : ""; 
+      let nik = rawNama.includes(" || ") ? rawNama.split(" || ")[1] : ""; 
+      if(nik && nik !== "-") { 
+        let k = `${nik}_${mKey}`; 
+        if(!map.has(k)) map.set(k, []); 
+        map.get(k).push({ data: h, rowIndex: idx + 2, tgl: d.isoStr }); 
+      } 
+    }); 
+    map.forEach((arr, key) => { if(arr.length > 1) ganda.push(...arr); }); 
+    
+    document.getElementById('titleModalCekGanda').innerHTML = '<i class="ph-light ph-copy-simple" style="color:#f59e0b;"></i> Deteksi Histori Ganda (Bulan Sama)'; 
+    document.getElementById('descModalCekGanda').innerText = `Ditemukan ${ganda.length} record pemantauan ganda pada NIK dan bulan kunjungan yang sama.`; 
+    document.getElementById('theadCekGanda').innerHTML = '<tr><th>Tanggal Histori</th><th>Nama / NIK</th><th>Metode</th><th style="text-align:right;">Aksi</th></tr>'; 
+    
+    let html = ''; 
+    if(ganda.length === 0) { html = `<tr><td colspan="4" style="text-align:center; color:#34c759; font-weight:bold;">Bersih! Tidak ada histori ganda.</td></tr>`; } 
+    else { 
+      ganda.forEach(item => { 
+        let h = item.data; let splitData = h[1].toString().split(" || "); 
+        html += `<tr><td>${item.tgl}</td><td><strong>${splitData[0]}</strong><br><span style="font-size:10px;">NIK: ${splitData[1] || "-"}</span></td><td>${h[2]}</td><td style="text-align:right;"><button class="btn-action btn-small" onclick="aksiHapusData('Pemantauan', ${item.rowIndex - 2})" style="background:#ff3b30;"><i class="ph-light ph-trash"></i> Hapus</button></td></tr>`; 
+      }); 
+    } 
+    document.getElementById('tbodyCekGanda').innerHTML = html; 
+    bukaModal('modalCekGanda'); 
+  }
+
+  // 15. MANAJEMEN ADMIN (USER, PASSWORD, CATATAN, JADWAL)
+  async function submitPassword(e) { 
+    e.preventDefault(); 
+    let oldP = document.getElementById('oldPwd').value; let newP = document.getElementById('newPwd').value; let confP = document.getElementById('confirmPwd').value; 
+    if(newP !== confP) { showToast("Password baru dan konfirmasi tidak cocok!", "error"); return; } 
+    let b = document.getElementById('btnSubmitPwd'); setBtnLoading(b, true); 
+    const res = await callGasApi("gantiPassword", { username: SESSION_USERNAME, oldPassword: oldP, newPassword: newP }); 
+    if(res.success) { showToast(res.message); e.target.reset(); tutupModal('modalPassword'); } 
+    else { showToast(res.message, "error"); } 
+    setBtnLoading(b, false); 
+  }
+  
+  async function submitTambahUser(e) { 
+    e.preventDefault(); 
+    let b = document.getElementById('btnSubmitUser'); setBtnLoading(b, true); 
+    const fd = { username: document.getElementById('newUsername').value, password: document.getElementById('newUserPwd').value, namaLengkap: document.getElementById('newUserNama').value, role: document.getElementById('newUserRole').value }; 
+    const res = await callGasApi("tambahUser", fd); 
+    if(res.success) { showToast(res.message); e.target.reset(); tutupModal('modalTambahUser'); } 
+    else { showToast(res.message, "error"); } 
+    setBtnLoading(b, false); 
+  }
+  
+  async function submitCatatanAdmin(e) { 
+    e.preventDefault(); 
+    let isi = document.getElementById('inputCatatanTerkini').value; 
+    let b = document.getElementById('btnSaveCatatan'); setBtnLoading(b, true); 
+    const res = await callGasApi("simpanInfoTerkini", { text: isi }); 
+    if(res.success) { document.getElementById('displayCatatanTerkini').innerText = isi; showToast(res.message); tutupModal('modalCatatan'); } 
+    else { showToast(res.message, "error"); } 
+    setBtnLoading(b, false); 
+  }
+
+  // MODUL JADWAL SERVER
+  function bukaModalJadwal() { 
+    bukaModal('modalJadwal'); 
+    renderTabelJadwal(); 
+  }
+  
+  function renderTabelJadwal() { 
+    let tb = document.getElementById('tbodyDaftarJadwal'); 
+    tb.innerHTML = ''; 
+    if (JADWAL_DB.length === 0) { 
+        tb.innerHTML = '<tr><td colspan="3" style="text-align:center;">Belum ada jadwal operasional (Tutup).</td></tr>'; 
+    } else {
+        // Urutkan jadwal (terbaru di atas)
+        let sorted = [...JADWAL_DB].sort((a,b) => b[0].localeCompare(a[0]));
+        sorted.slice(0, 15).forEach(j => {
+            let tglLengkap = formatTanggalIndo(j[0]);
+            let btnHapus = `<button class="btn-icon" onclick="hapusJadwalDB('${j[0]}')" style="color:#ff3b30; padding:2px;"><i class="ph-light ph-trash"></i></button>`;
+            tb.innerHTML += `<tr><td><strong>${tglLengkap}</strong></td><td>${j[1]} - ${j[2]} WIB</td><td style="text-align:right;">${btnHapus}</td></tr>`;
+        });
     }
   }
 
-  // Tambahkan 1 dari angka terbesar yang ditemukan
-  var nextUrut = maxAntrian + 1;
-  
-  // Format menjadi 2 digit (contoh: 01, 02, ..., 10, 11)
-  var nextUrutStr = nextUrut < 10 ? "0" + nextUrut : nextUrut.toString();
-  
-  return tipePrefix + "-" + nextUrutStr;
   async function eksekusiSimpanJadwalDB(e) {
-      if(e) e.preventDefault();
-      let tgl = document.getElementById('inputJadwalTanggal').value;
-      let buka = document.getElementById('inputJadwalBuka').value;
-      let tutup = document.getElementById('inputJadwalTutup').value;
-      
-      if (!tgl || !buka || !tutup) { showToast("Lengkapi semua isian jadwal!", "error"); return; }
-      
-      const btn = document.getElementById('btnSimpanJadwal');
-      setBtnLoading(btn, true);
-      showToast("Menyimpan ke database server...");
-      const res = await callGasApi("simpanJadwal", { tanggal: tgl, jamBuka: buka, jamTutup: tutup });
-      
-      if (res.success) {
-         showToast(res.message, "success");
-         fetchAppData(false); 
-         setTimeout(() => bukaModalJadwal(), 1000);
-      } else {
-         showToast("Gagal menyimpan jadwal", "error");
-      }
-      setBtnLoading(btn, false);
+    e.preventDefault();
+    let b = document.getElementById('btnSimpanJadwal');
+    setBtnLoading(b, true);
+    let fd = {
+        tanggal: document.getElementById('inputJadwalTanggal').value,
+        buka: document.getElementById('inputJadwalBuka').value,
+        tutup: document.getElementById('inputJadwalTutup').value
+    };
+    const res = await callGasApi("simpanJadwal", fd);
+    setBtnLoading(b, false);
+    if(res.success) {
+        showToast("Jadwal operasional berhasil disinkronkan ke server.");
+        e.target.reset();
+        fetchAppData(false); // Refresh data from server to get updated JADWAL_DB
+        setTimeout(renderTabelJadwal, 1500); // Tunggu bentar lalu render
+    } else {
+        showToast(res.message, "error");
     }
-}
+  }
+  
+  async function hapusJadwalDB(tglStr) {
+      if(!confirm(`Hapus jadwal untuk tanggal ${formatTanggalIndo(tglStr)}?`)) return;
+      showToast("Menghapus jadwal server...");
+      const res = await callGasApi("hapusJadwal", { tanggal: tglStr });
+      if (res.success) {
+          showToast("Jadwal dihapus.");
+          fetchAppData(false);
+          setTimeout(renderTabelJadwal, 1500);
+      } else {
+          showToast("Gagal menghapus jadwal: " + res.message, "error");
+      }
+  }
+  
+  // Fitur Segarkan Data Khusus Tab Antrian
+  function segarkanData() {
+      let b = document.querySelector('.top-bar-left .db-status');
+      b.innerHTML = `<span class="mac-spinner"></span><span>Menyegarkan</span>`;
+      b.style.color = 'var(--secondary)';
+      fetchAppData(false).then(() => {
+          b.innerHTML = `<div class="pulse-dot"></div><span>Terhubung</span>`;
+          b.style.color = '#28a745';
+          showToast("Data terbaru berhasil disinkronkan dari server.", "success");
+      });
+  }
+
   </script>
 </body>
 </html>
