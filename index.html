@@ -1004,34 +1004,47 @@
     let mobileQrScanner = null;
 
     // ENGINE JADWAL SERVER-SIDE
-    function cekStatusJadwal() {
-       let d = new Date();
-       let y = d.getFullYear();
-       let m = (d.getMonth() + 1).toString().padStart(2, '0');
-       let day = d.getDate().toString().padStart(2, '0');
-       let todayStr = `${y}-${m}-${day}`; 
+function cekStatusJadwal() {
+    let d = new Date();
+    let y = d.getFullYear();
+    let m = (d.getMonth() + 1).toString().padStart(2, '0');
+    let day = d.getDate().toString().padStart(2, '0');
+    let todayStr = `${y}-${m}-${day}`;  
 
-       if (JADWAL_DB.length === 0) return { buka: false, pesan: "Data jadwal kosong, harap sinkronisasi server." };
-
-       let jadwalHariIni = JADWAL_DB.find(j => j[0] === todayStr);
-
-       if (!jadwalHariIni) {
-           return { buka: false, pesan: `Layanan DITUTUP. Tanggal ${todayStr} tidak terdaftar sebagai hari layanan operasional.` };
-       }
-
-       let jamBuka = jadwalHariIni[1] || "07:30";
-       let jamTutup = jadwalHariIni[2] || "16:00";
-       let h = d.getHours().toString().padStart(2, '0');
-       let min = d.getMinutes().toString().padStart(2, '0');
-       let curTime = `${h}:${min}`;
-
-       if (curTime >= jamBuka && curTime <= jamTutup) {
-           return { buka: true, pesan: "" };
-       } else {
-           return { buka: false, pesan: `Layanan hari ini HANYA DIBUKA pukul ${jamBuka} - ${jamTutup} WIB.` };
-       }
+    // Cek apakah variabel JADWAL_DB ada dan tidak kosong
+    if (!JADWAL_DB || JADWAL_DB.length === 0) {
+        return { buka: false, pesan: "Data jadwal kosong, harap sinkronisasi server." };
     }
-    
+
+    // Cari jadwal dengan membersihkan format tanggal dari spreadsheet (mengantisipasi ada format timestamp/jam)
+    let jadwalHariIni = JADWAL_DB.find(j => {
+        if (!j || !j[0]) return false;
+        let tglSheet = j[0].toString().trim();
+        
+        // Jika dari spreadsheet berbentuk format ISO (ada huruf 'T'), potong ambil tanggalnya saja
+        if (tglSheet.includes('T')) {
+            tglSheet = tglSheet.split('T')[0];
+        }
+        
+        return tglSheet === todayStr;
+    });
+
+    if (!jadwalHariIni) {
+        return { buka: false, pesan: `Layanan DITUTUP. Tanggal ${todayStr} tidak terdaftar sebagai hari layanan operasional.` };
+    }
+
+    let jamBuka = jadwalHariIni[1] || "07:30";
+    let jamTutup = jadwalHariIni[2] || "16:00";
+    let h = d.getHours().toString().padStart(2, '0');
+    let min = d.getMinutes().toString().padStart(2, '0');
+    let curTime = `${h}:${min}`;
+
+    if (curTime >= jamBuka && curTime <= jamTutup) {
+        return { buka: true, pesan: "" };
+    } else {
+        return { buka: false, pesan: `Layanan hari ini HANYA DIBUKA pukul ${jamBuka} - ${jamTutup} WIB.` };
+    }
+}
     const APP_SECURE_SALT = "CILONGOK1_PRB_AUTH_SECRET_2026";
     const NAMA_BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const MASTER_DESA = ['Cilongok', 'Cikidang', 'Pernasidi', 'Rancamaya', 'Panembangan', 'Karanglo', 'Kalisari', 'Karangtengah', 'Sambirata', 'Gununglurah', 'Sokawera', 'Luar Wilayah'];
