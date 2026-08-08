@@ -1259,6 +1259,7 @@ async function fetchAppData(isFirstLogin = false) {
         const res = await callGasApi("getInitData");
         if (res && res.success) {
           APP_DATA_PASIEN = res.pasien || []; APP_DATA_HISTORI = res.pemantauan || []; APP_DATA_ANTRIAN = res.antrian || []; JADWAL_DB = res.jadwal || [];
+          window.jadwalOperasional = JADWAL_DB;
           if(res.infoTerkini) { document.getElementById('displayCatatanTerkini').innerText = res.infoTerkini; document.getElementById('inputCatatanTerkini').value = res.infoTerkini; }
           patientMapNIK.clear(); patientMapName.clear(); APP_DATA_PASIEN.forEach(p => { if(!p) return; let n = p[2] ? p[2].toString().replace(/^'/, "") : ""; if (n) patientMapNIK.set(n, p); if (p[1]) patientMapName.set(p[1].toString(), p); });
           
@@ -1375,6 +1376,15 @@ async function fetchAppData(isFirstLogin = false) {
     function bukaScannerAntrian() { 
       let status = cekStatusJadwal();
       if (!status.buka) { showToast(status.pesan, "error"); return; }
+      if (typeof window.jadwalOperasional === 'undefined' || window.jadwalOperasional.length === 0) {
+        alert("Data jadwal kosong, harap sinkronisasi server.");
+        return; 
+    }
+
+    // Jika jadwal ada, lanjutkan ke proses scanner
+    console.log("Jadwal ditemukan:", window.jadwalOperasional);
+    // ... (kode pembuka scanner Anda) ...
+}
       bukaModal('modalScannerAntrian'); 
       if (!scannerAntrian) { 
         scannerAntrian = new Html5QrcodeScanner("qr-reader-antrian", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false); 
