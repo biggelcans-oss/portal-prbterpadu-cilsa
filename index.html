@@ -2065,7 +2065,7 @@ async function fetchAppData(isFirstLogin = false) {
       }
       setBtnLoading(btn, false);
   }
-
+    function segarkanData() { showToast("Menyegarkan data dari server..."); fetchAppData(false); }
   function bukaModalJadwal() {
       renderTabelJadwal();
       let nW = parseDateWib(new Date()); 
