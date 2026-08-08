@@ -1390,7 +1390,6 @@ async function fetchAppData(isFirstLogin = false) {
         scannerAntrian = new Html5QrcodeScanner("qr-reader-antrian", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false); 
         scannerAntrian.render( function(decodedText) { if(scannerAntrian) { scannerAntrian.clear().then(() => { scannerAntrian = null; tutupScannerAntrian(); prosesAntrianQR(decodedText); }); } }, function(err) {} ); 
       } 
-    }
     
     function tutupScannerAntrian() { tutupModal('modalScannerAntrian'); if (scannerAntrian) { scannerAntrian.clear().then(() => { scannerAntrian = null; }); } }
 
