@@ -1254,7 +1254,10 @@ async function fetchAppData(isFirstLogin = false) {
              let curM = parseDateWib(todayWib).month; 
              document.getElementById('laporanFilterBulan').value = curM.toString(); 
              document.getElementById('laporanFilterTanggal').value = todayWib; 
-             document.getElementById('filterTanggalHistori').value = ""; 
+              let filterHistori = document.getElementById('filterTanggalHistori');
+              if (filterHistori) {
+                  filterHistori.value = "";
+              }
              toggleFilterLaporan(); 
           }
           
