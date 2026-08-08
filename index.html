@@ -987,7 +987,7 @@
 <!-- JAVASCRIPT LOGIC ENGINE FINAL -->
   <script>
     // MASUKKAN URL DEPLOYMENT GOOGLE APPS SCRIPT YANG BARU DI SINI
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxSkCe4HLw69eZUhBUii7xx7hFZWORzMT-o9KdDg2FXhz4UuEwPlbntucUrT92JCLPV/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycby-ZvvLsHCAmkgwqrYPf0vkqGHePk3kLwonbO_5YQpeXKMP2RKgC46pjbElZatWXxcC/exec";
 
     let SESSION_USER = "", SESSION_USERNAME = "", SESSION_ROLE = "";
     let APP_DATA_PASIEN = []; let APP_DATA_HISTORI = []; let APP_DATA_ANTRIAN = [];
@@ -1401,24 +1401,33 @@ async function fetchAppData(isFirstLogin = false) {
         } 
     }
 
-    // 1. BLOKIR SAAT KLIK TOMBOL "AMBIL ANTRIAN PASIEN (SCAN QR)" DARI PC
-    function bukaScannerAntrian() { 
-      let status = cekStatusJadwal();
-      if (!status.buka) { showToast(status.pesan, "error"); return; }
-      if (typeof window.jadwalOperasional === 'undefined' || window.jadwalOperasional.length === 0) {
-        alert("Data jadwal kosong, harap sinkronisasi server.");
-        return; 
-    }
+// === PERBAIKAN KURUNG KURAWAL (BRACE) YANG MEMOTONG FUNGSI ===
+function bukaScannerAntrian() { 
+  let status = cekStatusJadwal();
+  if (!status.buka) { showToast(status.pesan, "error"); return; }
+  
+  if (typeof window.jadwalOperasional === 'undefined' || window.jadwalOperasional.length === 0) {
+    alert("Data jadwal kosong, harap sinkronisasi server.");
+    return; 
+  }
 
-    // Jika jadwal ada, lanjutkan ke proses scanner
-    console.log("Jadwal ditemukan:", window.jadwalOperasional);
-    // ... (kode pembuka scanner Anda) ...
-}
-      bukaModal('modalScannerAntrian'); 
-      if (!scannerAntrian) { 
-        scannerAntrian = new Html5QrcodeScanner("qr-reader-antrian", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false); 
-        scannerAntrian.render( function(decodedText) { if(scannerAntrian) { scannerAntrian.clear().then(() => { scannerAntrian = null; tutupScannerAntrian(); prosesAntrianQR(decodedText); }); } }, function(err) {} ); 
+  // Jika jadwal ada, lanjutkan ke proses scanner
+  console.log("Jadwal ditemukan:", window.jadwalOperasional);
+  
+  bukaModal('modalScannerAntrian'); 
+  if (!scannerAntrian) { 
+    scannerAntrian = new Html5QrcodeScanner("qr-reader-antrian", { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 }, false); 
+    scannerAntrian.render( function(decodedText) { 
+      if(scannerAntrian) { 
+        scannerAntrian.clear().then(() => { 
+          scannerAntrian = null; 
+          tutupScannerAntrian(); 
+          prosesAntrianQR(decodedText); 
+        }); 
       } 
+    }, function(err) {} ); 
+  }
+}
     
     function tutupScannerAntrian() { tutupModal('modalScannerAntrian'); if (scannerAntrian) { scannerAntrian.clear().then(() => { scannerAntrian = null; }); } }
 
