@@ -1475,15 +1475,16 @@ function bukaScannerAntrian() {
       } 
     }
     
-    function filterTabelAntrian() { 
+function filterTabelAntrian() { 
       let fKode = document.getElementById("filterAntrianKode").value; 
       let fText = document.getElementById("searchAntrianInput").value.toLowerCase(); 
       let dToday = getWibDateStr(); 
+      let todayParsed = parseDateWib(dToday);
       
       dataAntrianFiltered = APP_DATA_ANTRIAN.filter(a => { 
         if (!a || !a[0]) return false; 
         let dAntrian = parseDateWib(a[0]); 
-        if (!dAntrian || dAntrian.isoStr !== dToday) return false; 
+        if (!dAntrian || !todayParsed || dAntrian.isoStr !== todayParsed.isoStr) return false; 
         
         let noA = a[1].toString(); 
         if (fKode !== "ALL" && !noA.startsWith(fKode)) return false; 
@@ -1505,12 +1506,37 @@ function bukaScannerAntrian() {
           let dWaktu = parseDateWib(a[0]); 
           let wStr = dWaktu ? `${dWaktu.hh.toString().padStart(2,'0')}:${dWaktu.mm.toString().padStart(2,'0')}` : "-"; 
           
-          let isSelesai = a[5] === "Selesai";
+          let nikPasien = (a[2] || "").toString().replace(/^'/, "").trim();
+          let namaPasien = (a[3] || "").toString().trim().toLowerCase();
+          
+          // --- FITUR BARU: Kroscek otomatis ke data histori hari ini ---
+          let isSudahDiinputHistori = false;
+          for (let i = 0; i < APP_DATA_HISTORI.length; i++) {
+              let h = APP_DATA_HISTORI[i];
+              if (!h || !h[0]) continue;
+              let dH = parseDateWib(h[0]);
+              if (dH && todayParsed && dH.isoStr === todayParsed.isoStr) {
+                  let rawHistName = h[1] ? h[1].toString() : "";
+                  let histParts = rawHistName.split(" || ");
+                  let hNama = histParts[0].trim().toLowerCase();
+                  let hNik = histParts.length > 1 ? histParts[1].replace(/^'/, "").trim() : "";
+                  
+                  // Deteksi kecocokan NIK atau Nama
+                  if ((nikPasien !== "" && hNik === nikPasien) || (namaPasien === hNama)) {
+                      isSudahDiinputHistori = true;
+                      break;
+                  }
+              }
+          }
+
+          // Gabungkan validasi antrian 'Selesai' dan kroscek Histori
+          let isSelesai = a[5] === "Selesai" || isSudahDiinputHistori;
           let bgRow = isSelesai ? "background-color: var(--table-hover); opacity: 0.7;" : "";
           let styleText = isSelesai ? "text-decoration: line-through; color: var(--secondary);" : "";
           
+          // Ubah tampilan UI aksi menjadi "Sudah Diinput / Selesai" dengan label badge estetik
           let btnAksi = isSelesai 
-            ? `<span style="color:#34c759; font-weight:800; font-size:11px; padding: 6px;"><i class="ph-fill ph-check-circle"></i> Sudah Dilayani</span>`
+            ? `<span style="color:#34c759; font-weight:800; font-size:11px; padding: 6px 12px; background: rgba(52, 199, 89, 0.12); border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(52,199,89,0.25);"><i class="ph-fill ph-check-circle" style="font-size:14px;"></i> Sudah Diinput / Selesai</span>`
             : `<button class="btn-action btn-small" onclick='bukaModalPantauInstan_DariAntrian(${JSON.stringify(a)})'><i class="ph-light ph-stethoscope"></i> Input Pemantauan</button>`;
 
           trHtml += `<tr style="${bgRow}">
@@ -1685,7 +1711,7 @@ function bukaScannerAntrian() {
     function renderTabelHistori() { let start = (pageHistori - 1) * PER_PAGE; let pagedData = dataHistoriFiltered.slice(start, start + PER_PAGE); let trHtml = ''; if(pagedData.length === 0) { trHtml = '<tr><td colspan="9" style="text-align: center;">Tidak ada histori kunjungan ditemukan</td></tr>'; } else { pagedData.forEach(h => { let trueIdx = APP_DATA_HISTORI.indexOf(h); let rawNama = h[1] ? h[1].toString() : ""; let splitData = rawNama.split(" || "); let namaPasien = splitData[0]; let nikHistori = splitData[1] || ""; let p = nikHistori ? patientMapNIK.get(nikHistori) : patientMapName.get(namaPasien); let rtHistori = p ? (p[6] ? p[6].toString().replace(/^'/, "") : "-") : "-"; let rawDesa = p ? (p[4] || "Tidak Diketahui") : "Tidak Diketahui"; let desaHistori = rawDesa === 'Luar Wilayah' ? 'Luar Wilayah' : rawDesa; let gula = h[4] === 'Tidak Diperiksa' ? '-' : `${h[4]}: ${h[5]}`; let displayNikBpjs = "-"; if (nikHistori && splitData[2]) displayNikBpjs = `<span style="font-size:10px; color:var(--secondary);">NIK: ${nikHistori}<br>BPJS: ${splitData[2]}</span>`; else if (p) displayNikBpjs = `<span style="font-size:10px; color:var(--secondary);">NIK: ${p[2] ? p[2].toString().replace(/^'/, "") : "-"}<br>BPJS: ${p[3] ? p[3].toString().replace(/^'/, "") : "-"}</span>`; trHtml += `<tr><td>${formatTanggalIndo(h[0])}</td><td><strong>${namaPasien}</strong><br>${displayNikBpjs}</td><td>${desaHistori}</td><td>${rtHistori}</td><td>${getMultiDiagnosaHtml(p)}</td><td><span style="padding:3px 6px; border-radius:4px; font-size:10px; font-weight:700; background:var(--table-hover); color:var(--text);">${h[2]}</span></td><td>TD: ${h[3] ? h[3].toString().replace(/^'/, "") : "-"}<br><span style="font-size:10px; color:var(--secondary);">${gula}</span></td><td>${h[7]}</td><td style="text-align:right;"><button class="btn-icon" onclick="cetakKartuKendaliDariHistori(${trueIdx})" title="Kartu Kendali"><i class="ph-light ph-printer"></i></button> <button class="btn-icon" onclick="bukaFormEditPemantauan(${trueIdx})"><i class="ph-light ph-pencil-simple"></i></button> <button class="btn-icon" onclick="aksiHapusData('Pemantauan', ${trueIdx})" style="color:#ff3b30;"><i class="ph-light ph-trash"></i></button></td></tr>`; }); } document.getElementById('tbodyHistori').innerHTML = trHtml; let totalPages = Math.ceil(dataHistoriFiltered.length / PER_PAGE) || 1; document.getElementById('infoPageHistori').innerText = `Halaman ${pageHistori} dari ${totalPages}`; document.getElementById('btnPrevHistori').disabled = (pageHistori === 1); document.getElementById('btnNextHistori').disabled = (pageHistori === totalPages); }
     function changePageHistori(dir) { let totalPages = Math.ceil(dataHistoriFiltered.length / PER_PAGE) || 1; if(dir === 1 && pageHistori < totalPages) { pageHistori++; renderTabelHistori(); } else if(dir === -1 && pageHistori > 1) { pageHistori--; renderTabelHistori(); } }
     function goToFilteredHistori(kategori, nilai) { switchTab('histori'); document.getElementById('searchHistoriInput').value = ''; document.getElementById('filterPrbHistori').value = ''; document.getElementById('filterStatusHistori').value = ''; document.getElementById('filterTanggalHistori').value = ''; if (kategori === 'diagnosa') { document.getElementById('filterPrbHistori').value = nilai; showToast(`Histori: ${nilai}`); } else if (kategori === 'desa') { document.getElementById('searchHistoriInput').value = nilai; showToast(`Histori desa: ${nilai}`); } filterTabelHistori(); }
-    function updateHistoriSummaryUI(total, rekapDiag, rekapDiagDesa, fTanggal) { let tglTeks = "Seluruh Waktu"; if(fTanggal) { let d = parseDateWib(fTanggal); if(d) tglTeks = `${d.day} ${NAMA_BULAN[d.month]} ${d.year}`; } let htmlPill = ''; for (let key in rekapDiag) htmlPill += `<div class="sum-pill">${key} <span>${rekapDiag[key]}</span></div>`; if(htmlPill === '') htmlPill = '<div class="sum-pill" style="color:var(--secondary); background:transparent; border:none; padding:0; box-shadow:none;">Tidak ada rekam data.</div>'; let htmlDesa = `<div id="detailDesaContainer" class="hidden" style="margin-top:10px; border-top: 1px dashed var(--primary-medium); padding-top:8px;"><div style="font-size:10.5px; font-weight:700;">Distribusi Desa (${tglTeks})</div><div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top:6px;">`; MASTER_DESA.forEach(desa => { if(rekapDiagDesa[desa]) { htmlDesa += `<div style="background:var(--window); border:var(--border); padding:8px; border-radius:6px;"><div style="font-size:10.5px; font-weight:700; color:var(--blue); border-bottom:1px solid var(--border); padding-bottom:3px;">${desa}</div>`; for(let diag in rekapDiagDesa[desa]) htmlDesa += `<div style="display:flex; justify-content:space-between; font-size:9.5px; padding:2px 0;"><span style="color:var(--secondary);">${diag}</span><span style="font-weight:700;">${rekapDiagDesa[desa][diag]}</span></div>`; htmlDesa += `</div>`; } }); htmlDesa += '</div></div>'; document.getElementById('historiSummaryContainer').innerHTML = `<div style="display:flex; flex-direction:column; gap:10px; width:100%;"><div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start;"><div style="flex:1; max-width:180px;"><div style="font-size:10px; color:var(--secondary); font-weight:700;">Total Kunjungan (${tglTeks})</div><div style="font-size:22px; font-weight:800; color:var(--blue);">${total} <span style="font-size:11px;">Pasien</span></div></div><div style="width: 1px; height: 38px; background: var(--primary-medium);"></div><div style="flex:2;"><div style="font-size:10px; color:var(--secondary); font-weight:700;">Rincian Diagnosa (${tglTeks})</div><div class="sum-pill-container">${htmlPill}</div></div></div><button onclick="document.getElementById('detailDesaContainer').classList.toggle('hidden')" style="align-self:flex-start; background:var(--primary-light); border:none; color:var(--blue); padding:6px 10px; border-radius:6px; font-size:10.5px; cursor:pointer; font-weight:700;"><i class="ph)-light ph-caret-down"></i> Detail Desa</button>
+    function updateHistoriSummaryUI(total, rekapDiag, rekapDiagDesa, fTanggal) { let tglTeks = "Seluruh Waktu"; if(fTanggal) { let d = parseDateWib(fTanggal); if(d) tglTeks = `${d.day} ${NAMA_BULAN[d.month]} ${d.year}`; } let htmlPill = ''; for (let key in rekapDiag) htmlPill += `<div class="sum-pill">${key} <span>${rekapDiag[key]}</span></div>`; if(htmlPill === '') htmlPill = '<div class="sum-pill" style="color:var(--secondary); background:transparent; border:none; padding:0; box-shadow:none;">Tidak ada rekam data.</div>'; let htmlDesa = `<div id="detailDesaContainer" class="hidden" style="margin-top:10px; border-top: 1px dashed var(--primary-medium); padding-top:8px;"><div style="font-size:10.5px; font-weight:700;">Distribusi Desa (${tglTeks})</div><div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top:6px;">`; MASTER_DESA.forEach(desa => { if(rekapDiagDesa[desa]) { htmlDesa += `<div style="background:var(--window); border:var(--border); padding:8px; border-radius:6px;"><div style="font-size:10.5px; font-weight:700; color:var(--blue); border-bottom:1px solid var(--border); padding-bottom:3px;">${desa}</div>`; for(let diag in rekapDiagDesa[desa]) htmlDesa += `<div style="display:flex; justify-content:space-between; font-size:9.5px; padding:2px 0;"><span style="color:var(--secondary);">${diag}</span><span style="font-weight:700;">${rekapDiagDesa[desa][diag]}</span></div>`; htmlDesa += `</div>`; } }); htmlDesa += '</div></div>'; document.getElementById('historiSummaryContainer').innerHTML = `<div style="display:flex; flex-direction:column; gap:10px; width:100%;"><div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start;"><div style="flex:1; max-width:180px;"><div style="font-size:10px; color:var(--secondary); font-weight:700;">Total Kunjungan (${tglTeks})</div><div style="font-size:22px; font-weight:800; color:var(--blue);">${total} <span style="font-size:11px;">Pasien</span></div></div><div style="width: 1px; height: 38px; background: var(--primary-medium);"></div><div style="flex:2;"><div style="font-size:10px; color:var(--secondary); font-weight:700;">Rincian Diagnosa (${tglTeks})</div><div class="sum-pill-container">${htmlPill}</div></div></div><button onclick="document.getElementById('detailDesaContainer').classList.toggle('hidden')" style="align-self:flex-start; background:var(--primary-light); border:none; color:var(--blue); padding:6px 10px; border-radius:6px; font-size:10.5px; cursor:pointer; font-weight:700;"><i class="ph-light ph-caret-down"></i> Detail Desa</button>
       ${htmlDesa}
     </div>`; 
   }
