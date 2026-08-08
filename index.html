@@ -1215,21 +1215,50 @@ function cekStatusJadwal() {
     function bukaModal(id) { const overlay = document.getElementById(id); overlay.style.display = 'flex'; void overlay.offsetWidth; overlay.classList.add('show'); }
     function tutupModal(id) { const overlay = document.getElementById(id); overlay.classList.remove('show'); setTimeout(() => { overlay.style.display = 'none'; }, 300); }
 
-    window.onload = function() {
-      if(localStorage.getItem('appThemeDark') === 'true') toggleDarkMode(true);
-      generateCaptcha(); populateFilterYears(); setupInactivityListeners();
-      const savedSession = sessionStorage.getItem('appSession');
-      if (savedSession) {
-        const data = JSON.parse(savedSession); SESSION_USER = data.nama; SESSION_USERNAME = data.username; SESSION_ROLE = data.role;
-        document.getElementById('userDisplayNama').innerText = data.nama; document.getElementById('userDisplayRole').innerText = data.role;
-        if (SESSION_ROLE === 'Admin') { document.getElementById('menuManajemenUser').classList.remove('hidden'); document.getElementById('btnEditNotice').classList.remove('hidden'); document.getElementById('menuInfoAdmin').classList.remove('hidden'); document.getElementById('menuJadwalAdmin').classList.remove('hidden'); }
+window.onload = function() {
+    if(localStorage.getItem('appThemeDark') === 'true') toggleDarkMode(true);
+    generateCaptcha(); 
+    populateFilterYears(); 
+    setupInactivityListeners();
+    
+    const savedSession = sessionStorage.getItem('appSession');
+    if (savedSession) {
+        const data = JSON.parse(savedSession); 
+        SESSION_USER = data.nama; 
+        SESSION_USERNAME = data.username; 
+        SESSION_ROLE = data.role;
+        
+        document.getElementById('userDisplayNama').innerText = data.nama; 
+        document.getElementById('userDisplayRole').innerText = data.role;
+        
+        if (SESSION_ROLE === 'Admin') { 
+            document.getElementById('menuManajemenUser').classList.remove('hidden'); 
+            document.getElementById('btnEditNotice').classList.remove('hidden'); 
+            document.getElementById('menuInfoAdmin').classList.remove('hidden'); 
+            document.getElementById('menuJadwalAdmin').classList.remove('hidden'); 
+        }
+        
         document.getElementById('loginSection').style.opacity = '0'; 
         currentSessionId = Math.floor(10000 + Math.random() * 90000).toString();
+        
         if(remotePollingTimer) clearInterval(remotePollingTimer);
         remotePollingTimer = setInterval(cekHasilDariHP, 2500); 
-        setTimeout(() => { document.getElementById('loginSection').style.display = 'none'; document.getElementById('appContainer').style.display = 'flex'; fetchAppData(true); }, 500); resetInactivityTimer();
-      }
-    };
+        
+        setTimeout(() => { 
+            document.getElementById('loginSection').style.display = 'none'; 
+            document.getElementById('appContainer').style.display = 'flex'; 
+            
+            // --- TAMBAHKAN BARIS INI: Paksa buka Dashboard saat pertama load ---
+            if (typeof switchTab === 'function') {
+                switchTab('dashboard');
+            }
+            
+            fetchAppData(true); 
+        }, 500); 
+        
+        resetInactivityTimer();
+    }
+};
 
     // 4. LOGIKA LOGIN & FETCH DATA
     async function doLogin(e) {
