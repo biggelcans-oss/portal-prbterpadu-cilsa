@@ -987,7 +987,7 @@
 <!-- JAVASCRIPT LOGIC ENGINE FINAL -->
   <script>
     // MASUKKAN URL DEPLOYMENT GOOGLE APPS SCRIPT YANG BARU DI SINI
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbzjM0On3CmkoTH8pfJG35ktRWloZNllsfUN5f0qvNh66g9gK8d1OMHNraJuf0SeK0g5/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyE-zGoobyFMtfaUI_lyN_nR48foV8nJnJDGDIYADVK_6d1CTUqBqYVzNpSVReXrlMo/exec";
 
     let SESSION_USER = "", SESSION_USERNAME = "", SESSION_ROLE = "";
     let APP_DATA_PASIEN = []; let APP_DATA_HISTORI = []; let APP_DATA_ANTRIAN = [];
@@ -1241,18 +1241,36 @@
       sessionStorage.removeItem('appSession'); SESSION_USER = ""; SESSION_USERNAME = ""; SESSION_ROLE = ""; document.getElementById('username').value = ""; document.getElementById('password').value = ""; document.getElementById('captchaInput').value = ""; document.getElementById('menuManajemenUser').classList.add('hidden'); document.getElementById('menuInfoAdmin').classList.add('hidden'); document.getElementById('menuJadwalAdmin').classList.add('hidden'); document.getElementById('btnEditNotice').classList.add('hidden'); document.getElementById('appContainer').style.display = 'none'; document.getElementById('loginSection').style.display = 'flex'; setTimeout(() => { document.getElementById('loginSection').style.opacity = '1'; }, 50); generateCaptcha(); if (isTimeout) { showToast('Sesi otomatis berakhir (30 menit).', 'error'); } else { showToast('Berhasil keluar akun.'); } 
     }
 
-    async function fetchAppData(isFirstLogin = false) {
+async function fetchAppData(isFirstLogin = false) {
       try {
         const res = await callGasApi("getInitData");
-        if (res.success) {
+        if (res && res.success) {
           APP_DATA_PASIEN = res.pasien || []; APP_DATA_HISTORI = res.pemantauan || []; APP_DATA_ANTRIAN = res.antrian || []; JADWAL_DB = res.jadwal || [];
           if(res.infoTerkini) { document.getElementById('displayCatatanTerkini').innerText = res.infoTerkini; document.getElementById('inputCatatanTerkini').value = res.infoTerkini; }
           patientMapNIK.clear(); patientMapName.clear(); APP_DATA_PASIEN.forEach(p => { if(!p) return; let n = p[2] ? p[2].toString().replace(/^'/, "") : ""; if (n) patientMapNIK.set(n, p); if (p[1]) patientMapName.set(p[1].toString(), p); });
-          if(isFirstLogin) { let todayWib = getWibDateStr(); let curM = parseDateWib(todayWib).month; document.getElementById('laporanFilterBulan').value = curM.toString(); document.getElementById('laporanFilterTanggal').value = todayWib; document.getElementById('filterTanggalHistori').value = ""; toggleFilterLaporan(); }
+          
+          if(isFirstLogin) { 
+             let todayWib = getWibDateStr(); 
+             let curM = parseDateWib(todayWib).month; 
+             document.getElementById('laporanFilterBulan').value = curM.toString(); 
+             document.getElementById('laporanFilterTanggal').value = todayWib; 
+             document.getElementById('filterTanggalHistori').value = ""; 
+             toggleFilterLaporan(); 
+          }
+          
           renderDashboardFiltered(isFirstLogin); renderMutuFiltered(); buildLaporanCetak(); filterTabelPasien(); filterTabelAntrian(); filterTabelHistori(); filterTabelHistoriAntrian();
           if(isFirstLogin) switchTab('dashboard'); 
-        } else { showToast("Gagal memuat data dari database: " + res.message, "error"); }
-      } catch (err) { showToast("Sistem gagal terkoneksi. Periksa koneksi internet/URL.", "error"); }
+        } else { 
+          // Jika server berhasil dihubungi tapi mengembalikan error
+          let msg = res ? res.message : "Data backend kosong atau tidak valid.";
+          showToast("Gagal memuat data: " + msg, "error"); 
+          console.error("Backend Response Error:", msg);
+        }
+      } catch (err) { 
+        // Jika internet terputus, atau URL GAS kedaluwarsa
+        console.error("Fetch API Error:", err);
+        showToast("Sistem gagal terkoneksi. Periksa koneksi atau pastikan URL Apps Script sudah benar dan diperbarui.", "error"); 
+      }
     }
 
     async function bukaInfoSesi() {
@@ -2111,7 +2129,7 @@
       buildLaporanCetak();
   }
 
-  function buildLaporanCetak() {
+function buildLaporanCetak() {
       const jl = document.getElementById('jenisLaporanCetak').value; 
       let html = ""; 
       let thHtml = "";
@@ -2129,12 +2147,14 @@
               let fDi = document.getElementById('laporanFilterDiag').value; 
               if(fDi !== 'all') dFilter = dFilter.filter(p => (p[10] && p[10].includes(fDi)) || (p[11] && p[11].includes(fDi)) || (p[12] && p[12].includes(fDi))); 
           }
-          filteredDataLaporan = dFilter.sort((a,b) => a[1].toString().localeCompare(b[1].toString()));
+          filteredDataLaporan = dFilter.sort((a,b) => (a[1]||"").toString().localeCompare((b[1]||"").toString()));
           docTitle = "MASTER DATA PESERTA PRB"; 
           docSubtitle = `Filter: ${jl.replace(/_/g, ' ').toUpperCase()}`;
       } else {
           thHtml = '<tr><th style="padding:8px; border:1px solid #000; text-align:center;">No</th><th style="padding:8px; border:1px solid #000;">Tgl Kunjungan</th><th style="padding:8px; border:1px solid #000;">Nama & Identitas</th><th style="padding:8px; border:1px solid #000;">Desa</th><th style="padding:8px; border:1px solid #000;">Metode</th><th style="padding:8px; border:1px solid #000;">TD / Gula</th><th style="padding:8px; border:1px solid #000;">Diagnosa</th><th style="padding:8px; border:1px solid #000;">Status PRB</th></tr>';
-          let hFilter = APP_DATA_HISTORI;
+          
+          // PERBAIKAN: Menyingkirkan data "Tidak Hadir" sejak awal
+          let hFilter = APP_DATA_HISTORI.filter(h => h && h[2] !== 'Tidak Hadir');
           
           if(jl === 'laporan_tanggal') { 
               let ft = document.getElementById('laporanFilterTanggal').value; 
