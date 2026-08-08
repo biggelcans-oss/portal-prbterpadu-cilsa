@@ -1035,7 +1035,7 @@
     const APP_SECURE_SALT = "CILONGOK1_PRB_AUTH_SECRET_2026";
     const NAMA_BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
     const MASTER_DESA = ['Cilongok', 'Cikidang', 'Pernasidi', 'Rancamaya', 'Panembangan', 'Karanglo', 'Kalisari', 'Karangtengah', 'Sambirata', 'Gununglurah', 'Sokawera', 'Luar Wilayah'];
-    const PER_PAGE = 20; const PER_PAGE_LAPORAN = 20;
+    const PER_PAGE = 20; let PER_PAGE_LAPORAN = 20; // PERBAIKAN: Diubah menjadi let agar bisa disesuaikan saat cetak PDF
     
     let dataPasienFiltered = []; let dataAntrianFiltered = []; let dataHistoriFiltered = []; let dataHistoriAntrianFiltered = []; let filteredDataLaporan = []; let dataManualFiltered = [];
     let pagePasien = 1, pageHistori = 1, pageHistoriAntrian = 1, curPageLaporan = 1;
@@ -1604,631 +1604,692 @@
     function renderTabelHistori() { let start = (pageHistori - 1) * PER_PAGE; let pagedData = dataHistoriFiltered.slice(start, start + PER_PAGE); let trHtml = ''; if(pagedData.length === 0) { trHtml = '<tr><td colspan="9" style="text-align: center;">Tidak ada histori kunjungan ditemukan</td></tr>'; } else { pagedData.forEach(h => { let trueIdx = APP_DATA_HISTORI.indexOf(h); let rawNama = h[1] ? h[1].toString() : ""; let splitData = rawNama.split(" || "); let namaPasien = splitData[0]; let nikHistori = splitData[1] || ""; let p = nikHistori ? patientMapNIK.get(nikHistori) : patientMapName.get(namaPasien); let rtHistori = p ? (p[6] ? p[6].toString().replace(/^'/, "") : "-") : "-"; let rawDesa = p ? (p[4] || "Tidak Diketahui") : "Tidak Diketahui"; let desaHistori = rawDesa === 'Luar Wilayah' ? 'Luar Wilayah' : rawDesa; let gula = h[4] === 'Tidak Diperiksa' ? '-' : `${h[4]}: ${h[5]}`; let displayNikBpjs = "-"; if (nikHistori && splitData[2]) displayNikBpjs = `<span style="font-size:10px; color:var(--secondary);">NIK: ${nikHistori}<br>BPJS: ${splitData[2]}</span>`; else if (p) displayNikBpjs = `<span style="font-size:10px; color:var(--secondary);">NIK: ${p[2] ? p[2].toString().replace(/^'/, "") : "-"}<br>BPJS: ${p[3] ? p[3].toString().replace(/^'/, "") : "-"}</span>`; trHtml += `<tr><td>${formatTanggalIndo(h[0])}</td><td><strong>${namaPasien}</strong><br>${displayNikBpjs}</td><td>${desaHistori}</td><td>${rtHistori}</td><td>${getMultiDiagnosaHtml(p)}</td><td><span style="padding:3px 6px; border-radius:4px; font-size:10px; font-weight:700; background:var(--table-hover); color:var(--text);">${h[2]}</span></td><td>TD: ${h[3] ? h[3].toString().replace(/^'/, "") : "-"}<br><span style="font-size:10px; color:var(--secondary);">${gula}</span></td><td>${h[7]}</td><td style="text-align:right;"><button class="btn-icon" onclick="cetakKartuKendaliDariHistori(${trueIdx})" title="Kartu Kendali"><i class="ph-light ph-printer"></i></button> <button class="btn-icon" onclick="bukaFormEditPemantauan(${trueIdx})"><i class="ph-light ph-pencil-simple"></i></button> <button class="btn-icon" onclick="aksiHapusData('Pemantauan', ${trueIdx})" style="color:#ff3b30;"><i class="ph-light ph-trash"></i></button></td></tr>`; }); } document.getElementById('tbodyHistori').innerHTML = trHtml; let totalPages = Math.ceil(dataHistoriFiltered.length / PER_PAGE) || 1; document.getElementById('infoPageHistori').innerText = `Halaman ${pageHistori} dari ${totalPages}`; document.getElementById('btnPrevHistori').disabled = (pageHistori === 1); document.getElementById('btnNextHistori').disabled = (pageHistori === totalPages); }
     function changePageHistori(dir) { let totalPages = Math.ceil(dataHistoriFiltered.length / PER_PAGE) || 1; if(dir === 1 && pageHistori < totalPages) { pageHistori++; renderTabelHistori(); } else if(dir === -1 && pageHistori > 1) { pageHistori--; renderTabelHistori(); } }
     function goToFilteredHistori(kategori, nilai) { switchTab('histori'); document.getElementById('searchHistoriInput').value = ''; document.getElementById('filterPrbHistori').value = ''; document.getElementById('filterStatusHistori').value = ''; document.getElementById('filterTanggalHistori').value = ''; if (kategori === 'diagnosa') { document.getElementById('filterPrbHistori').value = nilai; showToast(`Histori: ${nilai}`); } else if (kategori === 'desa') { document.getElementById('searchHistoriInput').value = nilai; showToast(`Histori desa: ${nilai}`); } filterTabelHistori(); }
-    function updateHistoriSummaryUI(total, rekapDiag, rekapDiagDesa, fTanggal) { let tglTeks = "Seluruh Waktu"; if(fTanggal) { let d = parseDateWib(fTanggal); if(d) tglTeks = `${d.day} ${NAMA_BULAN[d.month]} ${d.year}`; } let htmlPill = ''; for (let key in rekapDiag) htmlPill += `<div class="sum-pill">${key} <span>${rekapDiag[key]}</span></div>`; if(htmlPill === '') htmlPill = '<div class="sum-pill" style="color:var(--secondary); background:transparent; border:none; padding:0; box-shadow:none;">Tidak ada rekam data.</div>'; let htmlDesa = `<div id="detailDesaContainer" class="hidden" style="margin-top:10px; border-top: 1px dashed var(--primary-medium); padding-top:8px;"><div style="font-size:10.5px; font-weight:700;">Distribusi Desa (${tglTeks})</div><div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top:6px;">`; MASTER_DESA.forEach(desa => { if(rekapDiagDesa[desa]) { htmlDesa += `<div style="background:var(--window); border:var(--border); padding:8px; border-radius:6px;"><div style="font-size:10.5px; font-weight:700; color:var(--blue); border-bottom:1px solid var(--border); padding-bottom:3px;">${desa}</div>`; for(let diag in rekapDiagDesa[desa]) htmlDesa += `<div style="display:flex; justify-content:space-between; font-size:9.5px; padding:2px 0;"><span style="color:var(--secondary);">${diag}</span><span style="font-weight:700;">${rekapDiagDesa[desa][diag]}</span></div>`; htmlDesa += `</div>`; } }); htmlDesa += '</div></div>'; document.getElementById('historiSummaryContainer').innerHTML = `<div style="display:flex; flex-direction:column; gap:10px; width:100%;"><div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start;"><div style="flex:1; max-width:180px;"><div style="font-size:10px; color:var(--secondary); font-weight:700;">Total Kunjungan (${tglTeks})</div><div style="font-size:22px; font-weight:800; color:var(--blue);">${total} <span style="font-size:11px;">Pasien</span></div></div><div style="width: 1px; height: 38px; background: var(--primary-medium);"></div><div style="flex:2;"><div style="font-size:10px; color:var(--secondary); font-weight:700;">Rincian Diagnosa (${tglTeks})</div><div class="sum-pill-container">${htmlPill}</div></div></div><button onclick="document.getElementById('detailDesaContainer').classList.toggle('hidden')" style="align-self:flex-start; background:var(--primary-light); border:none; color:var(--blue); padding:6px 10px; border-radius:6px; font-size:10.5px; cursor:pointer; font-weight:700;"><i class="ph-light ph-caret-down"></i> Detail Distribusi Desa</button>${htmlDesa}</div>`; }
-    setInterval(() => { const d = new Date(); document.getElementById('currentDate').innerText = d.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Jakarta' }); document.getElementById('currentTime').innerText = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Asia/Jakarta' }) + " WIB"; }, 1000);
+    function updateHistoriSummaryUI(total, rekapDiag, rekapDiagDesa, fTanggal) { let tglTeks = "Seluruh Waktu"; if(fTanggal) { let d = parseDateWib(fTanggal); if(d) tglTeks = `${d.day} ${NAMA_BULAN[d.month]} ${d.year}`; } let htmlPill = ''; for (let key in rekapDiag) htmlPill += `<div class="sum-pill">${key} <span>${rekapDiag[key]}</span></div>`; if(htmlPill === '') htmlPill = '<div class="sum-pill" style="color:var(--secondary); background:transparent; border:none; padding:0; box-shadow:none;">Tidak ada rekam data.</div>'; let htmlDesa = `<div id="detailDesaContainer" class="hidden" style="margin-top:10px; border-top: 1px dashed var(--primary-medium); padding-top:8px;"><div style="font-size:10.5px; font-weight:700;">Distribusi Desa (${tglTeks})</div><div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-top:6px;">`; MASTER_DESA.forEach(desa => { if(rekapDiagDesa[desa]) { htmlDesa += `<div style="background:var(--window); border:var(--border); padding:8px; border-radius:6px;"><div style="font-size:10.5px; font-weight:700; color:var(--blue); border-bottom:1px solid var(--border); padding-bottom:3px;">${desa}</div>`; for(let diag in rekapDiagDesa[desa]) htmlDesa += `<div style="display:flex; justify-content:space-between; font-size:9.5px; padding:2px 0;"><span style="color:var(--secondary);">${diag}</span><span style="font-weight:700;">${rekapDiagDesa[desa][diag]}</span></div>`; htmlDesa += `</div>`; } }); htmlDesa += '</div></div>'; document.getElementById('historiSummaryContainer').innerHTML = `<div style="display:flex; flex-direction:column; gap:10px; width:100%;"><div style="display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start;"><div style="flex:1; max-width:180px;"><div style="font-size:10px; color:var(--secondary); font-weight:700;">Total Kunjungan (${tglTeks})</div><div style="font-size:22px; font-weight:800; color:var(--blue);">${total} <span style="font-size:11px;">Pasien</span></div></div><div style="width: 1px; height: 38px; background: var(--primary-medium);"></div><div style="flex:2;"><div style="font-size:10px; color:var(--secondary); font-weight:700;">Rincian Diagnosa (${tglTeks})</div><div class="sum-pill-container">${htmlPill}</div></div></div><button onclick="document.getElementById('detailDesaContainer').classList.toggle('hidden')" style="align-self:flex-start; background:var(--primary-light); border:none; color:var(--blue); padding:6px 10px; border-radius:6px; font-size:10.5px; cursor:pointer; font-weight:700;"><i class="ph)-light ph-caret-down"></i> Detail Desa</button>
+      ${htmlDesa}
+    </div>`; 
+  }
 
-    // 11. FORM HELPER
-    function toggleStatusPrb() { let status = document.getElementById('statusPrb').value; let conditionalSrb = document.querySelectorAll('.conditional-srb'); conditionalSrb.forEach(el => { if (status === 'Baru') { el.classList.remove('hidden'); } else { el.classList.add('hidden'); } }); }
-    function toggleAlamatLuar() { let alamat = document.getElementById('alamat').value; let divDesaLuar = document.getElementById('divDesaLuar'); if (alamat === 'Luar Wilayah') { divDesaLuar.classList.remove('hidden'); } else { divDesaLuar.classList.add('hidden'); } }
-    function toggleGulaDarah() { let jenisGula = document.getElementById('jenisGula').value; let divHasilGula = document.getElementById('divHasilGula'); let labelHasilGula = document.getElementById('labelHasilGula'); let divG2PP = document.getElementById('divG2PP'); if (jenisGula === '') { divHasilGula.classList.add('hidden'); divG2PP.classList.add('hidden'); } else { divHasilGula.classList.remove('hidden'); labelHasilGula.innerText = `Hasil ${jenisGula}`; if (jenisGula === 'GDP') { divG2PP.classList.remove('hidden'); } else { divG2PP.classList.add('hidden'); } } }
-
-    function bukaFormPasienBaru() { document.getElementById('formPasien').reset(); document.getElementById('idWaktuPasien').value = ""; document.getElementById('titleModalPasien').innerHTML = '<i class="ph-light ph-user-plus"></i> Tambah Pasien Baru'; toggleStatusPrb(); toggleAlamatLuar(); bukaModal('modalPasien'); }
-    function bukaFormEditPasien(idx) { const data = APP_DATA_PASIEN[idx]; let exactRowIndex = idx + 2; document.getElementById('idWaktuPasien').value = exactRowIndex; document.getElementById('nama').value = data[1]; document.getElementById('nik').value = data[2] ? data[2].toString().replace(/^'/, "") : ""; document.getElementById('bpjs').value = data[3] ? data[3].toString().replace(/^'/, "") : ""; document.getElementById('rtrw').value = data[6] ? data[6].toString().replace(/^'/, "") : ""; document.getElementById('statusPrb').value = data[7]; document.getElementById('noSrb').value = data[8] === '-' ? '' : data[8]; let tglSrbForm = ''; if(data[9] !== '-' && data[9] !== '') { let d = parseDateWib(data[9]); if(d) tglSrbForm = d.isoStr; } document.getElementById('tglSrb').value = tglSrbForm; const optAlamat = Array.from(document.getElementById('alamat').options).map(opt => opt.value); if(optAlamat.includes(data[4])) { document.getElementById('alamat').value = data[4]; document.getElementById('desaLuar').value = ""; } else { document.getElementById('alamat').value = 'Luar Wilayah'; document.getElementById('desaLuar').value = data[5]; } document.getElementById('prb1').value = data[10] || ""; document.getElementById('prb2').value = (data[11] && data[11] !== '-') ? data[11] : ''; document.getElementById('prb3').value = (data[12] && data[12] !== '-') ? data[12] : ''; document.getElementById('titleModalPasien').innerHTML = '<i class="ph-light ph-pencil-simple"></i> Edit Data Pasien'; toggleStatusPrb(); toggleAlamatLuar(); bukaModal('modalPasien'); }
-    function bukaModalPantauInstan(p, noAntrian = null) { document.getElementById('formPemantauan').reset(); document.getElementById('idWaktuPemantauan').value = ""; document.getElementById('idNoAntrianPemantauan').value = noAntrian || ""; document.getElementById('namaPasienPantau').value = p[1]; let cleanNIK = p[2] ? p[2].toString().replace(/^'/, "") : "-"; let cleanBPJS = p[3] ? p[3].toString().replace(/^'/, "") : "-"; let alamatFull = p[4] === 'Luar Wilayah' ? "Luar Wilayah" : p[4]; let rtrw = p[6] ? p[6].toString().replace(/^'/, "") : "-"; document.getElementById('nikPasienPantau').value = cleanNIK; document.getElementById('bpjsPasienPantau').value = cleanBPJS; document.getElementById('alamatPasienPantau').value = `${alamatFull} (RT/RW: ${rtrw})`; document.getElementById('tglKunjunganBaru').value = getWibDateStr(); let titleHeader = noAntrian ? `<i class="ph-light ph-stethoscope"></i> Rekam Kunjungan (Antrian ${noAntrian})` : `<i class="ph-light ph-stethoscope"></i> Rekam Kunjungan Baru`; document.getElementById('titleModalPemantauan').innerHTML = titleHeader; toggleGulaDarah(); bukaModal('modalPemantauan'); }
-    function bukaFormEditPemantauan(idx) { const data = APP_DATA_HISTORI[idx]; let exactRowIndex = idx + 2; document.getElementById('idWaktuPemantauan').value = exactRowIndex; document.getElementById('idNoAntrianPemantauan').value = ""; let rawNama = data[1] ? data[1].toString() : ""; let splitData = rawNama.split(" || "); let namaPasien = splitData[0]; let nikHistori = splitData[1] || ""; document.getElementById('namaPasienPantau').value = namaPasien; let p = nikHistori ? patientMapNIK.get(nikHistori) : patientMapName.get(namaPasien); if(p) { document.getElementById('nikPasienPantau').value = p[2] ? p[2].toString().replace(/^'/, "") : "-"; document.getElementById('bpjsPasienPantau').value = p[3] ? p[3].toString().replace(/^'/, "") : "-"; document.getElementById('alamatPasienPantau').value = `${p[4] === 'Luar Wilayah' ? "Luar Wilayah" : p[4]} (RT/RW: ${p[6] ? p[6].toString().replace(/^'/, "") : "-"})`; } else { document.getElementById('nikPasienPantau').value = "-"; document.getElementById('bpjsPasienPantau').value = "-"; document.getElementById('alamatPasienPantau').value = "-"; } let d = parseDateWib(data[0]); document.getElementById('tglKunjunganBaru').value = d ? d.isoStr : getWibDateStr(); document.getElementById('jenisKunjungan').value = data[2]; document.getElementById('td').value = data[3] ? data[3].toString().replace(/^'/, "") : ""; document.getElementById('jenisGula').value = data[4] === 'Tidak Diperiksa' ? '' : data[4]; document.getElementById('hasilGula').value = data[5] === '-' ? '' : data[5]; document.getElementById('hasilG2PP').value = data[6] === '-' ? '' : data[6]; document.getElementById('statusPRB').value = data[7]; document.getElementById('titleModalPemantauan').innerHTML = '<i class="ph-light ph-pencil-simple"></i> Edit Rekam Kunjungan'; toggleGulaDarah(); bukaModal('modalPemantauan'); }
-    
-    // 12. CRUD ACTION
-    function aksiHapusData(tipe, idx) { let exactRowIndex = idx + 2; TARGET_HAPUS_TIPE = tipe; TARGET_HAPUS_ROW = exactRowIndex; document.getElementById("teksKonfirmasiHapus").innerText = `Hapus data ${tipe} ini? Tindakan permanen.`; bukaModal('modalKonfirmasiHapus'); }
-    async function eksekusiHapusData() { const btn = document.getElementById('btnHapusKonfirm'); setBtnLoading(btn, true); const res = await callGasApi("hapusData", { tipe: TARGET_HAPUS_TIPE, rowIndex: TARGET_HAPUS_ROW }); showToast(res.message); fetchAppData(false); tutupModal('modalKonfirmasiHapus'); setBtnLoading(btn, false); }
-    async function submitPasien(e) { e.preventDefault(); const rowIndex = document.getElementById('idWaktuPasien').value; let rawNik = document.getElementById('nik').value.replace(/^'/, ""); let rawBpjs = document.getElementById('bpjs').value.replace(/^'/, ""); const fd = { nama: document.getElementById('nama').value, nik: "'" + rawNik, bpjs: "'" + rawBpjs, statusPrb: document.getElementById('statusPrb').value, noSrb: document.getElementById('noSrb').value, tglSrb: document.getElementById('tglSrb').value, alamat: document.getElementById('alamat').value, desaLuar: document.getElementById('desaLuar').value, rtrw: "'" + document.getElementById('rtrw').value.replace(/^'/, ""), prb1: document.getElementById('prb1').value, prb2: document.getElementById('prb2').value, prb3: document.getElementById('prb3').value, currentUser: SESSION_USER }; const b = document.getElementById('btnSubmitPasien'); setBtnLoading(b, true); if (rowIndex === "") { if (APP_DATA_PASIEN.some(p => { let n = p[2] ? p[2].toString().replace(/^'/, "") : ""; let bp = p[3] ? p[3].toString().replace(/^'/, "") : ""; return (n !== "" && n === rawNik) || (bp !== "" && bp === rawBpjs); })) { showToast("Gagal: NIK/BPJS sudah terdaftar!", "error"); setBtnLoading(b, false); return; } const res = await callGasApi("simpanPasien", { fd }); showToast(res.message); e.target.reset(); tutupModal('modalPasien'); fetchAppData(false); } else { const res = await callGasApi("updatePasien", { rowIndex: parseInt(rowIndex), fd }); showToast(res.message); e.target.reset(); tutupModal('modalPasien'); fetchAppData(false); } setBtnLoading(b, false); }
-    
-    // Perbaikan Submit Pemantauan (Injeksi memori data lokal untuk blokir duplikasi)
-    async function submitPemantauan(e) { 
-      e.preventDefault(); 
-      const rowIndex = document.getElementById('idWaktuPemantauan').value; 
-      let noAntrian = document.getElementById('idNoAntrianPemantauan').value; 
-      let namaAsli = document.getElementById('namaPasienPantau').value; 
-      let nikAsli = document.getElementById('nikPasienPantau').value; 
-      let bpjsAsli = document.getElementById('bpjsPasienPantau').value; 
-      
-      const fd = { 
-        namaPasien: `${namaAsli} || ${nikAsli} || ${bpjsAsli}`, 
-        tglKunjungan: document.getElementById('tglKunjunganBaru').value, 
-        jenisKunjungan: document.getElementById('jenisKunjungan').value, 
-        td: document.getElementById('td').value === "-" ? "-" : "'" + document.getElementById('td').value.replace(/^'/, ""), 
-        jenisGula: document.getElementById('jenisGula').value, 
-        hasilGula: document.getElementById('hasilGula').value, 
-        hasilG2PP: document.getElementById('hasilG2PP').value, 
-        statusPRB: document.getElementById('statusPRB').value, 
-        currentUser: SESSION_USER 
-      }; 
-      
-      const b = document.getElementById('btnSubmitPemantauan'); 
-      setBtnLoading(b, true); 
-
-      if (rowIndex === "") { 
-        // Validasi ekstra ketat bulan dan tahun kunjungan yang diinputkan
-        if (cekSudahPemantauanBulanIni(nikAsli, namaAsli, fd.tglKunjungan)) {
-            showToast(`Pasien sudah memiliki rekam pemantauan di bulan tersebut.`, "error");
-            setBtnLoading(b, false); 
-            return; 
-        } 
-      
-        // Injeksi memori lokal sementara
-        APP_DATA_HISTORI.push([fd.tglKunjungan, fd.namaPasien, fd.jenisKunjungan, fd.td, fd.jenisGula || "Tidak Diperiksa", fd.hasilGula || "-", fd.hasilG2PP || "-", fd.statusPRB]);
-      
-        const res = await callGasApi("simpanPemantauan", { fd: fd, noAntrian: noAntrian }); 
-        if (res.success) {
-          showToast(res.message); 
-          e.target.reset(); 
-          tutupModal('modalPemantauan'); 
-          
-          // INJEKSI KODE AGAR ANTRIAN BERUBAH STATUS "SELESAI"
-          if (noAntrian) {
-             let antrianItem = APP_DATA_ANTRIAN.find(a => a[1] === noAntrian && a[2] === nikAsli);
-             if (antrianItem) antrianItem[5] = "Selesai";
-          }
-          
-          fetchAppData(false); 
-        } else {
-          APP_DATA_HISTORI.pop(); // Revert jika gagal
-          showToast(res.message, "error");
-        }
+  // =======================================================
+  // BAGIAN 11: FUNGSI TAMBAH, EDIT, DAN SIMPAN DATA PASIEN
+  // =======================================================
+  function toggleStatusPrb() {
+      const val = document.getElementById('statusPrb').value;
+      const els = document.querySelectorAll('.conditional-srb');
+      if(val.includes('Baru')) { 
+          els.forEach(e => e.classList.remove('hidden')); 
       } else { 
-        const res = await callGasApi("updatePemantauan", { rowIndex: parseInt(rowIndex), fd: fd }); 
-        if(res.success) {
+          els.forEach(e => e.classList.add('hidden')); 
+          document.getElementById('noSrb').value = ''; 
+          document.getElementById('tglSrb').value = ''; 
+      }
+  }
+
+  function toggleAlamatLuar() {
+      if(document.getElementById('alamat').value === 'Luar Wilayah') {
+          document.getElementById('divDesaLuar').classList.remove('hidden'); 
+      } else {
+          document.getElementById('divDesaLuar').classList.add('hidden');
+      }
+  }
+
+  function toggleGulaDarah() {
+      const val = document.getElementById('jenisGula').value;
+      if(val === '' || val === 'Tidak Diperiksa') { 
+          document.getElementById('divHasilGula').classList.add('hidden'); 
+          document.getElementById('divG2PP').classList.add('hidden'); 
+          document.getElementById('hasilGula').value = ''; 
+          document.getElementById('hasilG2PP').value = ''; 
+      } else { 
+          document.getElementById('divHasilGula').classList.remove('hidden'); 
+          document.getElementById('labelHasilGula').innerText = `Hasil ${val}`; 
+          if(val === 'GDP') {
+              document.getElementById('divG2PP').classList.remove('hidden'); 
+          } else { 
+              document.getElementById('divG2PP').classList.add('hidden'); 
+              document.getElementById('hasilG2PP').value = ''; 
+          } 
+      }
+  }
+
+  function bukaFormPasienBaru() {
+      document.getElementById('formPasien').reset();
+      document.getElementById('idWaktuPasien').value = "";
+      document.getElementById('titleModalPasien').innerHTML = '<i class="ph-light ph-user-plus"></i> Tambah Pasien Baru';
+      toggleStatusPrb(); 
+      toggleAlamatLuar();
+      bukaModal('modalPasien');
+  }
+
+  function bukaFormEditPasien(idx) {
+      const p = APP_DATA_PASIEN[idx]; if(!p) return;
+      document.getElementById('idWaktuPasien').value = p[0];
+      document.getElementById('nama').value = p[1];
+      document.getElementById('nik').value = p[2] ? p[2].toString().replace(/^'/, "") : "";
+      document.getElementById('bpjs').value = p[3] ? p[3].toString().replace(/^'/, "") : "";
+      document.getElementById('alamat').value = p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : (MASTER_DESA.includes(p[4]) ? p[4] : 'Luar Wilayah');
+      toggleAlamatLuar(); 
+      if(document.getElementById('alamat').value === 'Luar Wilayah') document.getElementById('desaLuar').value = p[5] || "";
+      document.getElementById('rtrw').value = p[6] ? p[6].toString().replace(/^'/, "") : "";
+      document.getElementById('statusPrb').value = (p[7] && p[7].includes('Baru')) ? 'Baru' : 'Lama';
+      toggleStatusPrb(); 
+      document.getElementById('noSrb').value = p[8] || ""; 
+      
+      let dSrb = parseDateWib(p[9]);
+      document.getElementById('tglSrb').value = dSrb ? dSrb.isoStr : "";
+      
+      document.getElementById('prb1').value = p[10] || ""; 
+      document.getElementById('prb2').value = (p[11] && p[11] !== '-') ? p[11] : ""; 
+      document.getElementById('prb3').value = (p[12] && p[12] !== '-') ? p[12] : "";
+      
+      document.getElementById('titleModalPasien').innerHTML = '<i class="ph-light ph-pencil-simple"></i> Edit Data Pasien';
+      bukaModal('modalPasien');
+  }
+
+  async function submitPasien(e) {
+      e.preventDefault(); 
+      const btn = document.getElementById('btnSubmitPasien'); 
+      setBtnLoading(btn, true);
+      const data = {
+          idWaktu: document.getElementById('idWaktuPasien').value,
+          nama: document.getElementById('nama').value, 
+          nik: document.getElementById('nik').value, 
+          bpjs: document.getElementById('bpjs').value,
+          alamat: document.getElementById('alamat').value, 
+          desaLuar: document.getElementById('desaLuar').value, 
+          rtrw: document.getElementById('rtrw').value,
+          statusPrb: document.getElementById('statusPrb').value, 
+          noSrb: document.getElementById('noSrb').value, 
+          tglSrb: document.getElementById('tglSrb').value,
+          prb1: document.getElementById('prb1').value, 
+          prb2: document.getElementById('prb2').value, 
+          prb3: document.getElementById('prb3').value,
+          user: SESSION_USER
+      };
+      const res = await callGasApi("savePasien", data);
+      if(res.success) { 
           showToast(res.message); 
-          e.target.reset(); 
+          tutupModal('modalPasien'); 
+          fetchAppData(false); 
+      } else { 
+          showToast(res.message, "error"); 
+      }
+      setBtnLoading(btn, false);
+  }
+
+  // =======================================================
+  // BAGIAN 12: FUNGSI REKAM & EDIT PEMANTAUAN KUNJUNGAN
+  // =======================================================
+  function bukaModalPantauInstan(p, noAntrian = null) {
+      document.getElementById('formPemantauan').reset();
+      document.getElementById('idWaktuPemantauan').value = "";
+      document.getElementById('idNoAntrianPemantauan').value = noAntrian || "";
+      document.getElementById('namaPasienPantau').value = p[1];
+      document.getElementById('nikPasienPantau').value = p[2] ? p[2].toString().replace(/^'/, "") : "";
+      document.getElementById('bpjsPasienPantau').value = p[3] ? p[3].toString().replace(/^'/, "") : "";
+      
+      const desa = p[4] === 'Luar Wilayah' ? p[5] : p[4];
+      document.getElementById('alamatPasienPantau').value = `${desa} RT/RW ${p[6]}`;
+      
+      let nW = parseDateWib(new Date()); 
+      document.getElementById('tglKunjunganBaru').value = nW ? nW.isoStr : "";
+      document.getElementById('jenisKunjungan').value = "Hadir Langsung";
+      document.getElementById('statusPRB').value = "Aktif";
+      
+      document.getElementById('titleModalPemantauan').innerHTML = '<i class="ph-light ph-stethoscope"></i> Rekam Pemantauan Baru';
+      toggleGulaDarah();
+      bukaModal('modalPemantauan');
+  }
+
+  function bukaFormEditPemantauan(idx) {
+      const h = APP_DATA_HISTORI[idx]; if(!h) return;
+      let rawNama = h[1] ? h[1].toString() : ""; let split = rawNama.split(" || ");
+      let p = split[1] ? patientMapNIK.get(split[1]) : patientMapName.get(split[0]);
+      
+      document.getElementById('idWaktuPemantauan').value = h[0];
+      document.getElementById('idNoAntrianPemantauan').value = "";
+      document.getElementById('namaPasienPantau').value = split[0];
+      document.getElementById('nikPasienPantau').value = split[1] || (p ? p[2].toString().replace(/^'/, "") : "");
+      document.getElementById('bpjsPasienPantau').value = split[2] || (p ? p[3].toString().replace(/^'/, "") : "");
+      document.getElementById('alamatPasienPantau').value = p ? `${p[4]==='Luar Wilayah'?p[5]:p[4]} RT/RW ${p[6]}` : "-";
+      
+      let d = parseDateWib(h[0]); 
+      document.getElementById('tglKunjunganBaru').value = d ? d.isoStr : "";
+      document.getElementById('jenisKunjungan').value = h[2] || "Hadir Langsung";
+      document.getElementById('td').value = h[3] && h[3] !== '-' ? h[3].toString().replace(/^'/, "") : "";
+      document.getElementById('jenisGula').value = h[4] === '-' ? 'Tidak Diperiksa' : (h[4] || 'Tidak Diperiksa');
+      toggleGulaDarah(); 
+      
+      document.getElementById('hasilGula').value = h[5] && h[5] !== '-' ? h[5] : ""; 
+      document.getElementById('hasilG2PP').value = h[6] && h[6] !== '-' ? h[6] : "";
+      
+      let s = h[7] || "Aktif"; let stVal = "Aktif"; 
+      if(s.includes("Berobat Lanjut")) stVal = "Berobat Lanjut"; 
+      else if(s.includes("Meninggal Dunia")) stVal = "Berhenti - Meninggal Dunia"; 
+      else if(s.includes("Pindah Faskes")) stVal = "Berhenti - Pindah Faskes"; 
+      else if(s.includes("Berhenti Berobat")) stVal = "Berhenti - Berhenti Berobat";
+      document.getElementById('statusPRB').value = stVal;
+      
+      document.getElementById('titleModalPemantauan').innerHTML = '<i class="ph-light ph-pencil-simple"></i> Edit Pemantauan';
+      bukaModal('modalPemantauan');
+  }
+
+  async function submitPemantauan(e) {
+      e.preventDefault(); 
+      const btn = document.getElementById('btnSubmitPemantauan'); 
+      setBtnLoading(btn, true);
+      const data = {
+          idWaktu: document.getElementById('idWaktuPemantauan').value,
+          noAntrian: document.getElementById('idNoAntrianPemantauan').value,
+          nama: document.getElementById('namaPasienPantau').value, 
+          nik: document.getElementById('nikPasienPantau').value, 
+          bpjs: document.getElementById('bpjsPasienPantau').value,
+          tglManual: document.getElementById('tglKunjunganBaru').value,
+          jenisKunjungan: document.getElementById('jenisKunjungan').value, 
+          td: document.getElementById('td').value, 
+          jenisGula: document.getElementById('jenisGula').value,
+          hasilGula: document.getElementById('hasilGula').value, 
+          hasilG2PP: document.getElementById('hasilG2PP').value, 
+          statusPRB: document.getElementById('statusPRB').value,
+          user: SESSION_USER
+      };
+      const res = await callGasApi("savePemantauan", data);
+      if(res.success) { 
+          showToast(res.message); 
           tutupModal('modalPemantauan'); 
           fetchAppData(false); 
-        } else {
-          showToast(res.message, "error");
-        }
-      } 
-      setBtnLoading(b, false); 
-    }
+      } else { 
+          showToast(res.message, "error"); 
+      }
+      setBtnLoading(btn, false);
+  }
 
-    // 13. LAPORAN & CETAK EXCEL/PDF
-    function toggleFilterLaporan() { 
-      let j = document.getElementById('jenisLaporanCetak').value; 
+  // =======================================================
+  // BAGIAN 13: MODAL ABSEN, MULTI-DIAGNOSA & HAPUS DATA
+  // =======================================================
+  function aksiHapusData(tipe, idx) {
+      TARGET_HAPUS_TIPE = tipe; 
+      TARGET_HAPUS_ROW = tipe === 'Pasien' ? APP_DATA_PASIEN[idx][0] : APP_DATA_HISTORI[idx][0];
+      document.getElementById('teksKonfirmasiHapus').innerHTML = `Anda akan menghapus data <b>${tipe}</b> secara permanen. Data yang dihapus tidak dapat dikembalikan.<br><br>Yakin ingin melanjutkan?`;
+      bukaModal('modalKonfirmasiHapus');
+  }
+
+  async function eksekusiHapusData() {
+      const btn = document.getElementById('btnHapusKonfirm'); 
+      setBtnLoading(btn, true);
+      const res = await callGasApi("deleteData", { type: TARGET_HAPUS_TIPE, idWaktu: TARGET_HAPUS_ROW, user: SESSION_USER });
+      if(res.success) { 
+          showToast(res.message); 
+          tutupModal('modalKonfirmasiHapus'); 
+          fetchAppData(false); 
+      } else { 
+          showToast(res.message, "error"); 
+      }
+      setBtnLoading(btn, false);
+  }
+
+  function bukaModalAbsen() {
+      document.getElementById('searchAbsenInput').value = "";
+      renderTabelAbsen(); 
+      bukaModal('modalDaftarAbsen');
+  }
+
+  function renderTabelAbsen() {
+      let input = document.getElementById('searchAbsenInput').value.toLowerCase();
+      let filtered = window.GLOBAL_DAFTAR_ABSEN.filter(p => {
+          if(!p) return false;
+          let n = p[2] ? p[2].toString().replace(/^'/, "") : "";
+          let b = p[3] ? p[3].toString().replace(/^'/, "") : "";
+          let d = p[4] === 'Luar Wilayah' ? p[5] : p[4];
+          return input === "" || `${p[1]} ${n} ${b} ${d} ${p[10]}`.toLowerCase().includes(input);
+      });
+      let html = "";
+      if (filtered.length === 0) {
+          html = '<tr><td colspan="5" style="text-align:center;">Tidak ada data pasien yang absen sesuai pencarian.</td></tr>';
+      } else {
+          filtered.forEach(p => {
+              let n = p[2] ? p[2].toString().replace(/^'/, "") : "";
+              let b = p[3] ? p[3].toString().replace(/^'/, "") : "";
+              let d = p[4] === 'Luar Wilayah' ? p[5] : p[4];
+              let idxP = APP_DATA_PASIEN.indexOf(p);
+              
+              html += `<tr>
+                <td><strong>${p[1]}</strong></td>
+                <td><span style="font-size:10px; color:var(--secondary);">NIK: ${n}<br>BPJS: ${b}</span></td>
+                <td>${d}</td>
+                <td>${getMultiDiagnosaHtml(p)}</td>
+                <td style="text-align:right;">
+                  <button class="btn-action btn-small" onclick="bukaModalPantauInstan_DariAbsen(${idxP})" style="display:inline-block; margin-right:4px; background:var(--bg); color:var(--blue); border:var(--border); box-shadow:none;"><i class="ph-light ph-stethoscope"></i> Rekam</button>
+                  <button class="btn-action btn-small" onclick="bukaKonfirmasiTidakHadir(${idxP})" style="display:inline-block; background:rgba(255,59,48,0.1); color:#ff3b30; border:1px solid rgba(255,59,48,0.2); box-shadow:none;"><i class="ph-light ph-x-circle"></i> Set Tidak Hadir</button>
+                </td>
+              </tr>`;
+          });
+      }
+      document.getElementById('tbodyDaftarAbsen').innerHTML = html;
+  }
+
+  function bukaModalPantauInstan_DariAbsen(idx) {
+      tutupModal('modalDaftarAbsen');
+      setTimeout(() => bukaModalPantauInstan(APP_DATA_PASIEN[idx]), 300);
+  }
+
+  function bukaKonfirmasiTidakHadir(idx) {
+      TARGET_TIDAK_HADIR_IDX = idx;
+      let p = APP_DATA_PASIEN[idx];
+      document.getElementById('teksKonfirmasiTidakHadir').innerHTML = `Anda akan merekam status <b>TIDAK HADIR</b> bulan ini untuk pasien:<br><b style="color:var(--text); font-size:14px; display:inline-block; margin-top:8px;">${p[1]}</b>`;
+      bukaModal('modalKonfirmasiTidakHadir');
+  }
+
+  async function eksekusiTidakHadir() {
+      if(TARGET_TIDAK_HADIR_IDX === null) return;
+      const btn = document.getElementById('btnKonfirmTidakHadir'); 
+      setBtnLoading(btn, true);
+      let p = APP_DATA_PASIEN[TARGET_TIDAK_HADIR_IDX];
+      let nW = parseDateWib(new Date());
+      
+      const data = { 
+          idWaktu: "", noAntrian: "", nama: p[1], 
+          nik: p[2] ? p[2].toString().replace(/^'/, "") : "", 
+          bpjs: p[3] ? p[3].toString().replace(/^'/, "") : "", 
+          tglManual: nW ? nW.isoStr : "", 
+          jenisKunjungan: "Tidak Hadir", td: "-", jenisGula: "Tidak Diperiksa", 
+          hasilGula: "", hasilG2PP: "", statusPRB: "Aktif", user: SESSION_USER 
+      };
+      const res = await callGasApi("savePemantauan", data);
+      if(res.success) { 
+          showToast("Status Tidak Hadir berhasil direkam."); 
+          tutupModal('modalKonfirmasiTidakHadir'); 
+          tutupModal('modalDaftarAbsen'); 
+          fetchAppData(false); 
+      } else { 
+          showToast(res.message, "error"); 
+      }
+      setBtnLoading(btn, false);
+  }
+
+  function bukaModalMultiDiag() {
+      let html = "";
+      if(!window.GLOBAL_MULTI_DIAG || window.GLOBAL_MULTI_DIAG.length === 0) {
+          html = '<tr><td colspan="4" style="text-align:center;">Tidak ada pasien komplikasi.</td></tr>';
+      } else {
+          window.GLOBAL_MULTI_DIAG.forEach(p => {
+              let n = p[2] ? p[2].toString().replace(/^'/, "") : "";
+              let b = p[3] ? p[3].toString().replace(/^'/, "") : "";
+              let d = p[4] === 'Luar Wilayah' ? p[5] : p[4];
+              html += `<tr><td><strong>${p[1]}</strong></td><td><span style="font-size:10px; color:var(--secondary);">NIK: ${n}<br>BPJS: ${b}</span></td><td>${d}</td><td>${getMultiDiagnosaHtml(p)}</td></tr>`;
+          });
+      }
+      document.getElementById('tbodyMultiDiag').innerHTML = html;
+      bukaModal('modalMultiDiag');
+  }
+
+  // =======================================================
+  // BAGIAN 14: CEK DATA GANDA & KONTROL ADMIN 
+  // =======================================================
+  function cekDataGandaPasien() {
+      let nMap = new Map(); let dupes = [];
+      APP_DATA_PASIEN.forEach(p => { 
+          if(!p) return; 
+          let nik = p[2] ? p[2].toString().replace(/^'/, "").trim() : ""; 
+          if(nik && nik !== "" && nik !== "-") { 
+              if(nMap.has(nik)) { dupes.push({ n1: p, n2: nMap.get(nik) }); } 
+              else { nMap.set(nik, p); } 
+          } 
+      });
+      document.getElementById('titleModalCekGanda').innerHTML = '<i class="ph-light ph-copy-simple"></i> Deteksi Pasien Ganda (NIK)';
+      document.getElementById('descModalCekGanda').innerText = `Ditemukan ${dupes.length} indikasi data pasien dengan NIK sama.`;
+      document.getElementById('theadCekGanda').innerHTML = '<tr><th>Nama (Data 1)</th><th>Nama (Data 2)</th><th>NIK Duplikat</th></tr>';
+      
+      let html = "";
+      if(dupes.length === 0) {
+          html = '<tr><td colspan="3" style="text-align:center;">Tidak ada duplikasi NIK terdeteksi.</td></tr>';
+      } else {
+          dupes.forEach(d => { 
+              html += `<tr><td>${d.n1[1]} <br><span style="font-size:9px; color:var(--secondary);">${d.n1[0]}</span></td><td>${d.n2[1]} <br><span style="font-size:9px; color:var(--secondary);">${d.n2[0]}</span></td><td style="font-weight:700; color:#ff3b30;">${d.n1[2].toString().replace(/^'/, "")}</td></tr>`; 
+          });
+      }
+      document.getElementById('tbodyCekGanda').innerHTML = html; 
+      bukaModal('modalCekGanda');
+  }
+
+  function cekDataGandaHistori() {
+      let visitMap = new Map(); let dupes = []; 
+      let selM = parseInt(document.getElementById('dashFilterBulan').value); 
+      let selY = parseInt(document.getElementById('dashFilterTahun').value);
+      
+      APP_DATA_HISTORI.forEach(h => { 
+          if(!h || !h[0]) return; 
+          let d = parseDateWib(h[0]); 
+          if(d && d.year === selY && d.month === selM) { 
+              let rawNama = h[1] ? h[1].toString() : ""; 
+              let nik = rawNama.includes(" || ") ? rawNama.split(" || ")[1] : rawNama; 
+              if(visitMap.has(nik)) dupes.push({ n1: h, n2: visitMap.get(nik) }); 
+              else visitMap.set(nik, h); 
+          } 
+      });
+      document.getElementById('titleModalCekGanda').innerHTML = '<i class="ph-light ph-copy-simple"></i> Deteksi Kunjungan Ganda Bulan Ini';
+      document.getElementById('descModalCekGanda').innerText = `Ditemukan ${dupes.length} indikasi pasien melakukan pemantauan lebih dari 1x di bulan terpilih.`;
+      document.getElementById('theadCekGanda').innerHTML = '<tr><th>Tgl Kunjungan 1</th><th>Tgl Kunjungan 2</th><th>Identitas Pasien</th></tr>';
+      
+      let html = "";
+      if(dupes.length === 0) {
+          html = '<tr><td colspan="3" style="text-align:center;">Aman, tidak ada kunjungan ganda di bulan ini.</td></tr>';
+      } else {
+          dupes.forEach(d => { 
+              let nama1 = d.n1[1].toString().split(" || ")[0]; 
+              let nama2 = d.n2[1].toString().split(" || ")[0]; 
+              html += `<tr><td>${formatTanggalIndo(d.n1[0])}</td><td>${formatTanggalIndo(d.n2[0])}</td><td style="font-weight:700; color:#ff3b30;">${nama1} / ${nama2}</td></tr>`; 
+          });
+      }
+      document.getElementById('tbodyCekGanda').innerHTML = html; 
+      bukaModal('modalCekGanda');
+  }
+
+  async function submitCatatanAdmin(e) {
+      e.preventDefault(); 
+      const btn = document.getElementById('btnSaveCatatan'); 
+      setBtnLoading(btn, true);
+      const text = document.getElementById('inputCatatanTerkini').value;
+      const res = await callGasApi("saveInfoTerkini", { info: text });
+      if(res.success) { 
+          showToast("Catatan diperbarui!"); 
+          document.getElementById('displayCatatanTerkini').innerText = text; 
+          tutupModal('modalCatatan'); 
+      } else { 
+          showToast(res.message, "error"); 
+      }
+      setBtnLoading(btn, false);
+  }
+
+  async function submitPassword(e) {
+      e.preventDefault(); 
+      const btn = document.getElementById('btnSubmitPwd'); 
+      setBtnLoading(btn, true);
+      const o = document.getElementById('oldPwd').value; 
+      const n = document.getElementById('newPwd').value; 
+      const c = document.getElementById('confirmPwd').value;
+      
+      if(n !== c) { 
+          showToast("Konfirmasi password baru tidak cocok!", "error"); 
+          setBtnLoading(btn, false); return; 
+      }
+      const res = await callGasApi("changePassword", { username: SESSION_USERNAME, oldPwd: o, newPwd: n });
+      if(res.success) { 
+          showToast(res.message); 
+          tutupModal('modalPassword'); 
+          document.getElementById('oldPwd').value=''; document.getElementById('newPwd').value=''; document.getElementById('confirmPwd').value=''; 
+      } else { 
+          showToast(res.message, "error"); 
+      }
+      setBtnLoading(btn, false);
+  }
+
+  async function submitTambahUser(e) {
+      e.preventDefault(); 
+      const btn = document.getElementById('btnSubmitUser'); 
+      setBtnLoading(btn, true);
+      const data = { 
+          u: document.getElementById('newUsername').value, 
+          p: document.getElementById('newUserPwd').value, 
+          n: document.getElementById('newUserNama').value, 
+          r: document.getElementById('newUserRole').value, 
+          executorRole: SESSION_ROLE 
+      };
+      const res = await callGasApi("tambahUserAdmin", data);
+      if(res.success) { 
+          showToast(res.message); 
+          tutupModal('modalTambahUser'); 
+          document.getElementById('newUsername').value=''; document.getElementById('newUserPwd').value=''; document.getElementById('newUserNama').value=''; 
+      } else { 
+          showToast(res.message, "error"); 
+      }
+      setBtnLoading(btn, false);
+  }
+
+  function bukaModalJadwal() {
+      renderTabelJadwal();
+      let nW = parseDateWib(new Date()); 
+      document.getElementById('inputJadwalTanggal').value = nW ? nW.isoStr : "";
+      bukaModal('modalJadwal');
+  }
+
+  function renderTabelJadwal() {
+      let html = "";
+      let sortedJadwal = [...JADWAL_DB].sort((a,b) => b[0].localeCompare(a[0]));
+      
+      if(sortedJadwal.length === 0) {
+          html = '<tr><td colspan="3" style="text-align:center;">Belum ada jadwal tersimpan.</td></tr>';
+      } else {
+          let todayIso = parseDateWib(new Date()).isoStr;
+          sortedJadwal.forEach(j => {
+              let isToday = j[0] === todayIso;
+              let bg = isToday ? "background:rgba(52,199,89,0.1);" : "";
+              let st = isToday ? '<span style="color:#34c759; font-weight:700;">Hari Ini</span>' : '<span style="color:var(--secondary);">Terjadwal</span>';
+              html += `<tr style="${bg}"><td><strong>${formatTanggalIndo(j[0])}</strong></td><td>${j[1]} - ${j[2]} WIB</td><td style="text-align:right;">${st}</td></tr>`;
+          });
+      }
+      document.getElementById('tbodyDaftarJadwal').innerHTML = html;
+  }
+
+  async function eksekusiSimpanJadwalDB(e) {
+      e.preventDefault(); 
+      const btn = document.getElementById('btnSimpanJadwal'); 
+      setBtnLoading(btn, true);
+      const t = document.getElementById('inputJadwalTanggal').value; 
+      const b = document.getElementById('inputJadwalBuka').value; 
+      const tp = document.getElementById('inputJadwalTutup').value;
+      
+      const res = await callGasApi("simpanJadwalServer", { tanggal: t, buka: b, tutup: tp, user: SESSION_USER });
+      if(res.success) { 
+          showToast("Jadwal tersimpan di server!"); 
+          JADWAL_DB = res.data; 
+          renderTabelJadwal(); 
+      } else { 
+          showToast(res.message, "error"); 
+      }
+      setBtnLoading(btn, false);
+  }
+
+  // =======================================================
+  // BAGIAN 15: CETAK LAPORAN (PDF & EXCEL)
+  // =======================================================
+  function toggleFilterLaporan() {
+      const jl = document.getElementById('jenisLaporanCetak').value;
+      
       document.getElementById('divLaporanDesa').classList.add('hidden'); 
       document.getElementById('divLaporanDiag').classList.add('hidden'); 
       document.getElementById('divLaporanTanggal').classList.add('hidden'); 
       document.getElementById('divLaporanBulan').classList.add('hidden'); 
-      document.getElementById('divLaporanTahun').classList.add('hidden'); 
-      if (j === 'peserta_desa' || j === 'detail_desa_diagnosa') { document.getElementById('divLaporanDesa').classList.remove('hidden'); }
-      if (j === 'peserta_diagnosa' || j === 'detail_desa_diagnosa') { document.getElementById('divLaporanDiag').classList.remove('hidden'); }
-      if (j === 'laporan_tanggal') { document.getElementById('divLaporanTanggal').classList.remove('hidden'); }
-      if (j === 'laporan_bulan') { document.getElementById('divLaporanBulan').classList.remove('hidden'); document.getElementById('divLaporanTahun').classList.remove('hidden'); }
-      if (j === 'laporan_tahun') { document.getElementById('divLaporanTahun').classList.remove('hidden'); }
-      buildLaporanCetak(); 
-    }
-
-    function buildLaporanCetak() {
-      let j = document.getElementById('jenisLaporanCetak').value;
-      let fDesa = document.getElementById('laporanFilterDesa').value;
-      let fDiag = document.getElementById('laporanFilterDiag').value;
-      let fTanggal = document.getElementById('laporanFilterTanggal').value;
-      let fBulan = parseInt(document.getElementById('laporanFilterBulan').value);
-      let fTahun = parseInt(document.getElementById('laporanFilterTahun').value);
-
-      let theadHtml = ''; let dataRender = [];
-      let docTitle = ""; let docSubtitle = "";
-
-      if (j.startsWith('peserta') || j === 'seluruh_peserta' || j === 'detail_desa_diagnosa') {
-         theadHtml = '<tr><th style="border:1px solid #000; padding:6px;">No</th><th style="border:1px solid #000; padding:6px;">Nama Pasien</th><th style="border:1px solid #000; padding:6px;">NIK</th><th style="border:1px solid #000; padding:6px;">BPJS</th><th style="border:1px solid #000; padding:6px;">Desa</th><th style="border:1px solid #000; padding:6px;">RT/RW</th><th style="border:1px solid #000; padding:6px;">Diagnosa Utama</th><th style="border:1px solid #000; padding:6px;">Status</th></tr>';
-         docTitle = "DATA PESERTA RUJUK BALIK (PRB)";
-
-         dataRender = APP_DATA_PASIEN.filter(p => {
-            if(!p) return false;
-            let matchDesa = (fDesa === 'all' || p[4] === fDesa);
-            let matchDiag = (fDiag === 'all' || p[10] === fDiag);
-            if (j === 'peserta_desa') return matchDesa;
-            if (j === 'peserta_diagnosa') return matchDiag;
-            if (j === 'detail_desa_diagnosa') return matchDesa && matchDiag;
-            return true;
-         });
-
-         if (j === 'seluruh_peserta') docSubtitle = "Seluruh Desa & Seluruh Diagnosa";
-         else if (j === 'peserta_desa') docSubtitle = `Desa: ${fDesa}`;
-         else if (j === 'peserta_diagnosa') docSubtitle = `Diagnosa: ${fDiag}`;
-         else if (j === 'detail_desa_diagnosa') docSubtitle = `Desa: ${fDesa} | Diagnosa: ${fDiag}`;
-
-      } else if (j.startsWith('laporan')) {
-         theadHtml = '<tr><th style="border:1px solid #000; padding:6px;">No</th><th style="border:1px solid #000; padding:6px;">Tanggal</th><th style="border:1px solid #000; padding:6px;">Nama Pasien</th><th style="border:1px solid #000; padding:6px;">Desa</th><th style="border:1px solid #000; padding:6px;">Metode</th><th style="border:1px solid #000; padding:6px;">TD</th><th style="border:1px solid #000; padding:6px;">Gula Darah</th><th style="border:1px solid #000; padding:6px;">Tindak Lanjut</th></tr>';
-         docTitle = "LAPORAN KUNJUNGAN PEMANTAUAN PRB";
-
-         dataRender = APP_DATA_HISTORI.filter(h => {
-            if(!h || !h[0]) return false;
-            let d = parseDateWib(h[0]);
-            if(!d) return false;
-            if (j === 'laporan_tanggal') return d.isoStr === fTanggal;
-            if (j === 'laporan_bulan') return d.month === fBulan && d.year === fTahun;
-            if (j === 'laporan_tahun') return d.year === fTahun;
-            return true;
-         });
-
-         if (j === 'laporan_tanggal') docSubtitle = `Tanggal Kunjungan: ${formatTanggalIndo(fTanggal)}`;
-         else if (j === 'laporan_bulan') docSubtitle = `Periode Bulan: ${NAMA_BULAN[fBulan]} ${fTahun}`;
-         else if (j === 'laporan_tahun') docSubtitle = `Periode Tahun: ${fTahun}`;
-      }
-
-      document.getElementById('printDocTitle').innerText = docTitle;
-      document.getElementById('printDocSubtitle').innerText = docSubtitle;
-      document.getElementById('theadPrintPreview').innerHTML = theadHtml;
+      document.getElementById('divLaporanTahun').classList.add('hidden');
       
-      let curDate = parseDateWib(new Date());
-      document.getElementById('tglCetakStamp').innerText = `${curDate.day} ${NAMA_BULAN[curDate.month]} ${curDate.year} ${curDate.hh.toString().padStart(2,'0')}:${curDate.mm.toString().padStart(2,'0')}`;
-      document.getElementById('sigDate').innerText = `Cilongok, ${curDate.day} ${NAMA_BULAN[curDate.month]} ${curDate.year}`;
+      if(jl === 'peserta_desa') { document.getElementById('divLaporanDesa').classList.remove('hidden'); }
+      else if(jl === 'peserta_diagnosa') { document.getElementById('divLaporanDiag').classList.remove('hidden'); }
+      else if(jl === 'detail_desa_diagnosa') { document.getElementById('divLaporanDesa').classList.remove('hidden'); document.getElementById('divLaporanDiag').classList.remove('hidden'); }
+      else if(jl === 'laporan_tanggal') { document.getElementById('divLaporanTanggal').classList.remove('hidden'); }
+      else if(jl === 'laporan_bulan') { document.getElementById('divLaporanBulan').classList.remove('hidden'); document.getElementById('divLaporanTahun').classList.remove('hidden'); }
+      else if(jl === 'laporan_tahun') { document.getElementById('divLaporanTahun').classList.remove('hidden'); }
+      
+      buildLaporanCetak();
+  }
 
-      filteredDataLaporan = dataRender;
-      curPageLaporan = 1;
+  function buildLaporanCetak() {
+      const jl = document.getElementById('jenisLaporanCetak').value; 
+      let html = ""; 
+      let thHtml = "";
+      let docTitle = "", docSubtitle = "";
+      
+      if(jl.includes('peserta')) {
+          thHtml = '<tr><th style="padding:8px; border:1px solid #000; text-align:center;">No</th><th style="padding:8px; border:1px solid #000;">Tgl Daftar</th><th style="padding:8px; border:1px solid #000;">Nama & Identitas</th><th style="padding:8px; border:1px solid #000;">Desa & RT/RW</th><th style="padding:8px; border:1px solid #000;">Status Kepesertaan</th><th style="padding:8px; border:1px solid #000;">Diagnosa PRB</th></tr>';
+          let dFilter = APP_DATA_PASIEN;
+          
+          if(jl === 'peserta_desa' || jl === 'detail_desa_diagnosa') { 
+              let fd = document.getElementById('laporanFilterDesa').value; 
+              if(fd !== 'all') dFilter = dFilter.filter(p => (p[4] === 'Luar Wilayah' ? 'Luar Wilayah' : p[4]) === fd); 
+          }
+          if(jl === 'peserta_diagnosa' || jl === 'detail_desa_diagnosa') { 
+              let fDi = document.getElementById('laporanFilterDiag').value; 
+              if(fDi !== 'all') dFilter = dFilter.filter(p => (p[10] && p[10].includes(fDi)) || (p[11] && p[11].includes(fDi)) || (p[12] && p[12].includes(fDi))); 
+          }
+          filteredDataLaporan = dFilter.sort((a,b) => a[1].toString().localeCompare(b[1].toString()));
+          docTitle = "MASTER DATA PESERTA PRB"; 
+          docSubtitle = `Filter: ${jl.replace(/_/g, ' ').toUpperCase()}`;
+      } else {
+          thHtml = '<tr><th style="padding:8px; border:1px solid #000; text-align:center;">No</th><th style="padding:8px; border:1px solid #000;">Tgl Kunjungan</th><th style="padding:8px; border:1px solid #000;">Nama & Identitas</th><th style="padding:8px; border:1px solid #000;">Desa</th><th style="padding:8px; border:1px solid #000;">Metode</th><th style="padding:8px; border:1px solid #000;">TD / Gula</th><th style="padding:8px; border:1px solid #000;">Diagnosa</th><th style="padding:8px; border:1px solid #000;">Status PRB</th></tr>';
+          let hFilter = APP_DATA_HISTORI;
+          
+          if(jl === 'laporan_tanggal') { 
+              let ft = document.getElementById('laporanFilterTanggal').value; 
+              if(ft) hFilter = hFilter.filter(h => { let d = parseDateWib(h[0]); return d && d.isoStr === ft; }); 
+              docSubtitle = `Periode Tanggal: ${ft}`; 
+          } else if(jl === 'laporan_bulan') { 
+              let fb = parseInt(document.getElementById('laporanFilterBulan').value); 
+              let fy = parseInt(document.getElementById('laporanFilterTahun').value); 
+              hFilter = hFilter.filter(h => { let d = parseDateWib(h[0]); return d && d.month === fb && d.year === fy; }); 
+              docSubtitle = `Periode: Bulan ${NAMA_BULAN[fb]} ${fy}`; 
+          } else if(jl === 'laporan_tahun') { 
+              let fy = parseInt(document.getElementById('laporanFilterTahun').value); 
+              hFilter = hFilter.filter(h => { let d = parseDateWib(h[0]); return d && d.year === fy; }); 
+              docSubtitle = `Periode: Tahun ${fy}`; 
+          }
+          filteredDataLaporan = hFilter.sort((a,b) => (parseDateWib(a[0]) ? parseDateWib(a[0]).timestamp : 0) - (parseDateWib(b[0]) ? parseDateWib(b[0]).timestamp : 0));
+          docTitle = "LAPORAN KUNJUNGAN PEMANTAUAN PRB";
+      }
+      
+      document.getElementById('theadPrintPreview').innerHTML = thHtml;
+      document.getElementById('printDocTitle').innerText = docTitle; 
+      document.getElementById('printDocSubtitle').innerText = docSubtitle;
+      
+      let cD = new Date();
+      document.getElementById('tglCetakStamp').innerText = cD.toLocaleDateString('id-ID', { year:'numeric', month:'long', day:'numeric' }) + " " + cD.toLocaleTimeString('id-ID', { hour:'2-digit', minute:'2-digit'}) + " WIB";
+      document.getElementById('sigDate').innerText = `Cilongok, ${cD.toLocaleDateString('id-ID', { year:'numeric', month:'long', day:'numeric' })}`;
+      
+      curPageLaporan = 1; 
       renderTabelLaporan();
-    }
+  }
 
-    function renderTabelLaporan() {
-       let start = (curPageLaporan - 1) * PER_PAGE_LAPORAN;
-       let pagedData = filteredDataLaporan.slice(start, start + PER_PAGE_LAPORAN);
-       let tbodyHtml = '';
-       let j = document.getElementById('jenisLaporanCetak').value;
-
-       if (pagedData.length === 0) {
-          tbodyHtml = `<tr><td colspan="8" style="text-align:center; padding:10px; border:1px solid #000;">Tidak ada data pada periode/filter ini.</td></tr>`;
-       } else {
-          pagedData.forEach((row, i) => {
-             let num = start + i + 1;
-             if (j.startsWith('peserta') || j === 'seluruh_peserta' || j === 'detail_desa_diagnosa') {
-                tbodyHtml += `<tr>
-                  <td style="border:1px solid #000; padding:6px; text-align:center;">${num}</td>
-                  <td style="border:1px solid #000; padding:6px;">${row[1]}</td>
-                  <td style="border:1px solid #000; padding:6px;">${row[2] ? row[2].toString().replace(/^'/, "") : "-"}</td>
-                  <td style="border:1px solid #000; padding:6px;">${row[3] ? row[3].toString().replace(/^'/, "") : "-"}</td>
-                  <td style="border:1px solid #000; padding:6px;">${row[4]}</td>
-                  <td style="border:1px solid #000; padding:6px;">${row[6] ? row[6].toString().replace(/^'/, "") : "-"}</td>
-                  <td style="border:1px solid #000; padding:6px;">${row[10] || "-"}</td>
-                  <td style="border:1px solid #000; padding:6px;">${row[7]}</td>
-                </tr>`;
-             } else {
-                let rawNama = row[1] ? row[1].toString() : ""; 
-                let splitData = rawNama.split(" || "); 
-                let namaPasien = splitData[0];
-                let p = patientMapName.get(namaPasien) || patientMapNIK.get(splitData[1]);
-                let desa = p ? p[4] : "-";
-                let gula = row[4] === 'Tidak Diperiksa' ? '-' : `${row[4]}: ${row[5]}`;
-                
-                tbodyHtml += `<tr>
-                  <td style="border:1px solid #000; padding:6px; text-align:center;">${num}</td>
-                  <td style="border:1px solid #000; padding:6px;">${formatTanggalIndo(row[0])}</td>
-                  <td style="border:1px solid #000; padding:6px;">${namaPasien}</td>
-                  <td style="border:1px solid #000; padding:6px;">${desa}</td>
-                  <td style="border:1px solid #000; padding:6px;">${row[2]}</td>
-                  <td style="border:1px solid #000; padding:6px;">${row[3] ? row[3].toString().replace(/^'/, "") : "-"}</td>
-                  <td style="border:1px solid #000; padding:6px;">${gula}</td>
-                  <td style="border:1px solid #000; padding:6px;">${row[7]}</td>
-                </tr>`;
-             }
+  function renderTabelLaporan() {
+      const jl = document.getElementById('jenisLaporanCetak').value; let html = "";
+      let start = (curPageLaporan - 1) * PER_PAGE_LAPORAN; 
+      let paged = filteredDataLaporan.slice(start, start + PER_PAGE_LAPORAN);
+      
+      if(paged.length === 0) {
+          html = `<tr><td colspan="8" style="text-align:center; padding:15px; border:1px solid #000;">Tidak ada data pada periode/filter ini.</td></tr>`;
+      } else {
+          paged.forEach((item, index) => {
+              let num = start + index + 1;
+              if(jl.includes('peserta')) {
+                  let p = item; 
+                  let nik = p[2] ? p[2].toString().replace(/^'/, "") : "-"; 
+                  let bpjs = p[3] ? p[3].toString().replace(/^'/, "") : "-";
+                  let d = p[4] === 'Luar Wilayah' ? p[5] : p[4]; 
+                  let rt = p[6] ? p[6].toString().replace(/^'/, "") : "-";
+                  html += `<tr><td style="padding:6px; border:1px solid #000; text-align:center;">${num}</td><td style="padding:6px; border:1px solid #000;">${formatTanggalIndo(p[0])}</td><td style="padding:6px; border:1px solid #000;"><strong>${p[1]}</strong><br>NIK: ${nik}<br>BPJS: ${bpjs}</td><td style="padding:6px; border:1px solid #000;">${d}<br>RT/RW ${rt}</td><td style="padding:6px; border:1px solid #000;">${p[7]}</td><td style="padding:6px; border:1px solid #000;">${getMultiDiagnosaHtml(p)}</td></tr>`;
+              } else {
+                  let h = item; 
+                  let rawNama = h[1] ? h[1].toString() : ""; let split = rawNama.split(" || "); 
+                  let p = split[1] ? patientMapNIK.get(split[1]) : patientMapName.get(split[0]);
+                  let desa = p ? (p[4] === 'Luar Wilayah' ? p[5] : p[4]) : "-";
+                  let nikbpjs = split[1] ? `NIK: ${split[1]}<br>BPJS: ${split[2]||'-'}` : (p ? `NIK: ${p[2]?p[2].toString().replace(/^'/, ""):"-"}<br>BPJS: ${p[3]?p[3].toString().replace(/^'/, ""):"-"}` : "-");
+                  let diagHtml = p ? getMultiDiagnosaHtml(p) : "-";
+                  html += `<tr><td style="padding:6px; border:1px solid #000; text-align:center;">${num}</td><td style="padding:6px; border:1px solid #000;">${formatTanggalIndo(h[0])}</td><td style="padding:6px; border:1px solid #000;"><strong>${split[0]}</strong><br>${nikbpjs}</td><td style="padding:6px; border:1px solid #000;">${desa}</td><td style="padding:6px; border:1px solid #000;">${h[2]}</td><td style="padding:6px; border:1px solid #000;">TD: ${h[3]||'-'}<br>Gula: ${h[4]==='-'?'Tidak':h[5]}</td><td style="padding:6px; border:1px solid #000;">${diagHtml}</td><td style="padding:6px; border:1px solid #000;">${h[7]}</td></tr>`;
+              }
           });
-       }
-       
-       document.getElementById('tbodyPrintPreview').innerHTML = tbodyHtml;
-       let totalPages = Math.ceil(filteredDataLaporan.length / PER_PAGE_LAPORAN) || 1;
-       document.getElementById('infoHalamanLaporan').innerText = `Halaman ${curPageLaporan} dari ${totalPages}`;
-       document.getElementById('btnPrevLaporan').disabled = (curPageLaporan === 1);
-       document.getElementById('btnNextLaporan').disabled = (curPageLaporan === totalPages);
-    }
+      }
+      
+      document.getElementById('tbodyPrintPreview').innerHTML = html;
+      let totalP = Math.ceil(filteredDataLaporan.length / PER_PAGE_LAPORAN) || 1;
+      document.getElementById('infoHalamanLaporan').innerText = `Halaman ${curPageLaporan} dari ${totalP}`;
+      document.getElementById('btnPrevLaporan').disabled = (curPageLaporan === 1);
+      document.getElementById('btnNextLaporan').disabled = (curPageLaporan === totalP);
+  }
 
-    function changePageLaporan(dir) {
-       let totalPages = Math.ceil(filteredDataLaporan.length / PER_PAGE_LAPORAN) || 1;
-       if(dir === 1 && curPageLaporan < totalPages) { curPageLaporan++; renderTabelLaporan(); }
-       else if(dir === -1 && curPageLaporan > 1) { curPageLaporan--; renderTabelLaporan(); }
-    }
+  function changePageLaporan(dir) { 
+      let totalP = Math.ceil(filteredDataLaporan.length / PER_PAGE_LAPORAN) || 1; 
+      if(dir === 1 && curPageLaporan < totalP) { 
+          curPageLaporan++; 
+          renderTabelLaporan(); 
+      } else if(dir === -1 && curPageLaporan > 1) { 
+          curPageLaporan--; 
+          renderTabelLaporan(); 
+      } 
+  }
 
-    function cetakPDF() {
-        let oldPage = curPageLaporan;
-        let oldPerPage = PER_PAGE_LAPORAN;
-        
-        // Render semua data ke DOM tabel sebelum mencetak
-        curPageLaporan = 1;
-        PER_PAGE_LAPORAN = 999999;
-        renderTabelLaporan();
+  function exportExcel() {
+      if(filteredDataLaporan.length === 0) { 
+          showToast("Tidak ada data untuk diexport!", "error"); return; 
+      }
+      let fullCsv = [];
+      const jl = document.getElementById('jenisLaporanCetak').value;
+      
+      if(jl.includes('peserta')) {
+          fullCsv.push(["No", "Tgl Daftar", "Nama Pasien", "NIK", "No BPJS", "Desa", "RT/RW", "Status Kepesertaan", "Diagnosa 1", "Diagnosa 2", "Diagnosa 3"].join(","));
+          filteredDataLaporan.forEach((p, idx) => {
+              let n = p[2] ? p[2].toString().replace(/^'/, "") : ""; 
+              let b = p[3] ? p[3].toString().replace(/^'/, "") : ""; 
+              let r = p[6] ? p[6].toString().replace(/^'/, "") : "";
+              fullCsv.push([idx+1, p[0], '"'+p[1]+'"', "'"+n, "'"+b, p[4]==='Luar Wilayah'?p[5]:p[4], "'"+r, p[7], p[10]||'-', p[11]||'-', p[12]||'-'].join(","));
+          });
+      } else {
+          fullCsv.push(["No", "Tgl Kunjungan", "Nama Pasien", "NIK", "No BPJS", "Desa", "Metode", "Tensi Darah", "Jenis Gula", "Hasil Gula", "G2PP", "Status PRB"].join(","));
+          filteredDataLaporan.forEach((h, idx) => {
+              let rawNama = h[1] ? h[1].toString() : ""; 
+              let split = rawNama.split(" || "); 
+              let p = split[1] ? patientMapNIK.get(split[1]) : patientMapName.get(split[0]);
+              let nik = split[1] || (p ? (p[2]?p[2].toString().replace(/^'/, ""):"-") : "-");
+              let bpjs = split[2] || (p ? (p[3]?p[3].toString().replace(/^'/, ""):"-") : "-");
+              let desa = p ? (p[4] === 'Luar Wilayah' ? p[5] : p[4]) : "-";
+              fullCsv.push([idx+1, h[0], '"'+split[0]+'"', "'"+nik, "'"+bpjs, desa, h[2], "'"+(h[3]||'-'), h[4]||'-', h[5]||'-', h[6]||'-', h[7]].join(","));
+          });
+      }
+      let csvFile = new Blob([fullCsv.join("\n")], { type: "text/csv" });
+      let downloadLink = document.createElement("a"); 
+      downloadLink.download = `Export_PRB_${new Date().getTime()}.csv`; 
+      downloadLink.href = window.URL.createObjectURL(csvFile);
+      downloadLink.style.display = "none"; 
+      document.body.appendChild(downloadLink); 
+      downloadLink.click(); 
+      document.body.removeChild(downloadLink);
+  }
 
-        let printContents = document.getElementById('printArea').innerHTML;
-        let iframe = document.createElement('iframe');
-        iframe.style.position = 'absolute';
-        iframe.style.top = '-9999px';
-        document.body.appendChild(iframe);
-        let doc = iframe.contentWindow.document;
-        doc.open();
-        doc.write(`<html><head><title>Cetak Laporan PRB</title>
-            <style>
-              @page { size: A4; margin: 15mm; }
-              body { font-family: Arial, sans-serif; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-              table { width: 100%; border-collapse: collapse; font-size: 10px; }
-              th, td { border: 1px solid #000; padding: 6px; }
-              th { background-color: #f2f2f2 !important; }
-            </style>
-            </head><body>${printContents}</body></html>`);
-        doc.close();
-        
-        setTimeout(() => { 
-            iframe.contentWindow.focus(); 
-            iframe.contentWindow.print(); 
-            document.body.removeChild(iframe);
+  function cetakPDF() {
+      if (filteredDataLaporan.length === 0) { 
+          showToast("Tidak ada data untuk dicetak!", "error"); return; 
+      }
+      let oldPerPage = PER_PAGE_LAPORAN;
+      PER_PAGE_LAPORAN = 999999; 
+      curPageLaporan = 1;
+      renderTabelLaporan(); 
 
-            PER_PAGE_LAPORAN = oldPerPage;
-            curPageLaporan = oldPage;
-            renderTabelLaporan();
-        }, 500);
-    }
+      setTimeout(() => {
+          const printContents = document.getElementById('printArea').innerHTML;
+          let iframe = document.getElementById('printLaporanFrame');
+          if (!iframe) {
+              iframe = document.createElement('iframe');
+              iframe.id = 'printLaporanFrame'; 
+              iframe.style.position = 'absolute'; 
+              iframe.style.top = '-9999px';
+              document.body.appendChild(iframe);
+          }
+          const doc = iframe.contentWindow.document;
+          doc.open();
+          doc.write(`<html><head><title>Cetak Laporan PRB</title><style>@page { size: landscape; margin: 10mm; } body { font-family: sans-serif; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; margin:0; padding:10px; } table { width: 100%; border-collapse: collapse; font-size: 10px; } th, td { border: 1px solid #000; padding: 6px; } th { background-color: #f2f2f2 !important; font-weight:bold; text-align:center; }</style></head><body onload="setTimeout(function(){ window.print(); }, 500);">${printContents}</body></html>`);
+          doc.close();
 
-    function exportExcel() {
-        let j = document.getElementById('jenisLaporanCetak').value;
-        let csvContent = "data:text/csv;charset=utf-8,";
-        
-        if (j.startsWith('peserta') || j === 'seluruh_peserta' || j === 'detail_desa_diagnosa') {
-            csvContent += "No,Nama Pasien,NIK,BPJS,Desa,RT/RW,Diagnosa Utama,Status\n";
-            filteredDataLaporan.forEach((row, i) => {
-                let r = [i+1, row[1], `"${row[2] ? row[2].toString().replace(/^'/, "") : ""}"`, `"${row[3] ? row[3].toString().replace(/^'/, "") : ""}"`, row[4], row[6] ? row[6].toString().replace(/^'/, "") : "", row[10], row[7]];
-                csvContent += r.join(",") + "\n";
-            });
-        } else {
-            csvContent += "No,Tanggal,Nama Pasien,Desa,Metode,TD,Gula Darah,Tindak Lanjut\n";
-            filteredDataLaporan.forEach((row, i) => {
-                let rawNama = row[1] ? row[1].toString() : ""; 
-                let splitData = rawNama.split(" || "); 
-                let namaPasien = splitData[0];
-                let p = patientMapName.get(namaPasien);
-                let desa = p ? p[4] : "-";
-                let gula = row[4] === 'Tidak Diperiksa' ? '-' : `${row[4]}: ${row[5]}`;
-                
-                let r = [i+1, formatTanggalIndo(row[0]), namaPasien, desa, row[2], row[3] ? row[3].toString().replace(/^'/, "") : "-", gula, row[7]];
-                csvContent += r.join(",") + "\n";
-            });
-        }
+          setTimeout(() => {
+              PER_PAGE_LAPORAN = oldPerPage;
+              renderTabelLaporan();
+          }, 1000);
+      }, 100);
+  }
 
-        let encodedUri = encodeURI(csvContent);
-        let link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "Laporan_PRB_Cilongok1.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
+  // =======================================================
+  // INTERVAL MASTER CLOCK (JAM SISTEM WEB)
+  // =======================================================
+  setInterval(() => {
+      let now = new Date();
+      document.getElementById('currentDate').innerText = formatTanggalIndo(now.toISOString());
+      document.getElementById('currentTime').innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  }, 1000);
 
-    function cekDataGandaPasien() {
-        document.getElementById('titleModalCekGanda').innerHTML = '<i class="ph-light ph-copy-simple"></i> Deteksi Pasien Ganda';
-        document.getElementById('descModalCekGanda').innerText = 'Sistem memindai NIK atau Nama yang memiliki lebih dari satu entri.';
-        let mapGanda = {}; let hasilGanda = [];
-        
-        APP_DATA_PASIEN.forEach((p, idx) => {
-            if(!p) return;
-            let nik = p[2] ? p[2].toString().replace(/^'/, "").trim() : "";
-            let nama = p[1] ? p[1].toString().trim().toLowerCase() : "";
-            let key = nik !== "" ? nik : nama;
-            
-            if(key !== "") {
-                if(!mapGanda[key]) mapGanda[key] = [];
-                mapGanda[key].push({ idx: idx, data: p });
-            }
-        });
-
-        for(let key in mapGanda) {
-            if(mapGanda[key].length > 1) {
-                hasilGanda.push(...mapGanda[key]);
-            }
-        }
-
-        document.getElementById('theadCekGanda').innerHTML = '<tr><th>Baris Data</th><th>Nama</th><th>NIK/BPJS</th><th>Desa</th><th>Aksi</th></tr>';
-        let tbodyHtml = '';
-        if(hasilGanda.length === 0) {
-            tbodyHtml = '<tr><td colspan="5" style="text-align:center;">Hebat! Tidak ditemukan data pasien ganda.</td></tr>';
-        } else {
-            hasilGanda.forEach(h => {
-                let d = h.data;
-                let numRow = h.idx + 2;
-                tbodyHtml += `<tr>
-                    <td><strong>Baris ${numRow}</strong></td>
-                    <td>${d[1]}</td>
-                    <td>NIK: ${d[2] ? d[2].toString().replace(/^'/, "") : "-"}<br>BPJS: ${d[3] ? d[3].toString().replace(/^'/, "") : "-"}</td>
-                    <td>${d[4]}</td>
-                    <td><button class="btn-action btn-small" onclick="aksiHapusData('Pasien', ${h.idx})" style="background:#ff3b30;">Hapus</button></td>
-                </tr>`;
-            });
-        }
-        document.getElementById('tbodyCekGanda').innerHTML = tbodyHtml;
-        bukaModal('modalCekGanda');
-    }
-
-    function cekDataGandaHistori() {
-        document.getElementById('titleModalCekGanda').innerHTML = '<i class="ph-light ph-copy-simple"></i> Deteksi Kunjungan Ganda';
-        document.getElementById('descModalCekGanda').innerText = 'Sistem memindai kunjungan pasien di tanggal/bulan yang sama secara berulang.';
-        let mapGanda = {}; let hasilGanda = [];
-
-        APP_DATA_HISTORI.forEach((h, idx) => {
-            if(!h || !h[0]) return;
-            let d = parseDateWib(h[0]);
-            if(!d) return;
-            let nama = h[1] ? h[1].toString().split(" || ")[0].trim().toLowerCase() : "";
-            
-            // Cek ganda berdasarkan Nama + Bulan + Tahun yang sama
-            let key = `${nama}_${d.month}_${d.year}`;
-            if(!mapGanda[key]) mapGanda[key] = [];
-            mapGanda[key].push({ idx: idx, data: h });
-        });
-
-        for(let key in mapGanda) {
-            if(mapGanda[key].length > 1) {
-                hasilGanda.push(...mapGanda[key]);
-            }
-        }
-
-        document.getElementById('theadCekGanda').innerHTML = '<tr><th>Baris Data</th><th>Tanggal Kunjungan</th><th>Nama Pasien</th><th>Metode</th><th>Aksi</th></tr>';
-        let tbodyHtml = '';
-        if(hasilGanda.length === 0) {
-            tbodyHtml = '<tr><td colspan="5" style="text-align:center;">Hebat! Tidak ditemukan riwayat ganda.</td></tr>';
-        } else {
-            hasilGanda.forEach(h => {
-                let d = h.data;
-                let numRow = h.idx + 2;
-                let namaAsli = d[1] ? d[1].toString().split(" || ")[0] : "-";
-                tbodyHtml += `<tr>
-                    <td><strong>Baris ${numRow}</strong></td>
-                    <td>${formatTanggalIndo(d[0])}</td>
-                    <td>${namaAsli}</td>
-                    <td>${d[2]}</td>
-                    <td><button class="btn-action btn-small" onclick="aksiHapusData('Pemantauan', ${h.idx})" style="background:#ff3b30;">Hapus</button></td>
-                </tr>`;
-            });
-        }
-        document.getElementById('tbodyCekGanda').innerHTML = tbodyHtml;
-        bukaModal('modalCekGanda');
-    }
-
-    function bukaModalAbsen() {
-        document.getElementById('searchAbsenInput').value = '';
-        renderTabelAbsen();
-        bukaModal('modalDaftarAbsen');
-    }
-
-    function renderTabelAbsen() {
-        let input = document.getElementById('searchAbsenInput').value.toLowerCase();
-        let arr = (window.GLOBAL_DAFTAR_ABSEN || []).filter(p => {
-            let n = p[2] ? p[2].toString().replace(/^'/, "") : "";
-            return input === "" || `${p[1]} ${n} ${p[4]} ${p[10]}`.toLowerCase().includes(input);
-        });
-
-        let tbodyHtml = '';
-        if (arr.length === 0) {
-            tbodyHtml = '<tr><td colspan="5" style="text-align:center;">Semua pasien telah terpantau.</td></tr>';
-        } else {
-            arr.forEach(p => {
-                let n = p[2] ? p[2].toString().replace(/^'/, "") : "-";
-                let b = p[3] ? p[3].toString().replace(/^'/, "") : "-";
-                let idxOriginal = APP_DATA_PASIEN.indexOf(p);
-                tbodyHtml += `<tr>
-                    <td><strong>${p[1]}</strong></td>
-                    <td>NIK: ${n}<br>BPJS: ${b}</td>
-                    <td>${p[4]}</td>
-                    <td>${getMultiDiagnosaHtml(p)}</td>
-                    <td style="text-align:right;">
-                       <button class="btn-action btn-small" onclick="bukaKonfirmasiTidakHadir(${idxOriginal})" style="background:var(--window); color:#ff3b30; border:var(--border); box-shadow:none; display:inline-block; margin-right:5px;"><i class="ph-light ph-x-circle"></i> Catat Absen</button>
-                       <button class="btn-action btn-small" onclick="tutupModal('modalDaftarAbsen'); switchTab('pemantauan'); setTimeout(() => bukaModalPantauInstan_ManualByData(${idxOriginal}), 300)" style="display:inline-block; background:var(--blue);"><i class="ph-light ph-stethoscope"></i> Pantau</button>
-                    </td>
-                </tr>`;
-            });
-        }
-        document.getElementById('tbodyDaftarAbsen').innerHTML = tbodyHtml;
-    }
-
-    function bukaModalPantauInstan_ManualByData(idx) {
-        let p = APP_DATA_PASIEN[idx];
-        if(p) bukaModalPantauInstan(p, null);
-    }
-
-    function bukaKonfirmasiTidakHadir(idxPasien) {
-        TARGET_TIDAK_HADIR_IDX = idxPasien;
-        let p = APP_DATA_PASIEN[idxPasien];
-        let n = p[1];
-        let blnTahun = `${NAMA_BULAN[parseInt(document.getElementById('dashFilterBulan').value)]} ${document.getElementById('dashFilterTahun').value}`;
-        document.getElementById('teksKonfirmasiTidakHadir').innerHTML = `Apakah Anda yakin ingin mencatat <strong>${n}</strong> sebagai <strong>Tidak Hadir (Absen)</strong> untuk periode <strong>${blnTahun}</strong>?`;
-        bukaModal('modalKonfirmasiTidakHadir');
-    }
-
-    async function eksekusiTidakHadir() {
-        if(TARGET_TIDAK_HADIR_IDX === null) return;
-        let p = APP_DATA_PASIEN[TARGET_TIDAK_HADIR_IDX];
-        
-        let btn = document.getElementById('btnKonfirmTidakHadir');
-        setBtnLoading(btn, true);
-
-        let tglKunjungan = new Date();
-        tglKunjungan.setFullYear(parseInt(document.getElementById('dashFilterTahun').value));
-        tglKunjungan.setMonth(parseInt(document.getElementById('dashFilterBulan').value));
-        
-        let namaAsli = p[1];
-        let nikAsli = p[2] ? p[2].toString().replace(/^'/, "") : "-";
-        let bpjsAsli = p[3] ? p[3].toString().replace(/^'/, "") : "-";
-        
-        const fd = { 
-          namaPasien: `${namaAsli} || ${nikAsli} || ${bpjsAsli}`, 
-          tglKunjungan: getWibDateStr(tglKunjungan), 
-          jenisKunjungan: "Tidak Hadir", 
-          td: "-", 
-          jenisGula: "Tidak Diperiksa", 
-          hasilGula: "-", 
-          hasilG2PP: "-", 
-          statusPRB: "Aktif", 
-          currentUser: SESSION_USER 
-        }; 
-        
-        const res = await callGasApi("simpanPemantauan", { fd: fd, noAntrian: "" });
-        if (res.success) {
-            showToast("Berhasil mencatat pasien Tidak Hadir.");
-            tutupModal('modalKonfirmasiTidakHadir');
-            fetchAppData(false);
-            if(document.getElementById('modalDaftarAbsen').classList.contains('show')){
-               setTimeout(renderTabelAbsen, 1000); 
-            }
-        } else {
-            showToast(res.message, "error");
-        }
-        setBtnLoading(btn, false);
-    }
-
-    function bukaModalMultiDiag() {
-        let arr = window.GLOBAL_MULTI_DIAG || [];
-        let tbodyHtml = '';
-        if (arr.length === 0) {
-            tbodyHtml = '<tr><td colspan="4" style="text-align:center;">Tidak ada pasien komplikasi.</td></tr>';
-        } else {
-            arr.forEach(p => {
-                let n = p[2] ? p[2].toString().replace(/^'/, "") : "-";
-                let b = p[3] ? p[3].toString().replace(/^'/, "") : "-";
-                tbodyHtml += `<tr>
-                    <td><strong>${p[1]}</strong></td>
-                    <td>NIK: ${n}<br>BPJS: ${b}</td>
-                    <td>${p[4]}</td>
-                    <td>${getMultiDiagnosaHtml(p)}</td>
-                </tr>`;
-            });
-        }
-        document.getElementById('tbodyMultiDiag').innerHTML = tbodyHtml;
-        bukaModal('modalMultiDiag');
-    }
-
-    async function submitCatatanAdmin(e) {
-        e.preventDefault();
-        let note = document.getElementById('inputCatatanTerkini').value;
-        let btn = document.getElementById('btnSaveCatatan');
-        setBtnLoading(btn, true);
-
-        const res = await callGasApi("simpanCatatanTerkini", { catatan: note, role: SESSION_ROLE });
-        if(res.success) {
-            document.getElementById('displayCatatanTerkini').innerText = note;
-            showToast("Catatan berhasil diperbarui!");
-            tutupModal('modalCatatan');
-        } else {
-            showToast(res.message, "error");
-        }
-        setBtnLoading(btn, false);
-    }
-
-    async function submitPassword(e) {
-        e.preventDefault();
-        let o = document.getElementById('oldPwd').value;
-        let n = document.getElementById('newPwd').value;
-        let c = document.getElementById('confirmPwd').value;
-
-        if (n !== c) { showToast("Password baru tidak cocok!", "error"); return; }
-        
-        let btn = document.getElementById('btnSubmitPwd');
-        setBtnLoading(btn, true);
-
-        const res = await callGasApi("gantiPassword", { username: SESSION_USERNAME, oldPass: o, newPass: n });
-        if(res.success) {
-            showToast(res.message);
-            e.target.reset();
-            tutupModal('modalPassword');
-        } else {
-            showToast(res.message, "error");
-        }
-        setBtnLoading(btn, false);
-    }
-
-    async function submitTambahUser(e) {
-        e.preventDefault();
-        let u = document.getElementById('newUsername').value;
-        let p = document.getElementById('newUserPwd').value;
-        let n = document.getElementById('newUserNama').value;
-        let r = document.getElementById('newUserRole').value;
-
-        let btn = document.getElementById('btnSubmitUser');
-        setBtnLoading(btn, true);
-
-        const res = await callGasApi("tambahUser", { newUsername: u, newPass: p, newNama: n, newRole: r, requestRole: SESSION_ROLE });
-        if(res.success) {
-            showToast(res.message);
-            e.target.reset();
-            tutupModal('modalTambahUser');
-        } else {
-            showToast(res.message, "error");
-        }
-        setBtnLoading(btn, false);
-    }
-
-    function bukaModalJadwal() {
-        document.getElementById('inputJadwalTanggal').value = parseDateWib(new Date()).isoStr;
-        renderDaftarJadwal();
-        bukaModal('modalJadwal');
-    }
-
-    async function eksekusiSimpanJadwalDB(e) {
-        e.preventDefault();
-        let tgl = document.getElementById('inputJadwalTanggal').value;
-        let buka = document.getElementById('inputJadwalBuka').value;
-        let tutup = document.getElementById('inputJadwalTutup').value;
-        
-        let btn = document.getElementById('btnSimpanJadwal');
-        setBtnLoading(btn, true);
-
-        const res = await callGasApi("setJadwal", { role: SESSION_ROLE, tgl: tgl, buka: buka, tutup: tutup });
-        if(res.success) {
-            showToast(res.message);
-            fetchAppData(false).then(() => {
-                renderDaftarJadwal();
-            });
-        } else {
-            showToast(res.message, "error");
-        }
-        setBtnLoading(btn, false);
-    }
-
-    function renderDaftarJadwal() {
-        let tbody = document.getElementById('tbodyDaftarJadwal');
-        if (JADWAL_DB.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">Belum ada jadwal tersimpan di Server.</td></tr>';
-            return;
-        }
-
-        let sortedJadwal = [...JADWAL_DB].sort((a,b) => b[0].localeCompare(a[0]));
-        let html = '';
-        
-        let d = new Date();
-        let y = d.getFullYear();
-        let m = (d.getMonth() + 1).toString().padStart(2, '0');
-        let day = d.getDate().toString().padStart(2, '0');
-        let todayStr = `${y}-${m}-${day}`; 
-
-        sortedJadwal.forEach(j => {
-            let badge = j[0] === todayStr ? `<span style="background:#34c759; color:#fff; padding:2px 6px; border-radius:4px; font-weight:700; font-size:9px;">HARI INI</span>` : '';
-            html += `<tr>
-                <td><strong>${formatTanggalIndo(j[0])}</strong> ${badge}</td>
-                <td>${j[1]} - ${j[2]} WIB</td>
-                <td style="text-align:right;">
-                   <button class="btn-icon" onclick="hapusJadwalDB('${j[0]}')" style="color:#ff3b30; padding:2px;" title="Hapus Jadwal"><i class="ph-light ph-trash"></i></button>
-                </td>
-            </tr>`;
-        });
-        tbody.innerHTML = html;
-    }
-
-    async function hapusJadwalDB(tgl) {
-        if(!confirm(`Hapus jadwal untuk tanggal ${formatTanggalIndo(tgl)}?`)) return;
-        const res = await callGasApi("hapusJadwal", { role: SESSION_ROLE, tgl: tgl });
-        if(res.success) {
-            showToast("Jadwal dihapus.");
-            fetchAppData(false).then(() => {
-                renderDaftarJadwal();
-            });
-        } else {
-            showToast(res.message, "error");
-        }
-    }
-
-    function segarkanData() {
-        showToast("Menyegarkan data antrian...");
-        fetchAppData(false);
-    }
-  </script>
+</script>
 </body>
 </html>
